@@ -8,7 +8,7 @@ base: ubuntu:22.04
 platforms:
   amd64:
 
-entrypoint: ["bash", "/opt/entrypoint.sh"]
+entrypoint: ["/bin/bash", "/opt/pebble-start.sh"]
 
 env:
   - SPARK_HOME: /opt/spark
@@ -100,9 +100,34 @@ parts:
       - openjdk-11-jre-headless
       - python3-setuptools
     overlay-script: |
-      SPARK_HOME=/opt/spark
-      # chmod a+x /opt/decom.sh
+      SPARK_GID=185
+      SPARK_UID=185
       
       # Create a user in the $CRAFT_OVERLAY chroot
+      groupadd -R $CRAFT_OVERLAY -g ${SPARK_GID} spark
+      useradd -R $CRAFT_OVERLAY -M -r -g spark -u ${SPARK_UID} spark
+    override-prime: |  
+      SPARK_GID=185
       SPARK_UID=185
-      useradd -R $CRAFT_OVERLAY -M -r -u 1000 -U spark
+      
+      craftctl default
+      chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
+      chmod -R 770 opt/spark
+      
+      chown ${SPARK_GID}:${SPARK_UID} opt/entrypoint.sh
+      chmod 770 opt/entrypoint.sh
+      
+      chown ${SPARK_GID}:${SPARK_UID} opt/decom.sh
+      chmod 770 opt/decom.sh
+
+  pebble-setup:
+    plugin: dump
+    source: files
+    organize:
+      pebble-start.sh: opt/pebble-start.sh
+    overlay-script:
+      mkdir -p $CRAFT_PART_INSTALL/var/lib/pebble/default
+    stage:
+      - opt/pebble-start.sh
+      - var/lib/pebble/default
+
