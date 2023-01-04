@@ -1,0 +1,10 @@
+on:
+  push:
+    branches:
+      - '*.*/edge'
+
+jobs:
+  publish:
+    name: Publish ROCK
+    uses: ./.github/workflows/publish.yaml
+    secrets: inherit
