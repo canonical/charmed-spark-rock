@@ -11,18 +11,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
       - name: Setup Docker
         run: |
           sudo snap install docker
           sudo addgroup --system docker; sudo adduser $USER docker
           newgrp docker
           sudo snap disable docker; sudo snap enable docker
+
       - name: Install skopeo
         run: |
           sudo snap install --devmode --channel edge skopeo
+
       - name: Install yq
         run: |
           sudo snap install yq
+
       - uses: actions/download-artifact@v3
         with:
           name: spark-rock
