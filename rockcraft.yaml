@@ -87,9 +87,50 @@ parts:
     stage:
       - opt/spark/jars
 
-  user-setup:
+  client-scripts:
     plugin: nil
     after: [hadoop-jars]
+    build-packages:
+      - wget
+      - pip
+    overlay-script: |
+      SPARK_CLIENT_PKG_VERSION='0.0.2'
+      mkdir -p $CRAFT_PART_INSTALL/opt/spark/bin
+      cd $CRAFT_PART_INSTALL/opt/spark/bin
+      echo "Downloading latest available Spark wheel package release v${SPARK_CLIENT_PKG_VERSION}."
+      wget https://github.com/canonical/spark-client-snap/releases/download/v${SPARK_CLIENT_PKG_VERSION}/spark_client-${SPARK_CLIENT_PKG_VERSION}-py3-none-any.whl --no-check-certificate
+      if  [[ $? -ne 0 ]]
+        then
+          echo "DOWNLOAD ERROR: Spark client package v${SPARK_CLIENT_PKG_VERSION} could not be downloaded properly! Exiting...."
+          exit 1
+      fi
+      pip install ./spark_client-${SPARK_CLIENT_PKG_VERSION}-py3-none-any.whl
+    stage:
+      - opt/spark/bin
+
+  kubectl-bin:
+    plugin: nil
+    after: [client-scripts]
+    build-packages:
+      - curl
+    overlay-script: |
+      mkdir -p $CRAFT_PART_INSTALL/opt/spark/bin
+      cd $CRAFT_PART_INSTALL/opt/spark/bin
+      curl -LO -s "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+      echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+      if  [[ $? -ne 0 ]]
+        then
+          echo "DOWNLOAD ERROR: kubectl could not be downloaded properly! Exiting...."
+          exit 1
+      fi
+      chmod +x kubectl
+    stage:
+      - opt/spark/bin
+
+  user-setup:
+    plugin: nil
+    after: [kubectl-bin]
     overlay-packages:
       - tini
       - libc6
