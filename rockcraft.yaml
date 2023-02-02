@@ -13,7 +13,9 @@ entrypoint: ["/bin/bash", "/opt/pebble-start.sh"]
 env:
   - SPARK_HOME: /opt/spark
   - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
-  - PYTHONPATH: /opt/spark/python:/opt/spark/python/build:/opt/spark/bin:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
+  - PYTHONPATH: /opt/spark/python:/opt/spark/python/build:/opt/spark/bin:$SNAP/usr/lib/python3/dist-packages:/opt/spark/python/dist:$PYTHONPATH
+  - PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin
+  - HOME: /opt/spark
 
 parts:
 
@@ -92,11 +94,12 @@ parts:
     after: [hadoop-jars]
     build-packages:
       - wget
-      - pip
+    overlay-packages:
+      - python3-pip
     overlay-script: |
       SPARK_CLIENT_PKG_VERSION='0.0.2'
-      mkdir -p $CRAFT_PART_INSTALL/opt/spark/bin
-      cd $CRAFT_PART_INSTALL/opt/spark/bin
+      mkdir -p $CRAFT_PART_INSTALL/opt/spark/python/dist
+      cd $CRAFT_PART_INSTALL/opt/spark/python/dist
       echo "Downloading latest available Spark wheel package release v${SPARK_CLIENT_PKG_VERSION}."
       wget https://github.com/canonical/spark-client-snap/releases/download/v${SPARK_CLIENT_PKG_VERSION}/spark_client-${SPARK_CLIENT_PKG_VERSION}-py3-none-any.whl --no-check-certificate
       if  [[ $? -ne 0 ]]
@@ -104,9 +107,9 @@ parts:
           echo "DOWNLOAD ERROR: Spark client package v${SPARK_CLIENT_PKG_VERSION} could not be downloaded properly! Exiting...."
           exit 1
       fi
-      pip install ./spark_client-${SPARK_CLIENT_PKG_VERSION}-py3-none-any.whl
+      pip install --target=${CRAFT_PART_INSTALL}/opt/spark/python/dist ./spark_client-${SPARK_CLIENT_PKG_VERSION}-py3-none-any.whl
     stage:
-      - opt/spark/bin
+      - opt/spark/python/dist
 
   kubectl-bin:
     plugin: nil
@@ -114,8 +117,8 @@ parts:
     build-packages:
       - curl
     overlay-script: |
-      mkdir -p $CRAFT_PART_INSTALL/opt/spark/bin
-      cd $CRAFT_PART_INSTALL/opt/spark/bin
+      mkdir -p $CRAFT_PART_INSTALL/opt/spark
+      cd $CRAFT_PART_INSTALL/opt/spark
       curl -LO -s "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
       curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
       echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
@@ -126,7 +129,7 @@ parts:
       fi
       chmod +x kubectl
     stage:
-      - opt/spark/bin
+      - opt/spark
 
   user-setup:
     plugin: nil
