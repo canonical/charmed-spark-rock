@@ -15,7 +15,7 @@ env:
   - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
   - PYTHONPATH: /opt/spark/python:/opt/spark/python/build:/opt/spark/bin:$SNAP/usr/lib/python3/dist-packages:/opt/spark/python/dist:$PYTHONPATH
   - PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin
-  - HOME: /opt/spark
+  - HOME: /home/spark
 
 parts:
 
@@ -75,7 +75,7 @@ parts:
       echo "`cat aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar.sha1`  aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar" | sha1sum --check
       if  [[ $? -ne 0 ]]
         then
-          echo "DOWNLOAD ERROR: aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar could not be downloaded properly! Exiting...."
+          echo "DOWNLOAD ERROR: aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar could not be downloaded properly! Exiting...." >&2
           exit 1
       fi
       wget -q "https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_AWS_VERSION}/hadoop-aws-${HADOOP_AWS_VERSION}.jar"
@@ -83,7 +83,7 @@ parts:
       echo "`cat hadoop-aws-${HADOOP_AWS_VERSION}.jar.sha1`  hadoop-aws-${HADOOP_AWS_VERSION}.jar" | sha1sum --check
       if  [[ $? -ne 0 ]]
         then
-          echo "DOWNLOAD ERROR: hadoop-aws-${HADOOP_AWS_VERSION}.jar could not be downloaded properly! Exiting...."
+          echo "DOWNLOAD ERROR: hadoop-aws-${HADOOP_AWS_VERSION}.jar could not be downloaded properly! Exiting...." >&2
           exit 1
       fi
     stage:
@@ -97,14 +97,14 @@ parts:
     overlay-packages:
       - python3-pip
     overlay-script: |
-      SPARK_CLIENT_PKG_VERSION='0.0.2'
+      SPARK_CLIENT_PKG_VERSION='0.0.3'
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/python/dist
       cd $CRAFT_PART_INSTALL/opt/spark/python/dist
       echo "Downloading latest available Spark wheel package release v${SPARK_CLIENT_PKG_VERSION}."
-      wget https://github.com/canonical/spark-client-snap/releases/download/v${SPARK_CLIENT_PKG_VERSION}/spark_client-${SPARK_CLIENT_PKG_VERSION}-py3-none-any.whl --no-check-certificate
+      wget -q https://github.com/canonical/spark-client-snap/releases/download/v${SPARK_CLIENT_PKG_VERSION}/spark_client-${SPARK_CLIENT_PKG_VERSION}-py3-none-any.whl --no-check-certificate
       if  [[ $? -ne 0 ]]
         then
-          echo "DOWNLOAD ERROR: Spark client package v${SPARK_CLIENT_PKG_VERSION} could not be downloaded properly! Exiting...."
+          echo "DOWNLOAD ERROR: Spark client package v${SPARK_CLIENT_PKG_VERSION} could not be downloaded properly! Exiting...." >&2
           exit 1
       fi
       pip install --target=${CRAFT_PART_INSTALL}/opt/spark/python/dist ./spark_client-${SPARK_CLIENT_PKG_VERSION}-py3-none-any.whl
@@ -115,25 +115,35 @@ parts:
     plugin: nil
     after: [client-scripts]
     build-packages:
-      - curl
+      - wget
     overlay-script: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark
       cd $CRAFT_PART_INSTALL/opt/spark
-      curl -LO -s "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-      curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+      KUBECTL_VERSION=$(wget -qO- https://dl.k8s.io/release/stable.txt)
+      wget -q "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
+      wget -q  "https://dl.k8s.io/$KUBECTL_VERSION/bin/linux/amd64/kubectl.sha256"
       echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
       if  [[ $? -ne 0 ]]
         then
-          echo "DOWNLOAD ERROR: kubectl could not be downloaded properly! Exiting...."
+          echo "DOWNLOAD ERROR: kubectl could not be downloaded properly! Exiting...." >&2
           exit 1
       fi
       chmod +x kubectl
     stage:
       - opt/spark
 
+  spark-conf:
+    plugin: dump
+    after: [kubectl-bin]
+    source: files/spark/conf
+    organize:
+      spark-defaults.conf: opt/spark/conf/spark-defaults.conf
+    stage:
+      - opt/spark/conf/spark-defaults.conf
+
   user-setup:
     plugin: nil
-    after: [kubectl-bin]
+    after: [spark-conf]
     overlay-packages:
       - tini
       - libc6
@@ -149,7 +159,7 @@ parts:
       
       # Create a user in the $CRAFT_OVERLAY chroot
       groupadd -R $CRAFT_OVERLAY -g ${SPARK_GID} spark
-      useradd -R $CRAFT_OVERLAY -M -r -g spark -u ${SPARK_UID} spark
+      useradd -R $CRAFT_OVERLAY -m -r -g spark -u ${SPARK_UID} spark
     override-prime: |  
       SPARK_GID=185
       SPARK_UID=185
@@ -166,7 +176,7 @@ parts:
 
   pebble-setup:
     plugin: dump
-    source: files
+    source: files/pebble
     organize:
       pebble-start.sh: opt/pebble-start.sh
     overlay-script:
