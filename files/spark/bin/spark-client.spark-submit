@@ -1,0 +1,3 @@
+#!/bin/bash
+
+python3 -m spark_client.cli.spark-submit $*
