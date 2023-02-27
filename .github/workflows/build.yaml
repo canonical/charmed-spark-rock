@@ -13,18 +13,6 @@ jobs:
       - name: Build ROCK
         uses: canonical/craft-actions/rockcraft-pack@main
 
-      # - name: Setup LXD
-      #   uses: canonical/setup-lxd@main
-      #   with:
-      #     channel: 5.9/stable
-
-      # - name: Install rockcraft
-      #   run: |
-      #     sudo snap install --classic --channel edge rockcraft
-
-      # - name: Build ROCK
-      #   run: sudo rockcraft pack --verbose
-
       - name: Upload locally built ROCK artifact
         uses: actions/upload-artifact@v3
         with:
