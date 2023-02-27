@@ -15,9 +15,9 @@ jobs:
         with:
           channel: 5.9/stable
 
-      - name: Check LXD Version
+      - name: Refresh LXD Version
         run: |
-          snap info
+          sudo snap refresh lxd --channel 5.9/edge 
 
 
       - name: Install rockcraft
