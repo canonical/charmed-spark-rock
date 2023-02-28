@@ -53,7 +53,7 @@ export SPARK_UID=185
 export SPARK_GID=185
 export SPARK_USER_HOME=/home/spark
 export SPARK_DRIVER_HOST=$(hostname -I | cut -d' ' -f1)
-docker run -it -p $SPARK_DRIVER_PORT:$SPARK_DRIVER_PORT -p $SPARK_BLOCKMANAGER_PORT:$SPARK_BLOCKMANAGER_PORT -u $SPARK_GID:$SPARK_UID -w $SPARK_USER_HOME --entrypoint /bin/bash docker.io/dataplatformoci/spark:3.3.1
+docker run -it -p $SPARK_DRIVER_PORT:$SPARK_DRIVER_PORT -p $SPARK_BLOCKMANAGER_PORT:$SPARK_BLOCKMANAGER_PORT -u $SPARK_GID:$SPARK_UID -w $SPARK_USER_HOME --entrypoint /bin/bash docker.io/dataplatformoci/spark:3.3.2
 ```
 
 2. From within the container, setup and launch the Spark job
@@ -74,7 +74,7 @@ EOF
 python3 -m spark_client.cli.service-account-registry create --username hello --properties-file ./conf/spark-defaults.conf --conf spark.driver.host=$SPARK_DRIVER_HOST --conf spark.driver.port=$SPARK_DRIVER_PORT --conf spark.blockManager.port=$SPARK_BLOCKMANAGER_PORT
 
 # launch Spark job
-python3 -m spark_client.cli.spark-submit --username hello --deploy-mode cluster --class org.apache.spark.examples.SparkPi local:///opt/spark/examples/jars/spark-examples_2.12-3.3.1.jar 100
+python3 -m spark_client.cli.spark-submit --username hello --deploy-mode cluster --class org.apache.spark.examples.SparkPi local:///opt/spark/examples/jars/spark-examples_2.12-3.3.2.jar 100
 ```
 
 
