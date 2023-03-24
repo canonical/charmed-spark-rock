@@ -31,18 +31,18 @@ jobs:
         with:
           name: spark-rock
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v1
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          username: ${{ secrets.GHCR_USER }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Import and push to Docker Hub
+      - name: Import and push to GHCR
         run: |
-          version="$(cat rockcraft.yaml | yq e '.version')"
-          sudo skopeo \
-            --insecure-policy \
-            copy \
-            oci-archive:"spark_${version}_amd64.rock" \
-            docker-daemon:"dataplatformoci/spark:${version}"
-          docker push "dataplatformoci/spark:${version}"
+          version=$(yq '(.version|split("-"))[0]' rockcraft.yaml)
+          base=$(yq '(.base|split(":"))[1]' rockcraft.yaml)
+          tag=${version}-${base}_edge
+          sudo skopeo --insecure-policy copy \
+            oci-archive:charmed-spark_${tag}_amd64.rock \
+            docker-daemon:ghcr.io/canonical/charmed-spark:${tag}
+          docker push ghcr.io/canonical/charmed-spark:${tag}
