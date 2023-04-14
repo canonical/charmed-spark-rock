@@ -8,14 +8,15 @@ base: ubuntu:22.04
 platforms:
   amd64:
 
-entrypoint: ["/bin/bash", "/opt/pebble-start.sh"]
-
-env:
-  - SPARK_HOME: /opt/spark
-  - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
-  - PYTHONPATH: /opt/spark/python:/opt/spark/python/dist:/usr/lib/python3/dist-packages
-  - PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin
-  - HOME: /home/spark
+services:
+  spark:
+    override: replace
+    command: /opt/spark/pebble-start.sh
+    startup: enabled
+    environment:
+      SPARK_HOME: /opt/spark
+      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+      PYTHONPATH: /opt/spark/python:/opt/spark/python/build:/opt/spark/bin:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
 
 parts:
 
@@ -43,8 +44,8 @@ parts:
       bin: opt/spark/bin
       sbin: opt/spark/sbin
       python: opt/spark/python
-      kubernetes/dockerfiles/spark/entrypoint.sh: opt/entrypoint.sh
-      kubernetes/dockerfiles/spark/decom.sh: opt/decom.sh
+      kubernetes/dockerfiles/spark/entrypoint.sh: opt/spark/entrypoint.sh
+      kubernetes/dockerfiles/spark/decom.sh: opt/spark/decom.sh
       examples: opt/spark/examples
       kubernetes/tests: opt/spark/tests
       data: opt/spark/data
@@ -53,8 +54,8 @@ parts:
        - opt/spark/jars
        - opt/spark/bin
        - opt/spark/sbin
-       - opt/entrypoint.sh
-       - opt/decom.sh
+       - opt/spark/entrypoint.sh
+       - opt/spark/decom.sh
        - opt/spark/examples
        - opt/spark/tests
        - opt/spark/data
@@ -153,9 +154,9 @@ parts:
     after: [kubectl-bin]
     source: files/spark/conf
     organize:
-      spark-defaults.conf: opt/spark/conf/spark-defaults.conf
+      spark-defaults.conf: etc/spark/spark-defaults.conf
     stage:
-      - opt/spark/conf/spark-defaults.conf
+      - etc/spark/spark-defaults.conf
 
   user-setup:
     plugin: nil
@@ -184,20 +185,25 @@ parts:
       chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
       chmod -R 770 opt/spark
       
-      chown ${SPARK_GID}:${SPARK_UID} opt/entrypoint.sh
-      chmod 770 opt/entrypoint.sh
+      chown ${SPARK_GID}:${SPARK_UID} opt/spark/entrypoint.sh
+      chmod 770 opt/spark/entrypoint.sh
       
-      chown ${SPARK_GID}:${SPARK_UID} opt/decom.sh
-      chmod 770 opt/decom.sh
+      chown ${SPARK_GID}:${SPARK_UID} opt/spark/decom.sh
+      chmod 770 opt/spark/decom.sh
 
   pebble-setup:
     plugin: dump
     source: files/pebble
     organize:
-      pebble-start.sh: opt/pebble-start.sh
+      pebble-start.sh: opt/spark/pebble-start.sh
     overlay-script:
-      mkdir -p $CRAFT_PART_INSTALL/var/lib/pebble/default
+      mkdir -p $CRAFT_PART_INSTALL/var/lib/pebble/default      
+      mkdir -p $CRAFT_PART_INSTALL/var/lib/spark
+      mkdir -p $CRAFT_PART_INSTALL/var/log/spark
+      mkdir -p $CRAFT_PART_INSTALL/etc/spark
     stage:
-      - opt/pebble-start.sh
+      - opt/spark/pebble-start.sh
       - var/lib/pebble/default
-
+      - var/lib/spark
+      - var/log/spark
+      - etc/spark
