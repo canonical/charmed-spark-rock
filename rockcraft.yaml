@@ -99,7 +99,7 @@ parts:
     overlay-packages:
       - python3-pip
     overlay-script: |
-      SPARK_CLIENT_PKG_VERSION='0.0.6'
+      SPARK_CLIENT_PKG_VERSION='0.0.7'
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/python/dist
       cd $CRAFT_PART_INSTALL/opt/spark/python/dist
       echo "Downloading latest available Spark wheel package release v${SPARK_CLIENT_PKG_VERSION}."
