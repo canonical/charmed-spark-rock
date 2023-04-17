@@ -3,7 +3,7 @@ summary: Spark ROCK
 description: Spark ROCK
 license: Apache-2.0
 
-version: "3.3.2"
+version: "3.4.0"
 base: ubuntu:22.04
 platforms:
   amd64:
@@ -22,7 +22,7 @@ parts:
 
   spark:
     plugin: dump
-    source: https://downloads.apache.org/spark/spark-3.3.2/spark-3.3.2-bin-hadoop3.tgz
+    source: https://downloads.apache.org/spark/spark-3.4.0/spark-3.4.0-bin-hadoop3.tgz
     source-checksum: sha512/4cd2396069fbe0f8efde2af4fd301bf46f8c6317e9dea1dd42a405de6a38380635d49b17972cb92c619431acece2c3af4c23bfdf193cedb3ea913ed69ded23a1
     overlay-script: |
       set -ex
