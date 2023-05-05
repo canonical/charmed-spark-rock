@@ -14,4 +14,4 @@ do
 done
 
 # Exec entrypoint via Pebble
-/bin/pebble exec --user spark --group spark -w /opt/spark $ENV_LIST -- /bin/bash /opt/spark/entrypoint.sh $*
+/bin/pebble exec --user spark --group spark -w /opt/spark $ENV_LIST -- /bin/bash /opt/entrypoint.sh $*
