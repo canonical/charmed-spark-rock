@@ -1,0 +1,36 @@
+name: Spark Image Tests
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yaml
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    needs: build
+    strategy:
+      matrix:
+        env: [integration]
+      fail-fast: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: spark-rock
+      - name: Install microk8s
+        uses: /bin/bash ./tests/integration/setup-microk8s.sh
+	    - name: Configure microk8s  
+        uses: sg microk8s ./tests/integration/config-microk8s.sh 
+      - name: Install tox
+        run: python3 -m pip install tox
+      - name: Integration Tests
+        run: sg microk8s -c "tox -e ${{ matrix.env }}"
