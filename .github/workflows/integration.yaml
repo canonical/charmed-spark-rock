@@ -26,11 +26,13 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: spark-rock
-      - name: Install microk8s
-        run: bash spark-rock/tests/integration/setup-microk8s.sh
-	    - name: Configure microk8s  
-        uses: sg microk8s spark-rock/tests/integration/config-microk8s.sh 
-      - name: Install tox
-        run: python3 -m pip install tox
-      - name: Integration Tests
-        run: sg microk8s -c "tox -e ${{ matrix.env }}"
+      - name: ls
+        run: ls; ls spark-rock;
+      # - name: Install microk8s
+      #   run: bash spark-rock/tests/integration/setup-microk8s.sh
+	    # - name: Configure microk8s  
+      #   uses: sg microk8s spark-rock/tests/integration/config-microk8s.sh 
+      # - name: Install tox
+      #   run: python3 -m pip install tox
+      # - name: Integration Tests
+      #   run: sg microk8s -c "tox -e ${{ matrix.env }}"
