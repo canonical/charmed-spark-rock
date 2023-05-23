@@ -27,7 +27,7 @@ jobs:
         with:
           name: spark-rock
       - name: Install microk8s
-        uses: /bin/bash ./tests/integration/setup-microk8s.sh
+        uses: sg microk8s ./tests/integration/setup-microk8s.sh
 	    - name: Configure microk8s  
         uses: sg microk8s ./tests/integration/config-microk8s.sh 
       - name: Install tox
