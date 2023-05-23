@@ -7,7 +7,7 @@ get_spark_version(){
 
 
 spark_image(){
-  echo "ghcr.io/canonical/test-charmed-spark:$get_spark_version"
+  echo "ghcr.io/canonical/test-charmed-spark:$(get_spark_version)"
 }
 
 
@@ -39,10 +39,10 @@ setup_user() {
   then
     CONTEXT=$3 
     kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CX="$CONTEXT" \
-                  /bin/bash -c 'spark-client.service-account-registry create --context $CX --username $UU --namespace $NN' 
+                  /bin/bash -c 'python3 /opt/spark/python/dist/spark8t/cli/service_account_registry.py create --context $CX --username $UU --namespace $NN' 
   else
     kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" \
-                  /bin/bash -c 'spark-client.service-account-registry create --username $UU --namespace $NN' 
+                  /bin/bash -c 'env; python3 /opt/spark/python/dist/spark8t/cli/service_account_registry.py create --username $UU --namespace $NN' 
   fi
 
 }
@@ -56,14 +56,17 @@ setup_user_restricted_context() {
 }
 
 cleanup_user() {
+  set -x
   EXIT_CODE=$1
   USERNAME=$2
   NAMESPACE=$3
 
   kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" \
-                  /bin/bash -c 'spark-client.service-account-registry delete --username $UU --namespace $NN'  
+                  /bin/bash -c 'python3 /opt/spark/python/dist/spark8t/cli/service_account_registry.py delete --username $UU --namespace $NN'  
 
-  account_not_found_counter=$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" /bin/bash -c 'spark-client.service-account-registry get-config --username=$UU --namespace $NN' 2>&1 | grep -c '404 Not Found')
+  output = $(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" /bin/bash -c 'python3 /opt/spark/python/dist/spark8t/cli/service_account_registry.py get-config --username=$UU --namespace $NN' 2>&1 )
+
+  account_not_found_counter=$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" /bin/bash -c 'python3 /opt/spark/python/dist/spark8t/cli/service_account_registry.py get-config --username=$UU --namespace $NN' 2>&1 | grep -c 'NotFound')
 
   if [ "${account_not_found_counter}" == "0" ]; then
       exit 2
@@ -74,6 +77,7 @@ cleanup_user() {
   if [ "${EXIT_CODE}" != "0" ]; then
       exit 1
   fi
+  set +x
 }
 
 cleanup_user_success() {
@@ -112,6 +116,7 @@ setup_test_pod() {
   kubectl exec testpod -- /bin/bash -c 'mkdir /home/spark/.kube'
   kubectl exec testpod -- env KCONFIG="$MY_KUBE_CONFIG" /bin/bash -c 'echo "$KCONFIG" > /home/spark/.kube/config'
   kubectl exec testpod -- /bin/bash -c 'cat /home/spark/.kube/config'
+  kubectl exec testpod -- /bin/bash -c 'cp -r /opt/spark/python /home/spark/'
 }
 
 teardown_test_pod() {
@@ -119,7 +124,7 @@ teardown_test_pod() {
 }
 
 run_example_job_in_pod() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$get_spark_version.jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
 
@@ -127,8 +132,8 @@ run_example_job_in_pod() {
   USERNAME=$2
 
 
-  kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$spark_image" \
-                  /bin/bash -c 'spark-client.spark-submit \
+  kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+                  /bin/bash -c 'python3 /opt/spark/python/dist/spark8t/cli/spark_submit.py \
                   --username $UU --namespace $NN \
                   --conf spark.kubernetes.driver.request.cores=100m \
                   --conf spark.kubernetes.executor.request.cores=100m \
@@ -152,7 +157,6 @@ run_example_job_in_pod() {
   echo -e "Spark Pi Job Output: \n ${pi}"
 
   validate_pi_value $pi
-
 }
 
 test_example_job_in_pod() {
@@ -172,7 +176,7 @@ run_spark_shell_in_pod() {
   # Sample output
   # "Pi is roughly 3.13956232343"
 
-  echo -e "$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$SPARK_SHELL_COMMANDS" IM="$spark_image" /bin/bash -c 'echo "$CMDS" | spark-client.spark-shell --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > spark-shell.out
+  echo -e "$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$SPARK_SHELL_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | python3 /opt/spark/python/dist/spark8t/cli/spark_shell.py --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > spark-shell.out
 
   pi=$(cat spark-shell.out  | grep "^Pi is roughly" | rev | cut -d' ' -f1 | rev | cut -c 1-3)
   echo -e "Spark-shell Pi Job Output: \n ${pi}"
@@ -196,7 +200,7 @@ run_pyspark_in_pod() {
   # Sample output
   # "Pi is roughly 3.13956232343"
 
-  echo -e "$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$PYSPARK_COMMANDS" IM="$spark_image" /bin/bash -c 'echo "$CMDS" | spark-client.pyspark --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > pyspark.out
+  echo -e "$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$PYSPARK_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | python3 /opt/spark/python/dist/spark8t/cli/pyspark.py --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > pyspark.out
 
   cat pyspark.out
   pi=$(cat pyspark.out  | grep "Pi is roughly" | tail -n 1 | rev | cut -d' ' -f1 | rev | cut -c 1-3)

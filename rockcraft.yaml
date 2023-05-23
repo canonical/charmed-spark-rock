@@ -16,6 +16,8 @@ env:
   - PYTHONPATH: /opt/spark/python:/opt/spark/python/dist:/usr/lib/python3/dist-packages
   - PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin
   - HOME: /home/spark
+  - KUBECONFIG: /home/spark/.kube/config
+  - SPARK_USER_DATA: opt/spark/data
 
 parts:
 
@@ -28,14 +30,12 @@ parts:
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
       ln -svf /lib /lib64
-      # apt-get install -y bash tini libc6 libpam-modules krb5-user libnss3 procps
       apt-get install -y bash
       mkdir -p /opt/spark/python
       touch /opt/spark/RELEASE
       rm /bin/sh
       ln -svf /bin/bash /bin/sh
       echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su
-      # chgrp root /etc/passwd && chmod ug+rw /etc/passwd
       rm -rf /var/cache/apt/*
     organize:
       conf: opt/spark/conf
@@ -95,20 +95,12 @@ parts:
     build-packages:
       - wget
       - ssl-cert
+      - git
     overlay-packages:
       - python3-pip
     overlay-script: |
-      SPARK_CLIENT_PKG_VERSION='0.0.7'
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/python/dist
-      cd $CRAFT_PART_INSTALL/opt/spark/python/dist
-      echo "Downloading latest available Spark wheel package release v${SPARK_CLIENT_PKG_VERSION}."
-      wget -q https://github.com/canonical/spark-client-snap/releases/download/v${SPARK_CLIENT_PKG_VERSION}/spark_client-${SPARK_CLIENT_PKG_VERSION}-py3-none-any.whl
-      if  [[ $? -ne 0 ]]
-        then
-          echo "DOWNLOAD ERROR: Spark client package v${SPARK_CLIENT_PKG_VERSION} could not be downloaded properly! Exiting...." >&2
-          exit 1
-      fi
-      pip install --target=${CRAFT_PART_INSTALL}/opt/spark/python/dist ./spark_client-${SPARK_CLIENT_PKG_VERSION}-py3-none-any.whl
+      pip install --target=${CRAFT_PART_INSTALL}/opt/spark/python/dist git+https://github.com/canonical/spark-k8s-toolkit-py.git@dpe-1988-backend-argument
     stage:
       - opt/spark/python/dist
 
@@ -189,6 +181,9 @@ parts:
       
       chown ${SPARK_GID}:${SPARK_UID} opt/decom.sh
       chmod 770 opt/decom.sh
+
+      chown -R ${SPARK_GID}:${SPARK_UID} home/spark
+      chmod -R 770 home/spark
 
   pebble-setup:
     plugin: dump
