@@ -1,6 +1,0 @@
-on:
-  pull_request:
-
-jobs:
-  build:
-      uses: ./.github/workflows/integration.yaml

@@ -23,10 +23,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      # - name: Download artifact
-      # - uses: actions/download-artifact@v3
-      #   with:
-      #     name: charmed-spark
+      - name: Setup LXD
+        uses: canonical/setup-lxd@main
+      - name: Install dependencies
+        run: |
+          sudo snap install yq
+          sudo snap install rockcraft --classic --edge  --revision=687
       - name: ls
         run: ls
       - name: Install microk8s
