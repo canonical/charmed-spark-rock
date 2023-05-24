@@ -28,7 +28,7 @@ jobs:
       #   with:
       #     name: charmed-spark
       - name: ls
-        run: ls; ls charmed-spark-rock;
+        run: ls
       - name: Install microk8s
         run: bash .tests/integration/setup-microk8s.sh
       - name: Configure microk8s
