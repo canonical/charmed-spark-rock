@@ -49,16 +49,16 @@ parts:
       kubernetes/tests: opt/spark/tests
       data: opt/spark/data
     stage:
-       - opt/spark/conf
-       - opt/spark/jars
-       - opt/spark/bin
-       - opt/spark/sbin
-       - opt/entrypoint.sh
-       - opt/decom.sh
-       - opt/spark/examples
-       - opt/spark/tests
-       - opt/spark/data
-       - opt/spark/python
+      - opt/spark/conf
+      - opt/spark/jars
+      - opt/spark/bin
+      - opt/spark/sbin
+      - opt/entrypoint.sh
+      - opt/decom.sh
+      - opt/spark/examples
+      - opt/spark/tests
+      - opt/spark/data
+      - opt/spark/python
 
   hadoop-jars:
     plugin: nil
@@ -71,7 +71,7 @@ parts:
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
       cd $CRAFT_PART_INSTALL/opt/spark/jars
       wget -q "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/${AWS_JAVA_SDK_BUNDLE_VERSION}/aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar"
-      wget -q "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/${AWS_JAVA_SDK_BUNDLE_VERSION}/aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar.sha1"  
+      wget -q "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/${AWS_JAVA_SDK_BUNDLE_VERSION}/aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar.sha1"
       echo "`cat aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar.sha1`  aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar" | sha1sum --check
       if  [[ $? -ne 0 ]]
         then
@@ -106,7 +106,7 @@ parts:
 
   spark-client-apps:
     plugin: dump
-    after: [ client-scripts ]
+    after: [client-scripts]
     source: files/spark/bin
     organize:
       spark-client.pyspark: opt/spark/python/bin/spark-client.pyspark
@@ -164,21 +164,21 @@ parts:
     overlay-script: |
       SPARK_GID=185
       SPARK_UID=185
-      
+
       # Create a user in the $CRAFT_OVERLAY chroot
       groupadd -R $CRAFT_OVERLAY -g ${SPARK_GID} spark
       useradd -R $CRAFT_OVERLAY -m -r -g spark -u ${SPARK_UID} spark
-    override-prime: |  
+    override-prime: |
       SPARK_GID=185
       SPARK_UID=185
-      
+
       craftctl default
       chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
       chmod -R 770 opt/spark
-      
+
       chown ${SPARK_GID}:${SPARK_UID} opt/entrypoint.sh
       chmod 770 opt/entrypoint.sh
-      
+
       chown ${SPARK_GID}:${SPARK_UID} opt/decom.sh
       chmod 770 opt/decom.sh
 
