@@ -10,12 +10,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-rock:
-    uses: ./.github/workflows/build.yaml
+  # build-rock:
+  #   uses: ./.github/workflows/build.yaml
   integration:
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    needs: build-rock
+    # needs: build-rock
     strategy:
       matrix:
         env: [integration]
@@ -23,8 +23,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: charmed-spark-rock
+      # - name: Download artifact
+      # - uses: actions/download-artifact@v3
+      #   with:
+      #     name: charmed-spark
       - name: ls
         run: ls; ls charmed-spark-rock;
+      - name: Install microk8s
+        run: bash .tests/integration/setup-microk8s.sh
+      - name: Configure microk8s
+        run: sg microk8s .tests/integration/config-microk8s.sh
+      
