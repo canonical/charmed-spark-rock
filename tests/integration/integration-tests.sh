@@ -56,15 +56,12 @@ setup_user_restricted_context() {
 }
 
 cleanup_user() {
-  set -x
   EXIT_CODE=$1
   USERNAME=$2
   NAMESPACE=$3
 
   kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" \
                   /bin/bash -c 'python3 /opt/spark/python/dist/spark8t/cli/service_account_registry.py delete --username $UU --namespace $NN'  
-
-  output = $(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" /bin/bash -c 'python3 /opt/spark/python/dist/spark8t/cli/service_account_registry.py get-config --username=$UU --namespace $NN' 2>&1 )
 
   account_not_found_counter=$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" /bin/bash -c 'python3 /opt/spark/python/dist/spark8t/cli/service_account_registry.py get-config --username=$UU --namespace $NN' 2>&1 | grep -c 'NotFound')
 
@@ -77,7 +74,6 @@ cleanup_user() {
   if [ "${EXIT_CODE}" != "0" ]; then
       exit 1
   fi
-  set +x
 }
 
 cleanup_user_success() {

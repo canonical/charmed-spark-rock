@@ -104,21 +104,6 @@ parts:
     stage:
       - opt/spark/python/dist
 
-  spark-client-apps:
-    plugin: dump
-    after: [client-scripts]
-    source: files/spark/bin
-    organize:
-      spark-client.pyspark: opt/spark/python/bin/spark-client.pyspark
-      spark-client.service-account-registry: opt/spark/python/bin/spark-client.service-account-registry
-      spark-client.spark-shell: opt/spark/python/bin/spark-client.spark-shell
-      spark-client.spark-submit: opt/spark/python/bin/spark-client.spark-submit
-    stage:
-      - opt/spark/python/bin/spark-client.pyspark
-      - opt/spark/python/bin/spark-client.service-account-registry
-      - opt/spark/python/bin/spark-client.spark-shell
-      - opt/spark/python/bin/spark-client.spark-submit
-
   kubectl-bin:
     plugin: nil
     after: [client-scripts]
