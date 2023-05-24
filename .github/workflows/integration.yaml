@@ -15,7 +15,7 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    needs: build
+    needs: build-rock
     strategy:
       matrix:
         env: [integration]
