@@ -33,4 +33,7 @@ jobs:
         run: bash tests/integration/setup-microk8s.sh
       - name: Configure microk8s
         run: sg microk8s tests/integration/config-microk8s.sh
-      
+      - name: Install tox
+        run: python3 -m pip install tox
+      - name: Run Integration tests
+        run: sg microk8s -c "tox -e ${{ matrix.env }}"
