@@ -26,7 +26,6 @@ parts:
     source: https://downloads.apache.org/spark/spark-3.4.0/spark-3.4.0-bin-hadoop3.tgz
     source-checksum: sha512/67bc912e9192ef2159540cb480820e5466dfd91e907c97c5a4787587e3020be042b76c40c51854f2a5dbeb8c3775fe12d9021c1200c4704463ec644132243a69
     overlay-script: |
-      set -ex
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
       ln -svf /lib /lib64
@@ -103,6 +102,21 @@ parts:
       pip install --target=${CRAFT_PART_INSTALL}/opt/spark/python/dist git+https://github.com/canonical/spark-k8s-toolkit-py.git@main
     stage:
       - opt/spark/python/dist
+  
+  spark-client-apps:
+    plugin: dump
+    after: [client-scripts]
+    source: files/spark/bin
+    organize:
+      spark-client.pyspark: opt/spark/python/bin/spark-client.pyspark
+      spark-client.service-account-registry: opt/spark/python/bin/spark-client.service-account-registry
+      spark-client.spark-shell: opt/spark/python/bin/spark-client.spark-shell
+      spark-client.spark-submit: opt/spark/python/bin/spark-client.spark-submit
+    stage:
+      - opt/spark/python/bin/spark-client.pyspark
+      - opt/spark/python/bin/spark-client.service-account-registry
+      - opt/spark/python/bin/spark-client.spark-shell
+      - opt/spark/python/bin/spark-client.spark-submit
 
   kubectl-bin:
     plugin: nil
