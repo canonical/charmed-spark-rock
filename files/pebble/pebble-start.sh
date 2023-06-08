@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# Start  Pebble
-/bin/pebble run --hold &
-
-# Wait Pebble to be up and running...
-sleep 1
+# This script still exists because passing of working directory to services has not yet landed
+# in Pebble (https://github.com/canonical/pebble/issues/158) and being in the write directory
+# is important for the entrypoint script
 
 # Feed Env Variables to Pebble Command
 ENV_LIST=""
