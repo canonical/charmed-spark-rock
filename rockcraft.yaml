@@ -22,7 +22,7 @@ services:
       PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
       HOME: /home/spark
       KUBECONFIG: /home/spark/.kube/config
-      SPARK_USER_DATA: home/spark
+      SPARK_USER_DATA: /home/spark
     on-success: shutdown
     on-failure: shutdown
 
