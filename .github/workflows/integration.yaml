@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo snap install yq
-          sudo snap install rockcraft --classic --edge  --revision=687
+          sudo snap install rockcraft --classic --edge
       - name: Install microk8s
         run: bash tests/integration/setup-microk8s.sh
       - name: Configure microk8s

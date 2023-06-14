@@ -23,22 +23,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Setup LXD
-        uses: canonical/setup-lxd@main
-      - name: Install dependencies
-        run: |
-          sudo snap install yq
-          sudo snap install rockcraft --classic --edge  --revision=687
       - name: Build ROCK
-        run: |
-          app_version=$(yq '.version' rockcraft.yaml)
-          version=$(yq '(.version|split("-"))[0]' rockcraft.yaml)
-          base=$(yq '(.base|split(":"))[1]' rockcraft.yaml)
-          tag=${version}-${base}_edge
-          yq e -i ".version = \"$tag\"" rockcraft.yaml
-          rockcraft pack --verbose
+        uses: canonical/craft-actions/rockcraft-pack@main
+        id: rockcraft
       - name: Upload locally built ROCK artifact
         uses: actions/upload-artifact@v3
         with:
           name: charmed-spark
-          path: "charmed-spark_*.rock"
+          path: ${{ steps.rockcraft.outputs.rock }}
