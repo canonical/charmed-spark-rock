@@ -30,15 +30,10 @@ jobs:
           sudo snap install yq
           sudo snap install rockcraft --classic --edge
       - name: Build ROCK
-        run: |
-          app_version=$(yq '.version' rockcraft.yaml)
-          version=$(yq '(.version|split("-"))[0]' rockcraft.yaml)
-          base=$(yq '(.base|split(":"))[1]' rockcraft.yaml)
-          tag=${version}-${base}_edge
-          yq e -i ".version = \"$tag\"" rockcraft.yaml
-          rockcraft pack --verbose
-      # - name: Upload locally built ROCK artifact
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: charmed-spark
-      #     path: "charmed-spark_*.rock"
+        uses: canonical/craft-actions/rockcraft-pack@main
+        id: rockcraft
+      - name: Upload locally built ROCK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: charmed-spark
+          path: {{ steps.rockcraft.outputs.rock }}
