@@ -44,6 +44,6 @@ jobs:
           base=$(yq '(.base|split(":"))[1]' rockcraft.yaml)
           tag=${version}-${base}_edge
           sudo skopeo --insecure-policy copy \
-            oci-archive:charmed-spark_${tag}_amd64.rock \
+            oci-archive:charmed-spark_${version}_amd64.rock \
             docker-daemon:ghcr.io/canonical/charmed-spark:${tag}
           docker push ghcr.io/canonical/charmed-spark:${tag}
