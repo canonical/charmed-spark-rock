@@ -26,8 +26,8 @@ jobs:
       - name: Build ROCK
         uses: canonical/craft-actions/rockcraft-pack@main
         id: rockcraft
-      # - name: Upload locally built ROCK artifact
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: charmed-spark
-      #     path: ${{ steps.rockcraft.outputs.rock }}
+      - name: Upload locally built ROCK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: charmed-spark
+          path: ${{ steps.rockcraft.outputs.rock }}
