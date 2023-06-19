@@ -7,7 +7,7 @@ get_spark_version(){
 
 
 spark_image(){
-  echo "ghcr.io/canonical/test-charmed-spark:$(get_spark_version)"
+  echo "ghcr.io/canonical/test-charmed-spark-jobs:$(get_spark_version)"
 }
 
 

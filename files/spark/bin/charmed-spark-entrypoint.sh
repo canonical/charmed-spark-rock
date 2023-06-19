@@ -6,4 +6,15 @@
 
 cd /opt/spark
 
-./entrypoint.sh $*
+TYPE=$1
+shift
+
+if [ "$TYPE" == "jobs" ];
+then
+  ./entrypoint.sh $*
+fi
+
+if [ "$TYPE" == "history-server" ];
+then
+  echo ./sbin/start-history-server.sh --properties-file ${SPARK_PROPERTIES_FILE}
+fi
