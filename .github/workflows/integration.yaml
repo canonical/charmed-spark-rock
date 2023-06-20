@@ -36,10 +36,10 @@ jobs:
           sudo snap install yq
 
       - name: Build Images
-        run: make build PREFIX=test- REPOSITORY=ghcr.io/canonical/
+        run: sudo make build PREFIX=test- REPOSITORY=ghcr.io/canonical/
 
       - name: Running integration tests
-        run: make integration-tests PREFIX=test- REPOSITORY=ghcr.io/canonical/
+        run: sudo make integration-tests PREFIX=test- REPOSITORY=ghcr.io/canonical/
 
       - name: Upload built OCI tarball artifacts
         uses: actions/upload-artifact@v3

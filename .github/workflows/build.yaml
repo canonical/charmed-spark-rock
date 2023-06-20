@@ -31,7 +31,7 @@ jobs:
         id: rockcraft
 
       - name: Build Images
-        run: make build REPOSITORY=ghcr.io/canonical/
+        run: sudo make build REPOSITORY=ghcr.io/canonical/
 
       - name: Upload built OCI tarball artifacts
         uses: actions/upload-artifact@v3
