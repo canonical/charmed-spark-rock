@@ -82,7 +82,7 @@ deploy: build
 endif
 
 ifeq ($(TARGET), microk8s)
-deploy: $(K8S_TAG) build $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(VERSION).tar $(_MAKE_DIR)/$(JOB_OCI_FULL_NAME)/$(VERSION).tar
+deploy: $(K8S_TAG) $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(VERSION).tar $(_MAKE_DIR)/$(JOB_OCI_FULL_NAME)/$(VERSION).tar
 	microk8s ctr image import - --base-name $(CHARMED_OCI_FULL_NAME):$(VERSION) < $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(VERSION).tar
 	microk8s ctr image import - --base-name $(JOB_OCI_FULL_NAME):$(VERSION) < $(_MAKE_DIR)/$(JOB_OCI_FULL_NAME)/$(VERSION).tar
 endif

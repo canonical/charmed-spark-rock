@@ -24,6 +24,7 @@ jobs:
 
       - name: Install skopeo
         run: |
+          sudo apt-get install uidmap
           sudo snap install --devmode --channel edge skopeo
 
       - name: Install yq
