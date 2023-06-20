@@ -9,7 +9,7 @@ platforms:
   amd64:
 
 services:
-  spark-history-server:
+  history-server:
     command: "/bin/bash /opt/pebble/charmed-spark-entrypoint.sh history-server"
     summary: "This is the Spark History Server service"
     override: replace
