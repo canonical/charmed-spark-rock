@@ -15,6 +15,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Build ROCK
+        uses: canonical/craft-actions/rockcraft-pack@main
+        id: rockcraft
+
       - name: Setup Docker
         run: |
           sudo snap install docker
@@ -30,10 +34,6 @@ jobs:
       - name: Install yq
         run: |
           sudo snap install yq
-
-      - name: Build ROCK
-        uses: canonical/craft-actions/rockcraft-pack@main
-        id: rockcraft
 
       - name: Build Images
         run: make build PREFIX=test- REPOSITORY=ghcr.io/canonical/
