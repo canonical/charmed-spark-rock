@@ -151,7 +151,6 @@ parts:
     source: files/spark
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
-      conf/podTemplate.yaml: etc/spark/conf/podTemplate.yaml
       bin/charmed-spark-entrypoint.sh: opt/pebble/charmed-spark-entrypoint.sh
       bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
       bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
@@ -159,7 +158,6 @@ parts:
       bin/spark-client.spark-submit: opt/spark-client/python/bin/spark-client.spark-submit
     stage:
       - etc/spark8t/conf/
-      - etc/spark/conf/podTemplate.yaml
       - opt/pebble/charmed-spark-entrypoint.sh
       - opt/spark-client/python/bin/spark-client.pyspark
       - opt/spark-client/python/bin/spark-client.service-account-registry
