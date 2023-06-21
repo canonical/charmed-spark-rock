@@ -91,7 +91,7 @@ endif
 
 integration-tests: deploy
 	@echo "=== Running Integration Tests ==="
-	sg microk8s tests/integration/ie-tests.sh
+	sg microk8s tests/integration/integration-tests.sh
 
 clean:
 	@echo "=== Cleaning environment ==="
