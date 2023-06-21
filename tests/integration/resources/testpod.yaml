@@ -8,8 +8,6 @@ spec:
     name: spark
     ports:
     - containerPort: 18080
-    command: ["sleep"]
-    args: ["3600"]
     env:
       - name: SPARK_CONFS
         value: /etc/spark8t/conf
