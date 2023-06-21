@@ -1,9 +1,18 @@
 #!/bin/bash
 
-# This script still exists because passing of working directory to services has not yet landed
-# in Pebble (https://github.com/canonical/pebble/issues/158) and being in the write directory
-# is important for the entrypoint script
+TYPE=$1
+shift
 
-cd /opt/spark
+echo "Running script with ${TYPE} flavour"
 
-./entrypoint.sh $*
+if [ "${TYPE}" == "history-server" ];
+then
+  cd /opt/spark
+  ./sbin/start-history-server.sh --properties-file ${SPARK_PROPERTIES_FILE}
+elif [ "${TYPE}" == "jobs" ]
+  cd /opt/spark
+  ./entrypoint.sh "$*"
+else
+  echo "Component \"${TYPE}\" unknown"
+  exit 1
+fi

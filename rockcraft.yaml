@@ -9,8 +9,8 @@ platforms:
   amd64:
 
 services:
-  spark-entrypoint:
-    command: "/bin/bash /opt/pebble/charmed-spark-entrypoint.sh"
+  spark-jobs:
+    command: "/bin/bash /opt/pebble/charmed-spark-entrypoint.sh jobs"
     summary: "This is the service to startup Spark processes using the Spark entrypoint"
     override: replace
     startup: enabled
@@ -25,6 +25,21 @@ services:
       SPARK_USER_DATA: /home/spark
     on-success: shutdown
     on-failure: shutdown
+  history-server:
+    command: "/bin/bash /opt/pebble/charmed-spark-entrypoint.sh history-server"
+    summary: "This is the Spark History Server service"
+    override: replace
+    startup: disabled
+    environment:
+      SPARK_HOME: /opt/spark
+      SPARK_CONFS: /etc/spark8t/conf
+      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+      PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3/dist-packages
+      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
+      HOME: /home/spark
+      KUBECONFIG: /home/spark/.kube/config
+      SPARK_USER_DATA: /home/spark
+      SPARK_PROPERTIES_FILE: /etc/spark/conf/spark-defaults.conf
 
 parts:
   spark:
