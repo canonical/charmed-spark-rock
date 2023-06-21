@@ -63,9 +63,11 @@ cleanup_user() {
   kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" \
                   /bin/bash -c 'spark-client.service-account-registry delete --username $UU --namespace $NN'  
 
-  account_not_found_counter=$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" /bin/bash -c 'spark-client.service-account-registry get-config --username=$UU --namespace $NN' 2>&1 | grep -c 'NotFound')
+  OUTPUT=$(kubectl exec testpod -- /bin/bash -c 'spark-client.service-account-registry list')
 
-  if [ "${account_not_found_counter}" == "0" ]; then
+  EXISTS=$(echo -e "$OUTPUT" | grep "$NAMESPACE:$USERNAME" | wc -l)
+
+  if [ "$EXISTS" != "0" ]; then
       exit 2
   fi
 
@@ -99,7 +101,7 @@ setup_test_pod() {
         break
     elif [ "${i}" -le "5" ]
     then
-        echo "HERE"
+        echo "Waiting the pod to come online..."
         sleep 5
     else
         echo "testpod did not come up. Test Failed!"
