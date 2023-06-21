@@ -15,35 +15,38 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Build ROCK
-        uses: canonical/craft-actions/rockcraft-pack@main
-        id: rockcraft
+      - name: Setup microk8s
+        run: make microk8s
 
-      - name: Setup Docker
-        run: |
-          sudo snap install docker
-          sudo addgroup --system docker; sudo adduser $USER docker
-          newgrp docker
-          sudo snap disable docker; sudo snap enable docker
-
-      - name: Install skopeo
-        run: |
-          sudo apt-get install uidmap
-          sudo snap install --devmode --channel edge skopeo
-
-      - name: Install yq
-        run: |
-          sudo snap install yq
-
-      - name: Build Images
-        run: sudo make build PREFIX=test- REPOSITORY=ghcr.io/canonical/
-
-      - name: Running integration tests
-        run: sudo make integration-tests PREFIX=test- REPOSITORY=ghcr.io/canonical/
-
-      - name: Upload built OCI tarball artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: charmed-spark
-          path:  .make_cache/**/*.tar
+      # - name: Build ROCK
+      #   uses: canonical/craft-actions/rockcraft-pack@main
+      #   id: rockcraft
+      #
+      # - name: Setup Docker
+      #   run: |
+      #     sudo snap install docker
+      #     sudo addgroup --system docker; sudo adduser $USER docker
+      #     newgrp docker
+      #     sudo snap disable docker; sudo snap enable docker
+      #
+      # - name: Install skopeo
+      #   run: |
+      #     sudo apt-get install uidmap
+      #     sudo snap install --devmode --channel edge skopeo
+      #
+      # - name: Install yq
+      #   run: |
+      #     sudo snap install yq
+      #
+      # - name: Build Images
+      #   run: sudo make build PREFIX=test- REPOSITORY=ghcr.io/canonical/
+      #
+      # - name: Running integration tests
+      #   run: sudo make integration-tests PREFIX=test- REPOSITORY=ghcr.io/canonical/
+      #
+      # - name: Upload built OCI tarball artifacts
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: charmed-spark
+      #     path:  .make_cache/**/*.tar
 

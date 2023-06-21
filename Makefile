@@ -72,6 +72,8 @@ $(K8S_TAG):
 	sg microk8s ./tests/integration/config-microk8s.sh
 	@touch $(K8S_TAG)
 
+microk8s: $(K8S_TAG)
+
 $(_MAKE_DIR)/%/$(VERSION).tar: $(_MAKE_DIR)/%/$(VERSION).tag
 	docker save $*:$(VERSION) > $(_MAKE_DIR)/$*/$(VERSION).tar
 
