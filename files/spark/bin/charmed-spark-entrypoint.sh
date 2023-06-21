@@ -7,7 +7,7 @@ echo "Running script with ${TYPE} flavour"
 case "${TYPE}" in
   driver|executor)
     cd /opt/spark
-    ./entrypoint.sh "$*"
+    ./entrypoint.sh $*
     ;;
   history-server)
     cd /opt/spark
