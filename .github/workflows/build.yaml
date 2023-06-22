@@ -10,10 +10,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Install tox
-        run: python3 -m pip install tox
+      - name: Install yamllint
+        run: python3 -m pip install yamllint
       - name: YAML Lint
-        run: tox -e lint
+        run:  |
+          yamllint -d "{extends: relaxed, rules: {line-length: {max: 200}}}" \
+            --no-warnings rockcraft.yaml
 
   build:
     runs-on: ubuntu-latest
@@ -23,11 +25,32 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Build ROCK
-        uses: canonical/craft-actions/rockcraft-pack@main
-        id: rockcraft
-      - name: Upload locally built ROCK artifact
+
+      - name: Setup LXD
+        uses: canonical/setup-lxd@main
+
+      - name: Install dependencies
+        run: |
+          sudo snap install docker
+          sudo addgroup --system docker; sudo adduser $USER docker
+          newgrp docker
+          sudo snap disable docker; sudo snap enable docker
+
+          sudo snap install yq
+          sudo snap install rockcraft --classic --edge    
+          sudo snap install --devmode --channel edge skopeo
+
+      - name: Build image
+        run: sudo make build
+
+      - name: Get Artifact Name
+        id: artifact
+        run: |
+          ARTIFACT=$(make help | grep 'Artifact: ')
+          echo "name=${ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+
+      - name: Upload locally built artifact
         uses: actions/upload-artifact@v3
         with:
           name: charmed-spark
-          path: ${{ steps.rockcraft.outputs.rock }}
+          path:  ${{ steps.artifact.outputs.name }}
