@@ -1,24 +1,20 @@
 #!/bin/bash
 
-TYPE=$1
+FLAVOUR=$1
 
-echo "Running script with ${TYPE} flavour"
+echo "Running script with ${FLAVOUR} flavour"
 
-case "${TYPE}" in
+case "${FLAVOUR}" in
   driver|executor)
-    cd /opt/spark
-    ./entrypoint.sh $*
-    ;;
-  history-server)
-    cd /opt/spark
-    ./sbin/start-history-server.sh --properties-file ${SPARK_PROPERTIES_FILE}
+    pushd /opt/spark
+    ./entrypoint.sh "$@"
     ;;
   "")
-    # Infinite loop to allow pebble to be running indefinitely
-    while true; do sleep 5; done
+    # Infinite sleep to allow pebble to be running indefinitely
+    sleep inf
     ;;
   *)
-    echo "Component \"${TYPE}\" unknown"
+    echo "Component \"${FLAVOUR}\" unknown"
     exit 1
     ;;
 esac

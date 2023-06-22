@@ -101,7 +101,7 @@ setup_test_pod() {
         break
     elif [ "${i}" -le "5" ]
     then
-        echo "Waiting the pod to come online..."
+        echo "Waiting for the pod to come online..."
         sleep 5
     else
         echo "testpod did not come up. Test Failed!"
