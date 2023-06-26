@@ -1,8 +1,7 @@
 on:
   push:
     branches:
-      - '3.4-22.04/edge'
-      - '3.4-22.04'
+      - '3.4-22.04/*'
 
 jobs:
   publish:
