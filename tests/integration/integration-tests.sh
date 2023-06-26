@@ -67,13 +67,13 @@ cleanup_user() {
 
   EXISTS=$(echo -e "$OUTPUT" | grep "$NAMESPACE:$USERNAME" | wc -l)
 
-  if [ "$EXISTS" != "0" ]; then
+  if [ "${EXISTS}" -ne "0" ]; then
       exit 2
   fi
 
   kubectl delete namespace ${NAMESPACE}
 
-  if [ "${EXIT_CODE}" != "0" ]; then
+  if [ "${EXIT_CODE}" -ne "0" ]; then
       exit 1
   fi
 }
@@ -91,6 +91,7 @@ cleanup_user_failure() {
 setup_test_pod() {
   kubectl apply -f ./tests/integration/resources/testpod.yaml
 
+  SLEEP_TIME=1
   for i in {1..5}
   do
     pod_status=$(kubectl get pod testpod | awk '{ print $3 }' | tail -n 1)
@@ -102,11 +103,12 @@ setup_test_pod() {
     elif [ "${i}" -le "5" ]
     then
         echo "Waiting for the pod to come online..."
-        sleep 5
+        sleep $SLEEP_TIME
     else
         echo "testpod did not come up. Test Failed!"
         exit 3
     fi
+    SLEEP_TIME=$(expr $SLEEP_TIME \* 2);
   done
 
   MY_KUBE_CONFIG=$(cat /home/${USER}/.kube/config)
