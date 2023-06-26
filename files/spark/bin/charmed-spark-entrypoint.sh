@@ -1,9 +1,20 @@
 #!/bin/bash
 
-# This script still exists because passing of working directory to services has not yet landed
-# in Pebble (https://github.com/canonical/pebble/issues/158) and being in the write directory
-# is important for the entrypoint script
+FLAVOUR=$1
 
-cd /opt/spark
+echo "Running script with ${FLAVOUR} flavour"
 
-./entrypoint.sh $*
+case "${FLAVOUR}" in
+  driver|executor)
+    pushd /opt/spark
+    ./entrypoint.sh "$@"
+    ;;
+  "")
+    # Infinite sleep to allow pebble to be running indefinitely
+    sleep inf
+    ;;
+  *)
+    echo "Component \"${FLAVOUR}\" unknown"
+    exit 1
+    ;;
+esac
