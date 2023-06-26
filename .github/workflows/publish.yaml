@@ -3,23 +3,42 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-      uses: ./.github/workflows/build.yaml
+  release_checks:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Extract branch metadata
+      shell: bash
+      run: |
+        BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
+        echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+        echo "risk=${BRANCH##*\/}" >> $GITHUB_OUTPUT
+        echo "track=${BRANCH%*\/*}" >> $GITHUB_OUTPUT
+      id: branch_metadata
+    - name: Check consistency between metadata and release branch
+      run: |
+        RAW_VERSION=$(yq '(.version|split("-"))[0]' rockcraft.yaml)
+        MAJOR_MINOR_VERSION=$(echo $RAW_VERSION | sed -n "s/\(^[0-9]*\.[0-9]*\).*/\1/p")
+        BASE=$(yq '(.base|split(":"))[1]' rockcraft.yaml)
+        if [ "${MAJOR_MINOR_VERSION}-${BASE}" != "${{ steps.branch_metadata.outputs.track }}" ]; then exit 1; fi
+      continue-on-error: false
+
+    outputs:
+      branch: ${{ steps.branch_metadata.outputs.branch }}
+      track: ${{ steps.branch_metadata.outputs.track }}
+      risk: ${{ steps.branch_metadata.outputs.risk }}
+
+  tests:
+      uses: ./.github/workflows/integration.yaml
+
   publish:
-    needs: build
+    needs: [tests, release_checks]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Extract branch metadata
-        shell: bash
-        run: |
-          BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
-          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
-          echo "risk=${BRANCH##*\/}" >> $GITHUB_OUTPUT
-          echo "track=${BRANCH%*\/*}" >> $GITHUB_OUTPUT
-        id: branch_metadata
 
       - name: Install dependencies
         run: |
@@ -29,13 +48,6 @@ jobs:
           sudo snap disable docker; sudo snap enable docker
           
           sudo snap install yq
-
-      - name: Check consistency between metadata and release branch
-        run: |
-          version=$(yq '(.version|split("-"))[0]' rockcraft.yaml)
-          base=$(yq '(.base|split(":"))[1]' rockcraft.yaml)
-          if [ "${version}-${base}" != "${{ steps.branch_metadata.outputs.track }}" ]; then exit 1; fi
-        continue-on-error: false
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -63,15 +75,15 @@ jobs:
           rmdir charmed-spark
           
           REPOSITORY="ghcr.io/canonical/"
+          RISK=${{ needs.release_checks.outputs.risk }}
+          TRACK=${{ needs.release_checks.outputs.track }}
+          if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
           
           # Import artifact into docker with new tag
-          sudo make import TARGET=docker REPOSITORY=${REPOSITORY} \
+          sudo make import TARGET=docker REPOSITORY=${REPOSITORY} TAG=${TAG}\
             -o ${{ steps.artifact.outputs.name }} 
 
-          RISK=${{ steps.branch_metadata.outputs.risk }}
-          TRACK=${{ steps.branch_metadata.outputs.track }}
-          if [ ! -z "$RISK" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
           IMAGE_NAME="${REPOSITORY}charmed-spark"
-          echo "Publishing ${IMAGE_NAME}:${TAG}"
           
+          echo "Publishing ${IMAGE_NAME}:${TAG}"          
           docker push ${IMAGE_NAME}:${TAG}

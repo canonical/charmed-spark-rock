@@ -28,15 +28,17 @@ K8S_TAG := $(_MAKE_DIR)/.k8s_tag
 IMAGE_NAME := $(shell yq .name rockcraft.yaml)
 VERSION := $(shell yq .version rockcraft.yaml)
 
+TAG := $(VERSION)
+
 BASE_NAME=$(IMAGE_NAME)_$(VERSION)_$(PLATFORM).tar
 
 _ROCK_OCI=$(IMAGE_NAME)_$(VERSION)_$(PLATFORM).rock
 
 _TMP_OCI_NAME := stage-$(IMAGE_NAME)
-_TMP_OCI_TAG := $(_MAKE_DIR)/$(_TMP_OCI_NAME)/$(VERSION).tag
+_TMP_OCI_TAG := $(_MAKE_DIR)/$(_TMP_OCI_NAME)/$(TAG).tag
 
 CHARMED_OCI_FULL_NAME=$(REPOSITORY)$(PREFIX)$(IMAGE_NAME)
-CHARMED_OCI_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(VERSION).tag
+CHARMED_OCI_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tag
 
 help:
 	@echo "---------------HELP-----------------"
@@ -63,12 +65,12 @@ $(_TMP_OCI_TAG): $(_ROCK_OCI)
 	skopeo --insecure-policy \
           copy \
           oci-archive:"$(_ROCK_OCI)" \
-          docker-daemon:"$(_TMP_OCI_NAME):$(VERSION)"
+          docker-daemon:"$(_TMP_OCI_NAME):$(TAG)"
 	if [ ! -d "$(_MAKE_DIR)/$(_TMP_OCI_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(_TMP_OCI_NAME)"; fi
 	touch $(_TMP_OCI_TAG)
 
 $(CHARMED_OCI_TAG): $(_TMP_OCI_TAG)
-	docker build - -t "$(CHARMED_OCI_FULL_NAME):$(VERSION)" --build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(VERSION)" < Dockerfile
+	docker build - -t "$(CHARMED_OCI_FULL_NAME):$(TAG)" --build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(TAG)" < Dockerfile
 	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)"; fi
 	touch $(CHARMED_OCI_TAG)
 
@@ -80,28 +82,28 @@ $(K8S_TAG):
 
 microk8s: $(K8S_TAG)
 
-$(_MAKE_DIR)/%/$(VERSION).tar: $(_MAKE_DIR)/%/$(VERSION).tag
-	docker save $*:$(VERSION) > $(_MAKE_DIR)/$*/$(VERSION).tar
+$(_MAKE_DIR)/%/$(TAG).tar: $(_MAKE_DIR)/%/$(TAG).tag
+	docker save $*:$(TAG) > $(_MAKE_DIR)/$*/$(TAG).tar
 
-$(BASE_NAME): $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(VERSION).tar
+$(BASE_NAME): $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tar
 	@echo "=== Creating $(BASE_NAME) OCI archive ==="
-	cp $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(VERSION).tar $(BASE_NAME)
+	cp $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tar $(BASE_NAME)
 
 build: $(BASE_NAME)
 
 ifeq ($(TARGET), docker)
 import: build
-	@echo "=== Importing image $(CHARMED_OCI_FULL_NAME):$(VERSION) into docker ==="
+	@echo "=== Importing image $(CHARMED_OCI_FULL_NAME):$(TAG) into docker ==="
 	$(eval IMAGE := $(shell docker load -i $(BASE_NAME)))
-	docker tag $(lastword $(IMAGE)) $(CHARMED_OCI_FULL_NAME):$(VERSION)
+	docker tag $(lastword $(IMAGE)) $(CHARMED_OCI_FULL_NAME):$(TAG)
 	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)"; fi
 	touch $(CHARMED_OCI_TAG)
 endif
 
 ifeq ($(TARGET), microk8s)
 import: $(K8S_TAG) build
-	@echo "=== Importing image $(CHARMED_OCI_FULL_NAME):$(VERSION) into Microk8s container registry ==="
-	microk8s ctr images import --base-name $(CHARMED_OCI_FULL_NAME):$(VERSION) $(BASE_NAME)
+	@echo "=== Importing image $(CHARMED_OCI_FULL_NAME):$(TAG) into Microk8s container registry ==="
+	microk8s ctr images import --base-name $(CHARMED_OCI_FULL_NAME):$(TAG) $(BASE_NAME)
 endif
 
 tests:
