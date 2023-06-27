@@ -17,11 +17,20 @@ jobs:
         echo "risk=${BRANCH##*\/}" >> $GITHUB_OUTPUT
         echo "track=${BRANCH%*\/*}" >> $GITHUB_OUTPUT
       id: branch_metadata
+
+    - name: Extract ROCK metadata
+      shell: bash
+      run: |
+        VERSION=$(yq '(.version|split("-"))[0]' rockcraft.yaml)
+        BASE=$(yq '(.base|split(":"))[1]' rockcraft.yaml)
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "base=${BASE}" >> $GITHUB_OUTPUT
+      id: rock_metadata
+
     - name: Check consistency between metadata and release branch
       run: |
-        RAW_VERSION=$(yq '(.version|split("-"))[0]' rockcraft.yaml)
-        MAJOR_MINOR_VERSION=$(echo $RAW_VERSION | sed -n "s/\(^[0-9]*\.[0-9]*\).*/\1/p")
-        BASE=$(yq '(.base|split(":"))[1]' rockcraft.yaml)
+        MAJOR_MINOR_VERSION=$(echo ${{ steps.rock_metadata.outputs.version }} | sed -n "s/\(^[0-9]*\.[0-9]*\).*/\1/p")
+        BASE=${{ steps.rock_metadata.outputs.base }}
         if [ "${MAJOR_MINOR_VERSION}-${BASE}" != "${{ steps.branch_metadata.outputs.track }}" ]; then exit 1; fi
       continue-on-error: false
 
@@ -29,6 +38,8 @@ jobs:
       branch: ${{ steps.branch_metadata.outputs.branch }}
       track: ${{ steps.branch_metadata.outputs.track }}
       risk: ${{ steps.branch_metadata.outputs.risk }}
+      base: ${{ steps.rock_metadata.outputs.base }}
+      version: ${{ steps.rock_metadata.outputs.version }}
 
   tests:
       uses: ./.github/workflows/integration.yaml
@@ -68,7 +79,7 @@ jobs:
           name: charmed-spark
           path: charmed-spark
 
-      - name: Import and push to GHCR
+      - name: Publish Image to Channel
         run: |
           # Unpack artifact
           mv charmed-spark/${{ steps.artifact.outputs.name }} .
@@ -87,3 +98,13 @@ jobs:
           
           echo "Publishing ${IMAGE_NAME}:${TAG}"          
           docker push ${IMAGE_NAME}:${TAG}
+          
+          if [[ "$RISK" == "edge" ]]; then           
+            TAG="${{ needs.release_checks.outputs.version }}-${{ needs.release_checks.outputs.base }}_edge"
+            
+            sudo make import TARGET=docker REPOSITORY=${REPOSITORY} TAG=${TAG}\
+              -o ${{ steps.artifact.outputs.name }} 
+            
+            echo "Publishing ${IMAGE_NAME}:${TAG}"          
+            docker push ${IMAGE_NAME}:${TAG}
+          fi
