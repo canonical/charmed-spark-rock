@@ -79,7 +79,7 @@ parts:
 
   hadoop:
     plugin: nil
-    after: [spark]
+    after: [ spark ]
     build-packages:
       - wget
     overlay-script: |
@@ -108,7 +108,7 @@ parts:
 
   spark8t:
     plugin: nil
-    after: [hadoop]
+    after: [ hadoop ]
     build-packages:
       - wget
       - ssl-cert
@@ -144,7 +144,7 @@ parts:
 
   charmed-spark:
     plugin: dump
-    after: [spark8t, spark]
+    after: [ spark8t, spark ]
     source: files/spark
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
@@ -165,7 +165,7 @@ parts:
 
   user-setup:
     plugin: nil
-    after: [charmed-spark]
+    after: [ charmed-spark ]
     overlay-packages:
       - tini
       - libc6
@@ -181,7 +181,7 @@ parts:
       SPARK_UID=584792
 
       craftctl default
-      
+
       chown -R ${SPARK_GID}:${SPARK_UID} etc
       chmod -R 770 etc
 
@@ -191,7 +191,7 @@ parts:
       mkdir -p home/spark
       chown -R ${SPARK_GID}:${SPARK_UID} home/spark
       chmod -R 770 home/spark
-      
+
       mkdir -p var/log/spark
       chown -R ${SPARK_GID}:${SPARK_UID} var/log/spark
       chmod -R 770 var/log/spark
