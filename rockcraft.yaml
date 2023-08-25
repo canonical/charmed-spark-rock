@@ -86,8 +86,8 @@ parts:
     build-packages:
       - wget
     overlay-script: |
-      AWS_JAVA_SDK_BUNDLE_VERSION='1.11.874'
-      HADOOP_AWS_VERSION='3.2.2'
+      AWS_JAVA_SDK_BUNDLE_VERSION='1.12.537'
+      HADOOP_AWS_VERSION='3.3.4'
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
       cd $CRAFT_PART_INSTALL/opt/spark/jars
       wget -q "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/${AWS_JAVA_SDK_BUNDLE_VERSION}/aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar"
