@@ -19,6 +19,7 @@ environment:
   HOME: /home/spark
   KUBECONFIG: /home/spark/.kube/config
   SPARK_USER_DATA: /home/spark
+  SPARK_LOG_DIR: /var/log/spark
 
 services:
   entrypoint:
@@ -29,12 +30,13 @@ services:
     on-success: shutdown
     on-failure: shutdown
   history-server:
-    command: "/bin/bash /opt/pebble/charmed-spark-entrypoint.sh history-server"
+    command: "/bin/bash /opt/pebble/charmed-spark-history-server.sh"
     summary: "This is the Spark History Server service"
     override: replace
     startup: disabled
+    working-dir: /opt/spark
     environment:
-      SPARK_PROPERTIES_FILE: /etc/spark/conf/spark-defaults.conf
+      SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
 
 parts:
   spark:
@@ -147,6 +149,7 @@ parts:
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
       bin/charmed-spark-entrypoint.sh: opt/pebble/charmed-spark-entrypoint.sh
+      bin/charmed-spark-history-server.sh: opt/pebble/charmed-spark-history-server.sh
       bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
       bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
       bin/spark-client.spark-shell: opt/spark-client/python/bin/spark-client.spark-shell
@@ -154,6 +157,7 @@ parts:
     stage:
       - etc/spark8t/conf/
       - opt/pebble/charmed-spark-entrypoint.sh
+      - opt/pebble/charmed-spark-history-server.sh
       - opt/spark-client/python/bin/spark-client.pyspark
       - opt/spark-client/python/bin/spark-client.service-account-registry
       - opt/spark-client/python/bin/spark-client.spark-shell
@@ -171,29 +175,24 @@ parts:
       - procps
       - openjdk-11-jre-headless
       - python3-setuptools
-    overlay-script: |
-      SPARK_GID=185
-      SPARK_UID=185
 
-      # Create a user in the $CRAFT_OVERLAY chroot
-      groupadd -R $CRAFT_OVERLAY -g ${SPARK_GID} spark
-      useradd -R $CRAFT_OVERLAY -m -r -g spark -u ${SPARK_UID} spark
     override-prime: |
-      SPARK_GID=185
-      SPARK_UID=185
+      SPARK_GID=584792
+      SPARK_UID=584792
 
       craftctl default
-      chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
-      chmod -R 770 opt/spark
+      
+      chown -R ${SPARK_GID}:${SPARK_UID} etc
+      chmod -R 770 etc
 
-      chown ${SPARK_GID}:${SPARK_UID} opt/spark/entrypoint.sh
-      chmod 770 opt/spark/entrypoint.sh
+      chown -R ${SPARK_GID}:${SPARK_UID} var
+      chmod -R 770 var
 
-      chown ${SPARK_GID}:${SPARK_UID} opt/spark/decom.sh
-      chmod 770 opt/spark/decom.sh
-
+      mkdir -p home/spark
       chown -R ${SPARK_GID}:${SPARK_UID} home/spark
       chmod -R 770 home/spark
+      
+      mkdir -p var/log/spark
+      chown -R ${SPARK_GID}:${SPARK_UID} var/log/spark
+      chmod -R 770 var/log/spark
 
-      chown -R ${SPARK_GID}:${SPARK_UID} opt/spark-client
-      chmod -R 770 opt/spark-client
