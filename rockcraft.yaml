@@ -181,6 +181,8 @@ parts:
       SPARK_UID=584792
 
       craftctl default
+    
+      chmod 755 opt/spark-client/python/bin/*
 
       chown -R ${SPARK_GID}:${SPARK_UID} etc
       chmod -R 770 etc
