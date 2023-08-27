@@ -189,6 +189,10 @@ parts:
       chown -R ${SPARK_GID}:${SPARK_UID} var
       chmod -R 770 var
 
+      # This is needed to run the spark job, as it requires RW+ access on the spark folder
+      chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
+      chmod -R 770 var
+
       mkdir -p home/spark
       chown -R ${SPARK_GID}:${SPARK_UID} home/spark
       chmod -R 770 home/spark
