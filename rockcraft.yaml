@@ -34,7 +34,8 @@ services:
     summary: "This is the Spark History Server service"
     override: replace
     startup: disabled
-    working-dir: /opt/spark
+    # Not working in charms
+    # working-dir: /opt/spark
     environment:
       SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
 
