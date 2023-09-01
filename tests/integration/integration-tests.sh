@@ -116,7 +116,7 @@ setup_test_pod() {
   kubectl exec testpod -- /bin/bash -c 'mkdir -p ~/.kube'
   kubectl exec testpod -- env KCONFIG="$MY_KUBE_CONFIG" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
   kubectl exec testpod -- /bin/bash -c 'cat ~/.kube/config'
-  kubectl exec testpod -- /bin/bash -c 'cp -r /opt/spark/python /home/spark/'
+  kubectl exec testpod -- /bin/bash -c 'cp -r /opt/spark/python /var/lib/spark/'
 }
 
 teardown_test_pod() {
