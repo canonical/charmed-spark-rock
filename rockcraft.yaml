@@ -42,8 +42,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://downloads.apache.org/spark/spark-3.4.1/spark-3.4.1-bin-hadoop3.tgz
-    source-checksum: sha512/5a21295b4c3d1d3f8fc85375c711c7c23e3eeb3ec9ea91778f149d8d321e3905e2f44cf19c69a28df693cffd536f7316706c78932e7e148d224424150f18b2c5
+    source: https://github.com/welpaolo/test-actions/releases/download/spark-3.4.1/spark-3.4.1-bin-ubuntu1-20230831140746.tgz
+    source-checksum: sha512/dfd6b0c4f00abc800ab301773b577828f5121ac283446c2d355c1c29dc3db1b0122aea94fce8399cd284b9f35522cec11dc643fee27ebf878937e965632f1931
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
