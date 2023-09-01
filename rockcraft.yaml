@@ -16,9 +16,9 @@ environment:
   JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
   PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3/dist-packages
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
-  HOME: /var/spark
+  HOME: /var/lib/spark
   KUBECONFIG: /home/spark/.kube/config
-  SPARK_USER_DATA: /var/spark
+  SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
 
 services:
@@ -197,6 +197,6 @@ parts:
       chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
       chmod -R 750 opt/spark
 
-      mkdir -p var/spark
-      chown -R ${SPARK_GID}:${SPARK_UID} var/spark
-      chmod -R 770 var/spark
+      mkdir -p var/lib/spark
+      chown -R ${SPARK_GID}:${SPARK_UID} var/lib/spark
+      chmod -R 770 var/lib/spark
