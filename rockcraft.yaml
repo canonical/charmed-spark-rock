@@ -178,7 +178,6 @@ parts:
       - python3-setuptools
 
     override-prime: |
-      
       # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
       # for more information about shared user.
       SPARK_GID=584792
