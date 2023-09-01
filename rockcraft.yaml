@@ -16,9 +16,9 @@ environment:
   JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
   PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3/dist-packages
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
-  HOME: /home/spark
+  HOME: /var/spark
   KUBECONFIG: /home/spark/.kube/config
-  SPARK_USER_DATA: /home/spark
+  SPARK_USER_DATA: /var/spark
   SPARK_LOG_DIR: /var/log/spark
 
 services:
@@ -178,27 +178,26 @@ parts:
       - python3-setuptools
 
     override-prime: |
+      
+      # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
+      # for more information about shared user.
       SPARK_GID=584792
       SPARK_UID=584792
 
       craftctl default
       chmod 755 opt/spark-client/python/bin/*
 
-      chown -R ${SPARK_GID}:${SPARK_UID} etc
-      chmod -R 770 etc
-
-      chown -R ${SPARK_GID}:${SPARK_UID} var
-      chmod -R 770 var
-
-      # This is needed to run the spark job, as it requires RW+ access on the spark folder
-      chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
-      chmod -R 770 var
-
-      mkdir -p home/spark
-      chown -R ${SPARK_GID}:${SPARK_UID} home/spark
-      chmod -R 770 home/spark
+      chown -R ${SPARK_GID}:${SPARK_UID} etc/spark etc/spark8t
+      chmod -R 750 etc/spark etc/spark8t
 
       mkdir -p var/log/spark
       chown -R ${SPARK_GID}:${SPARK_UID} var/log/spark
-      chmod -R 770 var/log/spark
+      chmod -R 750 var/log/spark
 
+      # This is needed to run the spark job, as it requires RW+ access on the spark folder
+      chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
+      chmod -R 750 opt/spark
+
+      mkdir -p var/spark
+      chown -R ${SPARK_GID}:${SPARK_UID} var/spark
+      chmod -R 770 var/spark
