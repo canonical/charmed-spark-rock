@@ -17,7 +17,7 @@ environment:
   PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3/dist-packages
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
   HOME: /var/lib/spark
-  KUBECONFIG: /var/lib/.kube/config
+  KUBECONFIG: /var/lib/spark/.kube/config
   SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
 
