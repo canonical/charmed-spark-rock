@@ -8,38 +8,36 @@ base: ubuntu:22.04
 platforms:
   amd64:
 
+run_user: _daemon_
+
+environment:
+  SPARK_HOME: /opt/spark
+  SPARK_CONFS: /etc/spark8t/conf
+  JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+  PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3/dist-packages
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
+  HOME: /var/lib/spark
+  KUBECONFIG: /var/lib/spark/.kube/config
+  SPARK_USER_DATA: /var/lib/spark
+  SPARK_LOG_DIR: /var/log/spark
+
 services:
   entrypoint:
     command: "/bin/bash /opt/pebble/charmed-spark-entrypoint.sh"
     summary: "This is the service to startup Spark processes using the Spark entrypoint"
     override: replace
     startup: enabled
-    environment:
-      SPARK_HOME: /opt/spark
-      SPARK_CONFS: /etc/spark8t/conf
-      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
-      PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3/dist-packages
-      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
-      HOME: /home/spark
-      KUBECONFIG: /home/spark/.kube/config
-      SPARK_USER_DATA: /home/spark
     on-success: shutdown
     on-failure: shutdown
   history-server:
-    command: "/bin/bash /opt/pebble/charmed-spark-entrypoint.sh history-server"
+    command: "/bin/bash /opt/pebble/charmed-spark-history-server.sh"
     summary: "This is the Spark History Server service"
     override: replace
     startup: disabled
+    # Not working in charms
+    # working-dir: /opt/spark
     environment:
-      SPARK_HOME: /opt/spark
-      SPARK_CONFS: /etc/spark8t/conf
-      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
-      PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3/dist-packages
-      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
-      HOME: /home/spark
-      KUBECONFIG: /home/spark/.kube/config
-      SPARK_USER_DATA: /home/spark
-      SPARK_PROPERTIES_FILE: /etc/spark/conf/spark-defaults.conf
+      SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
 
 parts:
   spark:
@@ -82,7 +80,7 @@ parts:
 
   hadoop:
     plugin: nil
-    after: [spark]
+    after: [ spark ]
     build-packages:
       - wget
     overlay-script: |
@@ -111,7 +109,7 @@ parts:
 
   spark8t:
     plugin: nil
-    after: [hadoop]
+    after: [ hadoop ]
     build-packages:
       - wget
       - ssl-cert
@@ -147,11 +145,12 @@ parts:
 
   charmed-spark:
     plugin: dump
-    after: [spark8t, spark]
+    after: [ spark8t, spark ]
     source: files/spark
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
       bin/charmed-spark-entrypoint.sh: opt/pebble/charmed-spark-entrypoint.sh
+      bin/charmed-spark-history-server.sh: opt/pebble/charmed-spark-history-server.sh
       bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
       bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
       bin/spark-client.spark-shell: opt/spark-client/python/bin/spark-client.spark-shell
@@ -159,6 +158,7 @@ parts:
     stage:
       - etc/spark8t/conf/
       - opt/pebble/charmed-spark-entrypoint.sh
+      - opt/pebble/charmed-spark-history-server.sh
       - opt/spark-client/python/bin/spark-client.pyspark
       - opt/spark-client/python/bin/spark-client.service-account-registry
       - opt/spark-client/python/bin/spark-client.spark-shell
@@ -166,7 +166,7 @@ parts:
 
   user-setup:
     plugin: nil
-    after: [charmed-spark]
+    after: [ charmed-spark ]
     overlay-packages:
       - tini
       - libc6
@@ -176,29 +176,27 @@ parts:
       - procps
       - openjdk-11-jre-headless
       - python3-setuptools
-    overlay-script: |
-      SPARK_GID=185
-      SPARK_UID=185
 
-      # Create a user in the $CRAFT_OVERLAY chroot
-      groupadd -R $CRAFT_OVERLAY -g ${SPARK_GID} spark
-      useradd -R $CRAFT_OVERLAY -m -r -g spark -u ${SPARK_UID} spark
     override-prime: |
-      SPARK_GID=185
-      SPARK_UID=185
+      # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
+      # for more information about shared user.
+      SPARK_GID=584792
+      SPARK_UID=584792
 
       craftctl default
+      chmod 755 opt/spark-client/python/bin/*
+
+      chown -R ${SPARK_GID}:${SPARK_UID} etc/spark etc/spark8t
+      chmod -R 750 etc/spark etc/spark8t
+
+      mkdir -p var/log/spark
+      chown -R ${SPARK_GID}:${SPARK_UID} var/log/spark
+      chmod -R 750 var/log/spark
+
+      # This is needed to run the spark job, as it requires RW+ access on the spark folder
       chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
-      chmod -R 770 opt/spark
+      chmod -R 750 opt/spark
 
-      chown ${SPARK_GID}:${SPARK_UID} opt/spark/entrypoint.sh
-      chmod 770 opt/spark/entrypoint.sh
-
-      chown ${SPARK_GID}:${SPARK_UID} opt/spark/decom.sh
-      chmod 770 opt/spark/decom.sh
-
-      chown -R ${SPARK_GID}:${SPARK_UID} home/spark
-      chmod -R 770 home/spark
-
-      chown -R ${SPARK_GID}:${SPARK_UID} opt/spark-client
-      chmod -R 770 opt/spark-client
+      mkdir -p var/lib/spark
+      chown -R ${SPARK_GID}:${SPARK_UID} var/lib/spark
+      chmod -R 770 var/lib/spark

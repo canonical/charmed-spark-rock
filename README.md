@@ -51,7 +51,7 @@ export SPARK_DRIVER_PORT=20002
 export SPARK_BLOCKMANAGER_PORT=6060
 export SPARK_UID=185
 export SPARK_GID=185
-export SPARK_USER_HOME=/home/spark
+export SPARK_USER_HOME=/var/lib/spark
 export SPARK_DRIVER_HOST=$(hostname -I | cut -d' ' -f1)
 docker run -it -p $SPARK_DRIVER_PORT:$SPARK_DRIVER_PORT -p $SPARK_BLOCKMANAGER_PORT:$SPARK_BLOCKMANAGER_PORT -u $SPARK_GID:$SPARK_UID -w $SPARK_USER_HOME --entrypoint /bin/bash ghcr.io/canonical/charmed-spark:3.4.1-22.04_edge
 ```
