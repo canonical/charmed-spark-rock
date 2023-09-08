@@ -40,7 +40,7 @@ services:
     environment:
       SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
   jupyter:
-    command: "/bin/bash /opt/pebble/charmed-spark-entrypoint.sh jupyter [ --username spark --namespace spark ]"
+    command: "spark-client.pyspark [ --username spark --namespace spark ]"
     summary: "This is the Spark-powered Jupyter service"
     override: replace
     startup: disabled

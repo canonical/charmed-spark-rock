@@ -9,13 +9,6 @@ case "${FLAVOUR}" in
     pushd /opt/spark
     ./entrypoint.sh "$@"
     ;;
-  jupyter)
-    shift
-    spark-client.pyspark "$@"
-    ;;
-  history-server)
-    /opt/pebble/charmed-spark-history-server.sh
-    ;;
   "")
     # Infinite sleep to allow pebble to be running indefinitely
     sleep inf
