@@ -38,12 +38,19 @@ services:
     # working-dir: /opt/spark
     environment:
       SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
+  thrift-server:
+    command: "/bin/bash /opt/pebble/charmed-spark-thrift-server.sh"
+    summary: "This is the Spark Thrift Server service"
+    override: replace
+    startup: disabled
+    environment:
+      SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
 
 parts:
   spark:
     plugin: dump
-    source: https://github.com/welpaolo/test-actions/releases/download/spark-3.4.1/spark-3.4.1-bin-ubuntu2-20230906081911.tgz
-    source-checksum: sha512/409b8d1a07f51e1c2c1d7f8acbcf532e113162fea41c3f2a7fe042db998cb281364ebe04c474079b3aaa6fb980018b075cbb987949f0145474a1524b310ac461
+    source: https://github.com/welpaolo/test-actions/releases/download/spark-3.4.1/spark-3.4.1-bin-ubuntu3-20230908123814.tgz
+    source-checksum: sha512/cc4fbbafd136002643122774313bd700004b4eb7893d5905462d66093350e4c241865e0e8594d6183e72533ccc48627100287a765e8cb24e5071fcdfb654e4bc
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
@@ -151,6 +158,7 @@ parts:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
       bin/charmed-spark-entrypoint.sh: opt/pebble/charmed-spark-entrypoint.sh
       bin/charmed-spark-history-server.sh: opt/pebble/charmed-spark-history-server.sh
+      bin/charmed-spark-thrift-server.sh: opt/pebble/charmed-spark-thrift-server.sh
       bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
       bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
       bin/spark-client.spark-shell: opt/spark-client/python/bin/spark-client.spark-shell
@@ -159,6 +167,7 @@ parts:
       - etc/spark8t/conf/
       - opt/pebble/charmed-spark-entrypoint.sh
       - opt/pebble/charmed-spark-history-server.sh
+      - opt/pebble/charmed-spark-thrift-server.sh
       - opt/spark-client/python/bin/spark-client.pyspark
       - opt/spark-client/python/bin/spark-client.service-account-registry
       - opt/spark-client/python/bin/spark-client.spark-shell
