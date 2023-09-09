@@ -49,7 +49,7 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/welpaolo/test-actions/releases/download/spark-3.4.1/spark-3.4.1-bin-ubuntu3-20230908123814.tgz
+    source: https://github.com/welpaolo/test-actions/releases/download/spark-3.4.1-bin-ubuntu3/spark-3.4.1-bin-ubuntu3-20230908123814.tgz
     source-checksum: sha512/cc4fbbafd136002643122774313bd700004b4eb7893d5905462d66093350e4c241865e0e8594d6183e72533ccc48627100287a765e8cb24e5071fcdfb654e4bc
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
