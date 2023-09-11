@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spark-jupyter
+spec:
+  containers:
+  - image: ghcr.io/canonical/test-charmed-spark:3.4.1
+    name: spark
+    ports:
+    - containerPort: 8888
+    command: [pebble, enter, --args, jupyter, --namespace, spark, --username, spark-test ]
