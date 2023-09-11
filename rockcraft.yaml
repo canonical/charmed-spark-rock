@@ -147,9 +147,12 @@ parts:
       - jupyter
     stage-packages:
       - python3-venv
+    organize:
+      lib: usr/lib
+      bin: usr/bin
+      share: usr/share
     stage:
-      - lib
-      - bin
+      - usr
 
   kubectl:
     plugin: nil
