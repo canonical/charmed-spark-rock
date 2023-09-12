@@ -42,8 +42,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/welpaolo/test-actions/releases/download/spark-3.4.1/spark-3.4.1-bin-ubuntu1-20230831140746.tgz
-    source-checksum: sha512/dfd6b0c4f00abc800ab301773b577828f5121ac283446c2d355c1c29dc3db1b0122aea94fce8399cd284b9f35522cec11dc643fee27ebf878937e965632f1931
+    source: https://github.com/welpaolo/test-actions/releases/download/spark-3.4.1/spark-3.4.1-bin-ubuntu2-20230906081911.tgz
+    source-checksum: sha512/409b8d1a07f51e1c2c1d7f8acbcf532e113162fea41c3f2a7fe042db998cb281364ebe04c474079b3aaa6fb980018b075cbb987949f0145474a1524b310ac461
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
@@ -175,7 +175,6 @@ parts:
       - libnss3
       - procps
       - openjdk-11-jre-headless
-      - python3-setuptools
 
     override-prime: |
       # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
