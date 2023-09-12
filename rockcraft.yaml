@@ -126,7 +126,6 @@ parts:
       - python3-pip
     overlay-script: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
-      pip install --upgrade pip setuptools
       pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist  https://github.com/canonical/spark-k8s-toolkit-py/releases/download/v0.0.1/spark8t-0.0.1-py3-none-any.whl
     
       rm usr/bin/pip*
