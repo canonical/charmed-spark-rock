@@ -44,28 +44,34 @@ spark.kubernetes.container.image=ghcr.io/canonical/charmed-spark:3.4.1-22.04_edg
 ### Using `spark8t` CLI 
 
 The `spark8t` CLI tooling interacts with the K8s API to create, manage and delete K8s resources representing the Spark service account. 
-Make sure that the kube config file is correctly loaded into the container, e.g. 
-
+Make sure that the kube config file is correctly loaded into the container, e.g.
 ```shell
-docker run -v /path/to/kube/config:/var/lib/spark/.kube/config ghcr.io/canonical/charmed-spark:3.4.1-22.04_edge
+docker run --name chamed-spark -v /path/to/kube/config:/var/lib/spark/.kube/config ghcr.io/canonical/charmed-spark:3.4.1-22.04_edge
 ```
 
 Note that this will start the image and a long-living service, allowing you to exec commands:
-
 ```shell
-docker exec 
+docker exec charmed-spark spark-client.service-account-registry list
 ```
 
 If you prefer to run one-shot commands, without having the Charmed Spark image running, use `\; exec` prefix, e.g.
-```
+```shell
 docker run -v ... ghcr.io/canonical/charmed-spark:3.4.1-22.04_edge \; exec spark-client.service-account-registry list
 ```
 
-For more information about spark-client API and `spark8t` tooling, please refer to [here]().
+For more information about spark-client API and `spark8t` tooling, please refer to [here](https://discourse.charmhub.io/t/spark-client-snap-how-to-manage-spark-accounts/8959).
 
 ### Starting Pebble services
 
+Charmed Spark Rock Image is delivered with Pebble already included in order to manage services. If you want to start a service, use the `\; start <service-name>` prefix, e.g. 
 
+```shell
+docker run ghcr.io/canonical/charmed-spark:3.4.1-22.04_edge \; start history-server
+```
+
+## Developers and Contributing
+
+Please see the [CONTRIBUTING.md](https://github.com/canonical/mongodb-operator/blob/main/CONTRIBUTING.md) for guidelines and for developer guidance.
 
 ## Bugs and feature request
 
@@ -77,9 +83,9 @@ If you find a bug in this ROCK or want to request a specific feature, here are t
 
 ## Licence statement
 
-The Charmed MongoDB Operator is free software, distributed under the [Apache Software License, version 2.0](https://github.com/canonical/mongodb-operator/blob/main/LICENSE). It instals and operates Percona Server for MongoDB, which is licensed under the Server Side Public License (SSPL) version 1.
+Charmed Spark is free software, distributed under the [Apache Software License, version 2.0](https://github.com/canonical/mongodb-operator/blob/main/LICENSE). It instals and operates Percona Server for MongoDB, which is licensed under the Server Side Public License (SSPL) version 1.
 
 ## Trademark Notice
 
-"MongoDB" is a trademark or registered trademark of MongoDB, Inc. Other trademarks are property of their respective owners. Charmed MongoDB is not sponsored, endorsed, or affiliated with MongoDB, Inc.
+"Apache Spark" is a trademark or registered trademark of ??? NOTE TO US: SHOULD WE HAVE THIS?
 
