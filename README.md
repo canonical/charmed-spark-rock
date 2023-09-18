@@ -1,4 +1,4 @@
-## Introduction to Charmed MongoDB ROCK  (OCI Image)
+## Introduction to Charmed Spark ROCK  (OCI Image)
 
 Charmed Spark is a set of Canonical supported artifacts (including charms, ROCK OCI images and SNAPs) that makes operating Spark workloads on Kubernetes seamless, secure and production-ready. 
 
@@ -21,13 +21,13 @@ The Charmed Spark Rock comes with some build-in tooling embedded:
 
 ROCKs will be named as `<version>-<series>_<risk>`.
 
-`<version>` is the software version; `<series>` is the Ubuntu LTS series that ROCKs supports; and the <risk> is the type of release, if it is edge, candidate or stable. Example versioning will be 5-22.04_stable which means Charmed MongoDB is a version 5 of the software, supporting the 22.04 Ubuntu release and currently a 'stable' version of the software. See  versioning details [here](https://snapcraft.io/docs/channels).
+`<version>` is the software version; `<series>` is the Ubuntu LTS series that ROCKs supports; and the <risk> is the type of release, if it is edge, candidate or stable. Example versioning will be 3.4-22.04_stable which means Charmed Spark is a version 3.4.x of the software, supporting the 22.04 Ubuntu release and currently a 'stable' version of the software. See  versioning details [here](https://snapcraft.io/docs/channels).
 
 Channel can also be represented by combining `<version>_<risk>`
 
 ## Release
 
-Charmed MongoDB ROCK are available at
+Charmed Spark ROCK are available at
 
 https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark
 
@@ -71,7 +71,7 @@ docker run ghcr.io/canonical/charmed-spark:3.4.1-22.04_edge \; start history-ser
 
 ## Developers and Contributing
 
-Please see the [CONTRIBUTING.md](https://github.com/canonical/mongodb-operator/blob/main/CONTRIBUTING.md) for guidelines and for developer guidance.
+Please see the [CONTRIBUTING.md](https://github.com/canonical/charmed-spark-rock/blob/3.4-22.04/edge/CONTRIBUTING.md) for guidelines and for developer guidance.
 
 ## Bugs and feature request
 
@@ -83,7 +83,7 @@ If you find a bug in this ROCK or want to request a specific feature, here are t
 
 ## Licence statement
 
-Charmed Spark is free software, distributed under the [Apache Software License, version 2.0](https://github.com/canonical/mongodb-operator/blob/main/LICENSE). It instals and operates Percona Server for MongoDB, which is licensed under the Server Side Public License (SSPL) version 1.
+Charmed Spark is free software, distributed under the [Apache Software License, version 2.0](https://github.com/canonical/charmed-spark-rock/blob/3.4-22.04/edge/LICENSE). 
 
 ## Trademark Notice
 

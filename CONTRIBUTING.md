@@ -21,7 +21,14 @@ sudo snap install skopeo --edge --devmode
 sudo usermod -aG docker $USER 
 sudo lxd init --auto
 ```
-*_NOTE:_* You will need to open a new shell for the group change to take effect (i.e. `su - $USER`)
+
+In order for the group change to take effect, you can either open a new shell (i.e. `su - $USER`) or use the following
+
+```bash
+newgrp docker
+sudo snap disable docker
+sudo snap enable docker
+```
 
 ### Build Rocks
 
