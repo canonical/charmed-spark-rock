@@ -87,5 +87,4 @@ Charmed Spark is free software, distributed under the [Apache Software License, 
 
 ## Trademark Notice
 
-"Apache Spark" is a trademark or registered trademark of ??? NOTE TO US: SHOULD WE HAVE THIS?
-
+Apache®, Apache Spark, Spark®, and the Spark logo are either registered trademarks or trademarks of the Apache Software Foundation in the United States and/or other countries.
