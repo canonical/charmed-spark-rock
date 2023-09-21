@@ -10,7 +10,7 @@ Charmed Spark helps to address these usability concerns and provides a consisten
 
 ### Features 
 
-The Charmed Spark Rock comes with some build-in tooling embedded:
+The Charmed Spark Rock comes with some built-in tooling embedded:
 
 * Canonical-supported Spark binaries 
 * [`spark8t`](https://github.com/canonical/spark-k8s-toolkit-py) CLI for managing Spark service accounts
