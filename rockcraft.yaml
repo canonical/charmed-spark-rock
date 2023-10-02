@@ -126,7 +126,7 @@ parts:
       cd $CRAFT_PART_INSTALL/opt/spark/jars
       wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar"
       wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar.sha512"
-      echo "`cat spark-metrics-assembly-3.4-1.0.0.jar.sha512`  spark-metrics-assembly-3.4-1.0.0.jar" | sha512sum --check
+      echo "`cat spark-metrics-assembly-3.4-1.0.0.jar.sha512`" | sha512sum --check
       if  [[ $? -ne 0 ]]
         then
           echo "DOWNLOAD ERROR: spark-metrics-assembly-3.4-1.0.0.jar could not be downloaded properly! Exiting...." >&2
