@@ -111,19 +111,6 @@ parts:
           echo "DOWNLOAD ERROR: hadoop-aws-${HADOOP_AWS_VERSION}.jar could not be downloaded properly! Exiting...." >&2
           exit 1
       fi
-    stage:
-      - opt/spark/jars
-
-  metrics:
-    plugin: nil
-    after: [ hadoop ]
-    build-packages:
-      - wget
-    overlay-script: |
-      AWS_JAVA_SDK_BUNDLE_VERSION='1.12.540'
-      HADOOP_AWS_VERSION='3.3.6'
-      mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
-      cd $CRAFT_PART_INSTALL/opt/spark/jars
       wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar"
       wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar.sha512"
       echo "`cat spark-metrics-assembly-3.4-1.0.0.jar.sha512`" | sha512sum --check
