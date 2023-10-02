@@ -111,14 +111,14 @@ parts:
           echo "DOWNLOAD ERROR: hadoop-aws-${HADOOP_AWS_VERSION}.jar could not be downloaded properly! Exiting...." >&2
           exit 1
       fi
-      wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar"
-      wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar.sha512"
-      echo "`cat spark-metrics-assembly-3.4-1.0.0.jar.sha512`" | sha512sum --check
-      if  [[ $? -ne 0 ]]
-        then
-          echo "DOWNLOAD ERROR: spark-metrics-assembly-3.4-1.0.0.jar could not be downloaded properly! Exiting...." >&2
-          exit 1
-      fi
+      # wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar"
+      # wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar.sha512"
+      # echo "`cat spark-metrics-assembly-3.4-1.0.0.jar.sha512`" | sha512sum --check
+      # if  [[ $? -ne 0 ]]
+      #  then
+      #    echo "DOWNLOAD ERROR: spark-metrics-assembly-3.4-1.0.0.jar could not be downloaded properly! Exiting...." >&2
+      #    exit 1
+      # fi
     stage:
       - opt/spark/jars
 
