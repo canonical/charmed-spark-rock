@@ -63,11 +63,27 @@ For more information about spark-client API and `spark8t` tooling, please refer 
 
 ### Starting Pebble services
 
-Charmed Spark Rock Image is delivered with Pebble already included in order to manage services. If you want to start a service, use the `\; start <service-name>` prefix, e.g. 
+Charmed Spark Rock Image is delivered with Pebble already included in order to manage services. If you want to start a service, use the `\; start <service-name>` prefix.
+
+#### Starting History Server
 
 ```shell
 docker run ghcr.io/canonical/charmed-spark:3.4.1-22.04_edge \; start history-server
 ```
+
+#### Starting Jupyter Notebook
+
+```shell
+docker run \
+  -v /path/to/kube/config:/var/lib/spark/.kube/config \
+  -p <port>:8888
+  ghcr.io/canonical/charmed-spark:3.4.1-22.04_edge \
+  \; --args jupyter --username <spark-service-account> --namespace <spark-namespace> \
+  \; start jupyter
+```
+
+Make sure to have created the `<spark-service-account>` in the `<spark-namespace>` with the `spark8t` CLI beforehand.
+You should be able to access the jupyter server at `http://0.0.0.0:<port>`.
 
 ## Developers and Contributing
 

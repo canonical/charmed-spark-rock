@@ -14,7 +14,7 @@ environment:
   SPARK_HOME: /opt/spark
   SPARK_CONFS: /etc/spark8t/conf
   JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
-  PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3/dist-packages
+  PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3.10/site-packages
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
   HOME: /var/lib/spark
   KUBECONFIG: /var/lib/spark/.kube/config
@@ -45,6 +45,14 @@ services:
     startup: disabled
     environment:
       SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
+  jupyter:
+    command: "spark-client.pyspark [ --username spark --namespace spark ]"
+    summary: "This is the Spark-powered Jupyter service"
+    override: replace
+    startup: disabled
+    environment:
+      PYSPARK_DRIVER_PYTHON: jupyter
+      PYSPARK_DRIVER_PYTHON_OPTS: "lab --no-browser --port=8888 --ip=0.0.0.0 --NotebookApp.token='' --notebook-dir=/var/lib/spark/notebook"
 
 parts:
   spark:
@@ -116,7 +124,6 @@ parts:
 
   spark8t:
     plugin: nil
-    after: [ hadoop ]
     build-packages:
       - wget
       - ssl-cert
@@ -126,8 +133,23 @@ parts:
     overlay-script: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
       pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist  https://github.com/canonical/spark-k8s-toolkit-py/releases/download/v0.0.1/spark8t-0.0.1-py3-none-any.whl
+      rm usr/bin/pip*
     stage:
       - opt/spark8t/python/dist
+
+  jupyter:
+    plugin: python
+    source: .
+    python-packages:
+      - jupyterlab
+    stage-packages:
+      - python3-venv
+    organize:
+      lib: usr/lib
+      bin: usr/bin
+      share: usr/share
+    stage:
+      - usr
 
   kubectl:
     plugin: nil
@@ -206,5 +228,6 @@ parts:
       chmod -R 750 opt/spark
 
       mkdir -p var/lib/spark
+      mkdir -p var/lib/spark/notebook
       chown -R ${SPARK_GID}:${SPARK_UID} var/lib/spark
       chmod -R 770 var/lib/spark
