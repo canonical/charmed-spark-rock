@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: label-demo
+  labels:
+    a: b
+    app: charmed-spark
+spec:
+  containers:
+  - name: spark
+

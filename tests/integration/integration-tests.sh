@@ -130,8 +130,7 @@ run_example_job_in_pod() {
 
   NAMESPACE=$1
   USERNAME=$2
-
-
+  kubectl exec testpod -- /bin/bash -c 'ls /etc/spark/conf'
   kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
                   /bin/bash -c 'spark-client.spark-submit \
                   --username $UU --namespace $NN \
@@ -158,6 +157,48 @@ run_example_job_in_pod() {
 
   validate_pi_value $pi
 }
+
+run_example_job_in_pod_with_pod_templates() {
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+
+  PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+
+  NAMESPACE=$1
+  USERNAME=$2
+  kubectl exec testpod -- /bin/bash -c 'ls /etc/spark/conf'
+  kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+                  /bin/bash -c 'spark-client.spark-submit \
+                  --username $UU --namespace $NN \
+                  --conf spark.kubernetes.driver.request.cores=100m \
+                  --conf spark.kubernetes.executor.request.cores=100m \
+                  --conf spark.kubernetes.container.image=$IM \
+                  --conf spark.kubernetes.driver.podTemplateFile=/etc/spark/conf/podTemplate.yaml \
+                  --conf spark.kubernetes.executor.podTemplateFile=/etc/spark/conf/podTemplate.yaml \
+                  --class org.apache.spark.examples.SparkPi \
+                  local:///opt/spark/examples/jars/$JJ 100'
+
+  # kubectl --kubeconfig=${KUBE_CONFIG} get pods
+  DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
+
+  if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
+  then
+    echo "ERROR: Sample job has not run!"
+    exit 1
+  fi
+
+  # Check job output
+  # Sample output
+  # "Pi is roughly 3.13956232343"
+  pi=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE})
+  echo -e "Spark Pi Job Output: \n ${pi}"
+
+  # validate_pi_value $pi
+}
+
+test_example_job_in_pod_with_templates() {
+  run_example_job_in_pod_with_pod_templates tests spark
+}
+
 
 test_example_job_in_pod() {
   run_example_job_in_pod tests spark
@@ -228,10 +269,18 @@ cleanup_user_failure_in_pod() {
 
 setup_test_pod
 
+echo "TEST1"
 (setup_user_admin_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo "TEST2"
 
 (setup_user_admin_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
+echo "TEST3"
+
 (setup_user_admin_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo "TEST4"
+(setup_user_admin_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
 
 teardown_test_pod
