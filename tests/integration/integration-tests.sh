@@ -112,11 +112,13 @@ setup_test_pod() {
   done
 
   MY_KUBE_CONFIG=$(cat /home/${USER}/.kube/config)
+  TEST_POD_TEMPLATE=$(cat tests/integration/resources/podTemplate.yaml)
 
   kubectl exec testpod -- /bin/bash -c 'mkdir -p ~/.kube'
   kubectl exec testpod -- env KCONFIG="$MY_KUBE_CONFIG" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
   kubectl exec testpod -- /bin/bash -c 'cat ~/.kube/config'
   kubectl exec testpod -- /bin/bash -c 'cp -r /opt/spark/python /var/lib/spark/'
+  kubectl exec testpod -- env PTEMPLATE="$TEST_POD_TEMPLATE" /bin/bash -c 'echo "$PTEMPLATE" > /etc/spark/conf/podTemplate.yaml'
 }
 
 teardown_test_pod() {
@@ -179,20 +181,28 @@ run_example_job_in_pod_with_pod_templates() {
 
   # kubectl --kubeconfig=${KUBE_CONFIG} get pods
   DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
+  echo "DRIVER JOB: $DRIVER_JOB"
 
   if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
   then
     echo "ERROR: Sample job has not run!"
     exit 1
   fi
+  DRIVER_JOB_LABEL=$(kubectl get pods -n ${NAMESPACE} -lproduct=charmed-spark | grep driver | tail -n 1 | cut -d' ' -f1)
+  echo "DRIVER JOB_LABEL: $DRIVER_JOB_LABEL"
+  if [[ "${DRIVER_JOB}" != "${DRIVER_JOB_LABEL}" ]]
+  then
+    echo "ERROR: Label not present... Error in the application of the template!"
+    exit 1
+  fi
 
   # Check job output
   # Sample output
   # "Pi is roughly 3.13956232343"
-  pi=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE})
+  pi=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE} | grep 'Pi is roughly' | rev | cut -d' ' -f1 | rev | cut -c 1-3)
   echo -e "Spark Pi Job Output: \n ${pi}"
 
-  # validate_pi_value $pi
+  validate_pi_value $pi
 }
 
 test_example_job_in_pod_with_templates() {
@@ -266,21 +276,42 @@ cleanup_user_failure_in_pod() {
   cleanup_user_failure
 }
 
+echo -e "##################################"
+echo -e "SETUP TEST POD"
+echo -e "##################################"
 
 setup_test_pod
 
-echo "TEST1"
+echo -e "##################################"
+echo -e "RUN EXAMPLE JOB"
+echo -e "##################################"
+
 (setup_user_admin_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo "TEST2"
+echo -e "##################################"
+echo -e "RUN SPARK SHELL IN POD"
+echo -e "##################################"
 
 (setup_user_admin_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo "TEST3"
+echo -e "##################################"
+echo -e "RUN PYSPARK IN POD"
+echo -e "##################################"
 
 (setup_user_admin_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo "TEST4"
+echo -e "##################################"
+echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
+echo -e "##################################"
+
 (setup_user_admin_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
 
+echo -e "##################################"
+echo -e "TEARDOWN TEST POD"
+echo -e "##################################"
+
 teardown_test_pod
+
+echo -e "##################################"
+echo -e "END OF THE TEST"
+echo -e "##################################"

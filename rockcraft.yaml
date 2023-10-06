@@ -186,7 +186,6 @@ parts:
     source: files/spark
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
-      conf/podTemplate.yaml: etc/spark/conf/podTemplate.yaml
       bin/charmed-spark-entrypoint.sh: opt/pebble/charmed-spark-entrypoint.sh
       bin/charmed-spark-history-server.sh: opt/pebble/charmed-spark-history-server.sh
       bin/charmed-spark-thrift-server.sh: opt/pebble/charmed-spark-thrift-server.sh
@@ -196,7 +195,6 @@ parts:
       bin/spark-client.spark-submit: opt/spark-client/python/bin/spark-client.spark-submit
     stage:
       - etc/spark8t/conf/
-      - etc/spark/conf/podTemplate.yaml
       - opt/pebble/charmed-spark-entrypoint.sh
       - opt/pebble/charmed-spark-history-server.sh
       - opt/pebble/charmed-spark-thrift-server.sh
