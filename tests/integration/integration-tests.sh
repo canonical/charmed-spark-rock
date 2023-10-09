@@ -224,13 +224,13 @@ run_example_job_in_pod_with_metrics() {
   echo "IP: $IP_ADDRESS"
   NAMESPACE=$1
   USERNAME=$2
-  kubectl exec testpod -- env IP="$IP_ADDRESS" UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+  kubectl exec testpod -- env PORT="$SERVER_PORT" IP="$IP_ADDRESS" UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
                   /bin/bash -c 'spark-client.spark-submit \
                   --username $UU --namespace $NN \
                   --conf spark.kubernetes.driver.request.cores=100m \
                   --conf spark.kubernetes.executor.request.cores=100m \
                   --conf spark.kubernetes.container.image=$IM \
-                  --conf spark.metrics.conf.*.sink.prometheus.pushgateway-address=$IP:$SERVER_PORT \
+                  --conf spark.metrics.conf.*.sink.prometheus.pushgateway-address="$IP:$PORT" \
                   --conf spark.metrics.conf.*.sink.prometheus.class=org.apache.spark.banzaicloud.metrics.sink.PrometheusSink \
                   --class org.apache.spark.examples.SparkPi \
                   local:///opt/spark/examples/jars/$JJ 1000'
@@ -256,7 +256,6 @@ run_example_job_in_pod_with_metrics() {
   # kill http server
   kill $HTTP_SERVER_PID
   validate_metrics $LOG_FILE
-
 }
 
 
