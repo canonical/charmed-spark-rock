@@ -93,7 +93,7 @@ parts:
       - opt/spark/python
       - opt/spark/data
 
-  hadoop:
+  dependencies:
     plugin: nil
     after: [ spark ]
     build-packages:
@@ -132,6 +132,7 @@ parts:
 
   spark8t:
     plugin: nil
+    after: [ dependencies ]
     build-packages:
       - wget
       - ssl-cert

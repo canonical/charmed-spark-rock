@@ -138,7 +138,7 @@ run_example_job_in_pod() {
   PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
   USERNAME=$2
-  kubectl exec testpod -- /bin/bash -c 'ls /etc/spark/conf'
+
   kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
                   /bin/bash -c 'spark-client.spark-submit \
                   --username $UU --namespace $NN \
@@ -214,9 +214,10 @@ run_example_job_in_pod_with_pod_templates() {
 run_example_job_in_pod_with_metrics() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
   LOG_FILE="/tmp/server.log"
+  SERVER_PORT=9091
   PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
   # start simple http server
-  python3 tests/integration/resources/test_web_server.py 9091 > $LOG_FILE &
+  python3 tests/integration/resources/test_web_server.py $SERVER_PORT > $LOG_FILE &
   HTTP_SERVER_PID=$!
   # get ip address
   IP_ADDRESS=$(hostname -I | cut -d ' ' -f 1)
@@ -229,7 +230,7 @@ run_example_job_in_pod_with_metrics() {
                   --conf spark.kubernetes.driver.request.cores=100m \
                   --conf spark.kubernetes.executor.request.cores=100m \
                   --conf spark.kubernetes.container.image=$IM \
-                  --conf spark.metrics.conf.*.sink.prometheus.pushgateway-address=$IP:9091 \
+                  --conf spark.metrics.conf.*.sink.prometheus.pushgateway-address=$IP:$SERVER_PORT \
                   --conf spark.metrics.conf.*.sink.prometheus.class=org.apache.spark.banzaicloud.metrics.sink.PrometheusSink \
                   --class org.apache.spark.examples.SparkPi \
                   local:///opt/spark/examples/jars/$JJ 1000'
