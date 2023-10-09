@@ -20,6 +20,13 @@ validate_pi_value() {
   fi
 }
 
+validate_metrics() {
+  log=$1
+  if [ $(grep -Ri "spark" $log | wc -l) -lt 2 ]; then
+      exit 1
+  fi
+}
+
 test_restricted_account() {
 
   kubectl config set-context spark-context --namespace=tests --cluster=prod --user=spark
@@ -112,11 +119,13 @@ setup_test_pod() {
   done
 
   MY_KUBE_CONFIG=$(cat /home/${USER}/.kube/config)
+  TEST_POD_TEMPLATE=$(cat tests/integration/resources/podTemplate.yaml)
 
   kubectl exec testpod -- /bin/bash -c 'mkdir -p ~/.kube'
   kubectl exec testpod -- env KCONFIG="$MY_KUBE_CONFIG" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
   kubectl exec testpod -- /bin/bash -c 'cat ~/.kube/config'
   kubectl exec testpod -- /bin/bash -c 'cp -r /opt/spark/python /var/lib/spark/'
+  kubectl exec testpod -- env PTEMPLATE="$TEST_POD_TEMPLATE" /bin/bash -c 'echo "$PTEMPLATE" > /etc/spark/conf/podTemplate.yaml'
 }
 
 teardown_test_pod() {
@@ -127,10 +136,8 @@ run_example_job_in_pod() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
-
   NAMESPACE=$1
   USERNAME=$2
-
 
   kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
                   /bin/bash -c 'spark-client.spark-submit \
@@ -139,7 +146,7 @@ run_example_job_in_pod() {
                   --conf spark.kubernetes.executor.request.cores=100m \
                   --conf spark.kubernetes.container.image=$IM \
                   --class org.apache.spark.examples.SparkPi \
-                  local:///opt/spark/examples/jars/$JJ 100'
+                  local:///opt/spark/examples/jars/$JJ 1000'
 
   # kubectl --kubeconfig=${KUBE_CONFIG} get pods
   DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
@@ -159,9 +166,112 @@ run_example_job_in_pod() {
   validate_pi_value $pi
 }
 
+run_example_job_in_pod_with_pod_templates() {
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+
+  PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+
+  NAMESPACE=$1
+  USERNAME=$2
+  kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+                  /bin/bash -c 'spark-client.spark-submit \
+                  --username $UU --namespace $NN \
+                  --conf spark.kubernetes.driver.request.cores=100m \
+                  --conf spark.kubernetes.executor.request.cores=100m \
+                  --conf spark.kubernetes.container.image=$IM \
+                  --conf spark.kubernetes.driver.podTemplateFile=/etc/spark/conf/podTemplate.yaml \
+                  --conf spark.kubernetes.executor.podTemplateFile=/etc/spark/conf/podTemplate.yaml \
+                  --class org.apache.spark.examples.SparkPi \
+                  local:///opt/spark/examples/jars/$JJ 100'
+
+  # kubectl --kubeconfig=${KUBE_CONFIG} get pods
+  DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
+  echo "DRIVER JOB: $DRIVER_JOB"
+
+  if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
+  then
+    echo "ERROR: Sample job has not run!"
+    exit 1
+  fi
+  DRIVER_JOB_LABEL=$(kubectl get pods -n ${NAMESPACE} -lproduct=charmed-spark | grep driver | tail -n 1 | cut -d' ' -f1)
+  echo "DRIVER JOB_LABEL: $DRIVER_JOB_LABEL"
+  if [[ "${DRIVER_JOB}" != "${DRIVER_JOB_LABEL}" ]]
+  then
+    echo "ERROR: Label not present... Error in the application of the template!"
+    exit 1
+  fi
+
+  # Check job output
+  # Sample output
+  # "Pi is roughly 3.13956232343"
+  pi=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE} | grep 'Pi is roughly' | rev | cut -d' ' -f1 | rev | cut -c 1-3)
+  echo -e "Spark Pi Job Output: \n ${pi}"
+
+  validate_pi_value $pi
+}
+
+
+run_example_job_in_pod_with_metrics() {
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  LOG_FILE="/tmp/server.log"
+  SERVER_PORT=9091
+  PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+  # start simple http server
+  python3 tests/integration/resources/test_web_server.py $SERVER_PORT > $LOG_FILE &
+  HTTP_SERVER_PID=$!
+  # get ip address
+  IP_ADDRESS=$(hostname -I | cut -d ' ' -f 1)
+  echo "IP: $IP_ADDRESS"
+  NAMESPACE=$1
+  USERNAME=$2
+  kubectl exec testpod -- env PORT="$SERVER_PORT" IP="$IP_ADDRESS" UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+                  /bin/bash -c 'spark-client.spark-submit \
+                  --username $UU --namespace $NN \
+                  --conf spark.kubernetes.driver.request.cores=100m \
+                  --conf spark.kubernetes.executor.request.cores=100m \
+                  --conf spark.kubernetes.container.image=$IM \
+                  --conf spark.metrics.conf.*.sink.prometheus.pushgateway-address="$IP:$PORT" \
+                  --conf spark.metrics.conf.*.sink.prometheus.class=org.apache.spark.banzaicloud.metrics.sink.PrometheusSink \
+                  --class org.apache.spark.examples.SparkPi \
+                  local:///opt/spark/examples/jars/$JJ 1000'
+
+  # kubectl --kubeconfig=${KUBE_CONFIG} get pods
+  DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
+
+  if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
+  then
+    echo "ERROR: Sample job has not run!"
+    exit 1
+  fi
+
+  # Check job output
+  # Sample output
+  # "Pi is roughly 3.13956232343"
+  pi=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE} | grep 'Pi is roughly' | rev | cut -d' ' -f1 | rev | cut -c 1-3)
+  echo -e "Spark Pi Job Output: \n ${pi}"
+
+  validate_pi_value $pi
+  # check that metrics are sent and stop the http server
+  echo "Number of POST done: $(wc -l $LOG_FILE)"
+  # kill http server
+  kill $HTTP_SERVER_PID
+  validate_metrics $LOG_FILE
+}
+
+
+test_example_job_in_pod_with_templates() {
+  run_example_job_in_pod_with_pod_templates tests spark
+}
+
+
 test_example_job_in_pod() {
   run_example_job_in_pod tests spark
 }
+
+test_example_job_in_pod_with_metrics() {
+  run_example_job_in_pod_with_metrics tests spark
+}
+
 
 
 run_spark_shell_in_pod() {
@@ -225,13 +335,48 @@ cleanup_user_failure_in_pod() {
   cleanup_user_failure
 }
 
+echo -e "##################################"
+echo -e "SETUP TEST POD"
+echo -e "##################################"
 
 setup_test_pod
 
+echo -e "##################################"
+echo -e "RUN EXAMPLE JOB"
+echo -e "##################################"
+
 (setup_user_admin_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo -e "##################################"
+echo -e "RUN SPARK SHELL IN POD"
+echo -e "##################################"
 
 (setup_user_admin_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
+echo -e "##################################"
+echo -e "RUN PYSPARK IN POD"
+echo -e "##################################"
+
 (setup_user_admin_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
+echo -e "##################################"
+echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
+echo -e "##################################"
+
+(setup_user_admin_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo -e "########################################"
+echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
+echo -e "########################################"
+
+(setup_user_admin_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo -e "##################################"
+echo -e "TEARDOWN TEST POD"
+echo -e "##################################"
+
 teardown_test_pod
+
+echo -e "##################################"
+echo -e "END OF THE TEST"
+echo -e "##################################"

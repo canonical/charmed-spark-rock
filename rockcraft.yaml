@@ -57,8 +57,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.1-ubuntu0/spark-3.4.1-ubuntu0-20230914144231-bin-k8s.tgz
-    source-checksum: sha512/365cc86e1517bf790f19eec3cd29eebe77e2a766b44712cde6cfd1c2b965f54531bf58fee4a374e08580afa80ca3f7973a9dc69f7e4729e3b7684c51d194ba5d
+    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.1-ubuntu1/spark-3.4.1-ubuntu1-20231004201041-bin-k8s.tgz
+    source-checksum: sha512/c229e0e1813873868368733f73138c47c70153e0a612823971e8b6a3ed79358ac3514e552b14c5aa579e1e0feed0dfdc672ab87b1d46e944efedb45ca538d2df
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
@@ -93,7 +93,7 @@ parts:
       - opt/spark/python
       - opt/spark/data
 
-  hadoop:
+  dependencies:
     plugin: nil
     after: [ spark ]
     build-packages:
@@ -119,11 +119,20 @@ parts:
           echo "DOWNLOAD ERROR: hadoop-aws-${HADOOP_AWS_VERSION}.jar could not be downloaded properly! Exiting...." >&2
           exit 1
       fi
+      wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar"
+      wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar.sha512"
+      echo "`cat spark-metrics-assembly-3.4-1.0.0.jar.sha512`" | sha512sum --check
+      if  [[ $? -ne 0 ]]
+        then
+          echo "DOWNLOAD ERROR: spark-metrics-assembly-3.4-1.0.0.jar could not be downloaded properly! Exiting...." >&2
+          exit 1
+      fi
     stage:
       - opt/spark/jars
 
   spark8t:
     plugin: nil
+    after: [ dependencies ]
     build-packages:
       - wget
       - ssl-cert
