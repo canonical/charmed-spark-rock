@@ -365,6 +365,12 @@ echo -e "##################################"
 
 (setup_user_admin_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
 
+echo -e "########################################"
+echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
+echo -e "########################################"
+
+(setup_user_admin_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
+
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
 echo -e "##################################"
