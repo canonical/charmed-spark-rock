@@ -37,7 +37,7 @@ jobs:
           sudo snap disable docker; sudo snap enable docker
 
           sudo snap install yq
-          sudo snap install rockcraft --classic --edge    
+          sudo snap install rockcraft --classic --revision 1143
           sudo snap install --devmode --channel edge skopeo
 
       - name: Build image
