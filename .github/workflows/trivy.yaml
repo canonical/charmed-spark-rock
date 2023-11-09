@@ -1,0 +1,53 @@
+name: trivy
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+jobs:
+  build:
+    uses: ./.github/workflows/build.yaml
+  scan:
+    name: Trivy scan
+    needs: build
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install skopeo
+        run: |
+          sudo snap install --devmode --channel edge skopeo
+      - name: Get Artifact Name
+        id: artifact
+        run: |
+          ARTIFACT=$(make help | grep 'Artifact: ')
+          echo "name=${ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: charmed-spark
+          path: charmed-spark
+      - name: Import locally
+        run: |
+          # Unpack artifact
+          mv charmed-spark/${{ steps.artifact.outputs.name }} .
+          rmdir charmed-spark
+
+          # Import artifact into docker with new tag
+          sudo skopeo --insecure-policy copy \
+            oci-archive:${{ steps.artifact.outputs.name }} \
+            docker-daemon:trivy/charmed-spark:test
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'trivy/charmed-spark:test'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'MEDIUM,HIGH,CRITICAL'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
