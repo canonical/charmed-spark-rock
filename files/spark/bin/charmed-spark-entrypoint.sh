@@ -3,7 +3,7 @@
 function finish {
   if [ $? -ne 0 ]
   then
-    kill -9 1
+    kill -1 1
     sleep 1
   fi
 }
