@@ -285,7 +285,7 @@ run_example_job_with_error_in_pod() {
   fi
 
   # Check job output
-  res=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1) -n ${NAMESPACE} | grep 'Service "entrypoint" stopped unexpectedly with code 1' | wc -l)
+  res=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1) -n ${NAMESPACE} | grep 'Exception in thread' | wc -l)
   echo -e "Number of errors: \n ${res}"
   if [ "${res}" != "1" ]; then
       echo "ERROR: Error is not captured."
@@ -295,6 +295,9 @@ run_example_job_with_error_in_pod() {
   if [ "${status}" = "Completed" ]; then
       echo "ERROR: Status should not be set to Completed."
       exit 1
+  fi
+  if [ "${status}" = "Error" ]; then
+      echo "Status is correctly set to ERROR!"
   fi
 
 }
