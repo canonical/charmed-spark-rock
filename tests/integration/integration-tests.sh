@@ -259,6 +259,54 @@ run_example_job_in_pod_with_metrics() {
 }
 
 
+run_example_job_with_error_in_pod() {
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+
+  PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+  NAMESPACE=$1
+  USERNAME=$2
+
+  kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+                  /bin/bash -c 'spark-client.spark-submit \
+                  --username $UU --namespace $NN \
+                  --conf spark.kubernetes.driver.request.cores=100m \
+                  --conf spark.kubernetes.executor.request.cores=100m \
+                  --conf spark.kubernetes.container.image=$IM \
+                  --class org.apache.spark.examples.SparkPi \
+                  local:///opt/spark/examples/jars/$JJ -1'
+
+  # kubectl --kubeconfig=${KUBE_CONFIG} get pods
+  DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
+
+  if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
+  then
+    echo "ERROR: Sample job has not run!"
+    exit 1
+  fi
+
+  # Check job output
+  res=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1) -n ${NAMESPACE} | grep 'Exception in thread' | wc -l)
+  echo -e "Number of errors: \n ${res}"
+  if [ "${res}" != "1" ]; then
+      echo "ERROR: Error is not captured."
+      exit 1
+  fi
+  status=$(kubectl get pod $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1) -n ${NAMESPACE} | tail -1 | cut -d " " -f 9)
+  if [ "${status}" = "Completed" ]; then
+      echo "ERROR: Status should not be set to Completed."
+      exit 1
+  fi
+  if [ "${status}" = "Error" ]; then
+      echo "Status is correctly set to ERROR!"
+  fi
+
+}
+
+test_example_job_in_pod_with_errors() {
+  run_example_job_with_error_in_pod tests spark
+}
+
+
 test_example_job_in_pod_with_templates() {
   run_example_job_in_pod_with_pod_templates tests spark
 }
@@ -371,6 +419,12 @@ echo -e "########################################"
 
 (setup_user_admin_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
 
+
+echo -e "########################################"
+echo -e "RUN EXAMPLE JOB WITH ERRORS"
+echo -e "########################################"
+
+(setup_user_admin_context && test_example_job_in_pod_with_errors && cleanup_user_success) || cleanup_user_failure_in_pod
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
 echo -e "##################################"
