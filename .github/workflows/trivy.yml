@@ -40,6 +40,7 @@ jobs:
           docker images
           sg microk8s -c "microk8s ctr images list"
           docker tag ghcr.io/canonical/test-charmed-spark:test trivy/charmed-spark:test
+          docker images
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
