@@ -31,11 +31,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo snap install docker
-          sudo addgroup --system docker; sudo adduser $USER docker
-          newgrp docker
-          sudo snap disable docker; sudo snap enable docker
-
           sudo snap install yq
           sudo snap install rockcraft --classic --edge    
           sudo snap install --devmode --channel edge skopeo
