@@ -36,6 +36,7 @@ jobs:
           # Import artifact into docker with new tag
           sg microk8s -c "microk8s ctr images import --base-name docker-daemon:trivy/charmed-spark:test ${{ steps.artifact.outputs.name }}"
           docker images
+          microk8s ctr images list
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
