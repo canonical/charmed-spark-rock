@@ -34,8 +34,9 @@ jobs:
           mv charmed-spark/${{ steps.artifact.outputs.name }} .
           ls -larth
           rmdir charmed-spark
+          docker import ${{ steps.artifact.outputs.name }} ghcr.io/canonical/test-charmed-spark:test
           # Import artifact into docker with new tag
-          sg microk8s -c "microk8s ctr images import --base-name ghcr.io/canonical/test-charmed-spark:test ${{ steps.artifact.outputs.name }}"
+          # sg microk8s -c "microk8s ctr images import --base-name ghcr.io/canonical/test-charmed-spark:test ${{ steps.artifact.outputs.name }}"
           docker images
           sg microk8s -c "microk8s ctr images list"
           docker tag ghcr.io/canonical/test-charmed-spark:test trivy/charmed-spark:test
