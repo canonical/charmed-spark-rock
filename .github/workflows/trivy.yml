@@ -34,7 +34,7 @@ jobs:
           mv charmed-spark/${{ steps.artifact.outputs.name }} .
           rmdir charmed-spark
           # Import artifact into docker with new tag
-          microk8s ctr images import --base-name trivy/charmed-spark:test ${{ steps.artifact.outputs.name }}
+          sg microk8s -c "microk8s ctr images import --base-name trivy/charmed-spark:test ${{ steps.artifact.outputs.name }}"
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
