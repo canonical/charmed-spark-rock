@@ -71,20 +71,6 @@ Charmed Spark Rock Image is delivered with Pebble already included in order to m
 docker run ghcr.io/canonical/charmed-spark:3.4.1-22.04_edge \; start history-server
 ```
 
-#### Starting Jupyter Notebook
-
-```shell
-docker run \
-  -v /path/to/kube/config:/var/lib/spark/.kube/config \
-  -p <port>:8888
-  ghcr.io/canonical/charmed-spark:3.4.1-22.04_edge \
-  \; --args jupyter --username <spark-service-account> --namespace <spark-namespace> \
-  \; start jupyter
-```
-
-Make sure to have created the `<spark-service-account>` in the `<spark-namespace>` with the `spark8t` CLI beforehand.
-You should be able to access the jupyter server at `http://0.0.0.0:<port>`.
-
 ## Developers and Contributing
 
 Please see the [CONTRIBUTING.md](https://github.com/canonical/charmed-spark-rock/blob/3.4-22.04/edge/CONTRIBUTING.md) for guidelines and for developer guidance.

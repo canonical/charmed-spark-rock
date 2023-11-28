@@ -22,7 +22,7 @@ environment:
   SPARK_LOG_DIR: /var/log/spark
 
 services:
-  entrypoint:
+  sparkd:
     command: "/bin/bash /opt/pebble/charmed-spark-entrypoint.sh"
     summary: "This is the service to startup Spark processes using the Spark entrypoint"
     override: replace
@@ -45,14 +45,6 @@ services:
     startup: disabled
     environment:
       SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
-  jupyter:
-    command: "spark-client.pyspark [ --username spark --namespace spark ]"
-    summary: "This is the Spark-powered Jupyter service"
-    override: replace
-    startup: disabled
-    environment:
-      PYSPARK_DRIVER_PYTHON: jupyter
-      PYSPARK_DRIVER_PYTHON_OPTS: "lab --no-browser --port=8888 --ip=0.0.0.0 --NotebookApp.token='' --notebook-dir=/var/lib/spark/notebook"
 
 parts:
   spark:
@@ -145,20 +137,6 @@ parts:
       rm usr/bin/pip*
     stage:
       - opt/spark8t/python/dist
-
-  jupyter:
-    plugin: python
-    source: .
-    python-packages:
-      - jupyterlab
-    stage-packages:
-      - python3-venv
-    organize:
-      lib: usr/lib
-      bin: usr/bin
-      share: usr/share
-    stage:
-      - usr
 
   kubectl:
     plugin: nil
