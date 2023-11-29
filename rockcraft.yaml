@@ -23,14 +23,14 @@ environment:
 
 services:
   sparkd:
-    command: "/bin/bash /opt/pebble/charmed-spark-entrypoint.sh"
+    command: "/bin/bash /opt/pebble/sparkd.sh"
     summary: "This is the service to startup Spark processes using the Spark entrypoint"
     override: replace
     startup: enabled
     on-success: shutdown
     on-failure: shutdown
   history-server:
-    command: "/bin/bash /opt/pebble/charmed-spark-history-server.sh"
+    command: "/bin/bash /opt/pebble/history-server.sh"
     summary: "This is the Spark History Server service"
     override: replace
     startup: disabled
@@ -39,7 +39,7 @@ services:
     environment:
       SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
   thrift-server:
-    command: "/bin/bash /opt/pebble/charmed-spark-thrift-server.sh"
+    command: "/bin/bash /opt/pebble/thrift-server.sh"
     summary: "This is the Spark Thrift Server service"
     override: replace
     startup: disabled
@@ -165,18 +165,18 @@ parts:
     source: files/spark
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
-      bin/charmed-spark-entrypoint.sh: opt/pebble/charmed-spark-entrypoint.sh
-      bin/charmed-spark-history-server.sh: opt/pebble/charmed-spark-history-server.sh
-      bin/charmed-spark-thrift-server.sh: opt/pebble/charmed-spark-thrift-server.sh
+      bin/sparkd.sh: opt/pebble/sparkd.sh
+      bin/history-server.sh: opt/pebble/history-server.sh
+      bin/thrift-server.sh: opt/pebble/thrift-server.sh
       bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
       bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
       bin/spark-client.spark-shell: opt/spark-client/python/bin/spark-client.spark-shell
       bin/spark-client.spark-submit: opt/spark-client/python/bin/spark-client.spark-submit
     stage:
       - etc/spark8t/conf/
-      - opt/pebble/charmed-spark-entrypoint.sh
-      - opt/pebble/charmed-spark-history-server.sh
-      - opt/pebble/charmed-spark-thrift-server.sh
+      - opt/pebble/sparkd.sh
+      - opt/pebble/history-server.sh
+      - opt/pebble/thrift-server.sh
       - opt/spark-client/python/bin/spark-client.pyspark
       - opt/spark-client/python/bin/spark-client.service-account-registry
       - opt/spark-client/python/bin/spark-client.spark-shell
