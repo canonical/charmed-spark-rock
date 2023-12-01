@@ -1,7 +1,9 @@
 name: trivy
 on:
+  push:
+    branches:
+      - 3.4-22.04/edge
   pull_request:
-
 jobs:
   build:
     uses: ./.github/workflows/build.yaml
