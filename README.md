@@ -1,5 +1,8 @@
 ## Introduction to Charmed Spark ROCK  (OCI Image)
 
+[![Container Registry](https://img.shields.io/badge/Container%20Registry-published-blue)](https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-kafka)
+[![Release](https://github.com/canonical/charmed-spark-rock/actions/workflows/publish.yaml/badge.svg)](https://github.com/canonical/charmed-spark-rock/actions/workflows/publish.yaml)
+
 Charmed Spark is a set of Canonical supported artifacts (including charms, ROCK OCI images and SNAPs) that makes operating Spark workloads on Kubernetes seamless, secure and production-ready. 
 
 The solution helps to simplify user interaction with Spark applications and the underlying Kubernetes cluster whilst retaining the traditional semantics and command line tooling that users already know. Operators benefit from straightforward, automated deployment of Spark components (e.g. Spark History Server) to the Kubernetes cluster, using [Juju](https://juju.is/). 
