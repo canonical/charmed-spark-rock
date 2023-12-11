@@ -52,5 +52,9 @@ jobs:
           # Import artifact into microk8s to be used in integration tests
           sudo make import TARGET=microk8s PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
             -o $(find .make_cache -name "*.tag")
+
+          # Import artifact into docker with new tag
+          sudo make jupyter TARGET=docker REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
+            -o $(find .make_cache -name "*.tag")
           
           sg microk8s -c "make tests"

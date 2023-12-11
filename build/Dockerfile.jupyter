@@ -1,0 +1,13 @@
+ARG BASE_IMAGE=base-charmed-spark:latest
+FROM $BASE_IMAGE
+
+USER root
+RUN rm /var/lib/pebble/default/layers/*.yaml
+
+RUN python3 -m pip install "jupyterlab~=4.0"
+COPY ./files/jupyter/pebble/layers.yaml /var/lib/pebble/default/layers/001-charmed-jupyter.yaml
+
+USER _daemon_
+
+# Provide Default Entrypoint for Pebble
+ENTRYPOINT [ "/bin/pebble", "enter", "--verbose", "--args", "jupyter" ]

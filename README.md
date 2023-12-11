@@ -74,6 +74,29 @@ Charmed Spark Rock Image is delivered with Pebble already included in order to m
 docker run ghcr.io/canonical/charmed-spark:3.4.2-22.04_edge \; start history-server
 ```
 
+### Running Jupyter Lab
+
+In the Charmed Spark bundle we also provide the `charmed-spark-jupyter` image, 
+specifically built for running JupterLab server integrated with Spark where any notebook will also 
+start dedicated executors and inject a SparkSession and/or SparkContext within the notebook.
+
+To start a JupyterLab server using the `charmed-spark-jupyter` image, use
+
+```shell
+docker run \
+  -v /path/to/kube/config:/var/lib/spark/.kube/config \
+  -p <port>:8888
+  ghcr.io/canonical/charmed-spark-jupyter:3.4.1-22.04_edge \
+  --username <spark-service-account> --namespace <spark-namespace>
+```
+
+Make sure to have created the `<spark-service-account>` in the `<spark-namespace>` with the `spark8t` CLI beforehand.
+You should be able to access the jupyter server at `http://0.0.0.0:<port>`.
+
+You can provide extra-arguments to further configure the spark-executors by providing more `spark8t`
+commands. The mount of the local `kubeconfig` file is necessary to provide the ability to the 
+JupyterLab server to act as a Spark driver and request resources on the K8s cluster. 
+
 ## Developers and Contributing
 
 Please see the [CONTRIBUTING.md](https://github.com/canonical/charmed-spark-rock/blob/3.4-22.04/edge/CONTRIBUTING.md) for guidelines and for developer guidance.
