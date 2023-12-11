@@ -41,13 +41,19 @@ _TMP_OCI_TAG := $(_MAKE_DIR)/$(_TMP_OCI_NAME)/$(TAG).tag
 CHARMED_OCI_FULL_NAME=$(REPOSITORY)$(PREFIX)$(IMAGE_NAME)
 CHARMED_OCI_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tag
 
+CHARMED_OCI_JUPYTER=$(CHARMED_OCI_FULL_NAME)-jupyterlab4
+CHARMED_OCI_JUPYTER_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(TAG).tag
+
 help:
 	@echo "---------------HELP-----------------"
-	@echo "Image: $(IMAGE_NAME)"
+	@echo "Name: $(IMAGE_NAME)"
 	@echo "Version: $(VERSION)"
 	@echo "Platform: $(PLATFORM)"
 	@echo " "
 	@echo "Artifact: $(BASE_NAME)"
+	@echo " "
+	@echo "Image: $(CHARMED_OCI_FULL_NAME)"
+	@echo "Jupyter: $(CHARMED_OCI_JUPYTER)"
 	@echo " "
 	@echo "Type 'make' followed by one of these keywords:"
 	@echo " "
@@ -70,8 +76,8 @@ $(_TMP_OCI_TAG): $(_ROCK_OCI)
 	if [ ! -d "$(_MAKE_DIR)/$(_TMP_OCI_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(_TMP_OCI_NAME)"; fi
 	touch $(_TMP_OCI_TAG)
 
-$(CHARMED_OCI_TAG): $(_TMP_OCI_TAG)
-	docker build -t "$(CHARMED_OCI_FULL_NAME):$(TAG)" --build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(TAG)" -f Dockerfile .
+$(CHARMED_OCI_TAG): $(_TMP_OCI_TAG) build/Dockerfile
+	docker build -t "$(CHARMED_OCI_FULL_NAME):$(TAG)" --build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(TAG)" -f build/Dockerfile .
 	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)"; fi
 	touch $(CHARMED_OCI_TAG)
 
@@ -91,11 +97,20 @@ microk8s: $(K8S_TAG)
 $(_MAKE_DIR)/%/$(TAG).tar: $(_MAKE_DIR)/%/$(TAG).tag
 	docker save $*:$(TAG) -o $(_MAKE_DIR)/$*/$(TAG).tar
 
+$(CHARMED_OCI_JUPYTER_TAG): $(CHARMED_OCI_TAG) build/Dockerfile.jupyter
+	docker build -t "$(CHARMED_OCI_JUPYTER):$(TAG)" --build-arg BASE_IMAGE="$(CHARMED_OCI_FULL_NAME):$(TAG)" -f build/Dockerfile.jupyter .
+	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)"; fi
+	touch $(CHARMED_OCI_JUPYTER_TAG)
+
 $(BASE_NAME): $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tar
 	@echo "=== Creating $(BASE_NAME) OCI archive ==="
 	cp $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tar $(BASE_NAME)
 
 build: $(BASE_NAME)
+
+jupyter: $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(TAG).tar
+	@echo "=== Creating $(BASE_NAME) OCI jupyter archive ==="
+	cp $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(TAG).tar $(IMAGE_NAME)-jupyter_$(VERSION)_$(PLATFORM).tar
 
 ifeq ($(TARGET), docker)
 import: build
