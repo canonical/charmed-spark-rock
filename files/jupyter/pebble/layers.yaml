@@ -1,0 +1,9 @@
+services:
+  jupyter:
+      command: "spark-client.pyspark"
+      summary: "This is the Spark-powered Jupyter service"
+      override: replace
+      startup: enabled
+      environment:
+        PYSPARK_DRIVER_PYTHON: jupyter
+        PYSPARK_DRIVER_PYTHON_OPTS: "lab --no-browser --port=8888 --ip=0.0.0.0 --NotebookApp.token='' --notebook-dir=/var/lib/spark/notebook"
