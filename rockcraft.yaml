@@ -4,7 +4,7 @@ description: Spark ROCK
 license: Apache-2.0
 
 version: "3.4.2"
-base: ubuntu:22.04
+base: ubuntu@22.04
 platforms:
   amd64:
 
