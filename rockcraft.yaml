@@ -3,7 +3,7 @@ summary: Spark ROCK
 description: Spark ROCK
 license: Apache-2.0
 
-version: "3.4.1"
+version: "3.4.2"
 base: ubuntu:22.04
 platforms:
   amd64:
@@ -49,8 +49,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.1-ubuntu2/spark-3.4.1-ubuntu2-20231128202352-bin-k8s.tgz
-    source-checksum: sha512/b81937b2090074bb5de99ccfe6e4413073e2277220e40557635573e6df1a9961b7e75afba1b0074f24008c3a0e9f0547e7687b161add440f9d0d4da321983c14
+    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.2-ubuntu1/spark-3.4.2-ubuntu1-20231214143421-bin-k8s.tgz
+    source-checksum: sha512/a111897557921c4dd61daa67fb6979e0a231d4c5f56a0007f26663cb69ab42a12beb83e46edd8961baa7e7b62f031801c1b82e2e612afa1c6ebf8fc208e45ffd
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
