@@ -104,7 +104,7 @@
               "options": {
                 "mode": "exclude",
                 "names": [
-                  "Max Memory (MB)"
+                  "Remaining Memory (MB)"
                 ],
                 "prefix": "All except:",
                 "readOnly": true
@@ -148,9 +148,9 @@
             "type": "prometheus",
             "uid": "${prometheusds}"
           },
-          "editorMode": "builder",
+          "editorMode": "code",
           "exemplar": false,
-          "expr": "BlockManager_memory_maxMem_MB{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "expr": "BlockManager_memory_maxMem_MB{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "instant": false,
           "legendFormat": "Max Memory (MB)",
           "range": true,
@@ -161,8 +161,8 @@
             "type": "prometheus",
             "uid": "${prometheusds}"
           },
-          "editorMode": "builder",
-          "expr": "BlockManager_memory_maxOffHeapMem_MB{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "editorMode": "code",
+          "expr": "BlockManager_memory_maxOffHeapMem_MB{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "legendFormat": "Max Off Heap Memory (MB)",
           "range": true,
@@ -173,8 +173,8 @@
             "type": "prometheus",
             "uid": "${prometheusds}"
           },
-          "editorMode": "builder",
-          "expr": "BlockManager_memory_maxOnHeapMem_MB{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "editorMode": "code",
+          "expr": "BlockManager_memory_maxOnHeapMem_MB{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "legendFormat": "Max On Heap Memory (MB)",
           "range": true,
@@ -185,8 +185,8 @@
             "type": "prometheus",
             "uid": "${prometheusds}"
           },
-          "editorMode": "builder",
-          "expr": "BlockManager_memory_remainingMem_MB{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "editorMode": "code",
+          "expr": "BlockManager_memory_remainingMem_MB{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "legendFormat": "Remaining Memory (MB)",
           "range": true,
@@ -280,7 +280,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "BlockManager_disk_diskSpaceUsed_MB{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "expr": "BlockManager_disk_diskSpaceUsed_MB{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "legendFormat": "Disk Memory (MB)",
           "range": true,
           "refId": "A"
@@ -386,7 +386,7 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "HiveExternalCatalog_fileCacheHits{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "expr": "HiveExternalCatalog_fileCacheHits{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "instant": false,
           "legendFormat": "File Cache Hits",
           "range": true,
@@ -399,7 +399,7 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "HiveExternalCatalog_filesDiscovered{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "expr": "HiveExternalCatalog_filesDiscovered{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "File Discovered",
@@ -413,7 +413,7 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "HiveExternalCatalog_hiveClientCalls{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "expr": "HiveExternalCatalog_hiveClientCalls{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "Client Calls",
@@ -427,7 +427,7 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "HiveExternalCatalog_parallelListingJobCount{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "expr": "HiveExternalCatalog_parallelListingJobCount{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "Parallel Listing Jobs",
@@ -441,7 +441,7 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "HiveExternalCatalog_partitionsFetched{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "expr": "HiveExternalCatalog_partitionsFetched{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "Partitions Fetched",
@@ -549,7 +549,7 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "DAGScheduler_job_activeJobs{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "expr": "DAGScheduler_job_activeJobs{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "instant": false,
           "legendFormat": "Active Jobs",
           "range": true,
@@ -562,7 +562,7 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "DAGScheduler_job_allJobs{job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
+          "expr": "DAGScheduler_job_allJobs{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "All Jobs",
@@ -656,7 +656,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "DAGScheduler_stage_failedStages{role=\"driver\", job=\"$spark_job_id\"}",
+          "expr": "DAGScheduler_stage_failedStages{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "legendFormat": "Failed Stages",
           "range": true,
           "refId": "FailedStages"
@@ -667,7 +667,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "DAGScheduler_stage_runningStages{role=\"driver\", job=\"$spark_job_id\"}",
+          "expr": "DAGScheduler_stage_runningStages{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "legendFormat": "Running Stages",
           "range": true,
@@ -679,7 +679,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "DAGScheduler_stage_waitingStages{role=\"driver\", job=\"$spark_job_id\"}",
+          "expr": "DAGScheduler_stage_waitingStages{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "legendFormat": "Waiting Stages",
           "range": true,
@@ -747,8 +747,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -786,7 +785,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "ExecutorMetrics_DirectPoolMemory{role=\"driver\", job=\"$spark_job_id\"}",
+          "expr": "ExecutorMetrics_DirectPoolMemory{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "legendFormat": "Direct Pool Memory",
           "range": true,
           "refId": "A"
@@ -797,7 +796,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "ExecutorMetrics_JVMHeapMemory{role=\"driver\", job=\"$spark_job_id\"}",
+          "expr": "ExecutorMetrics_JVMHeapMemory{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "legendFormat": "JVM Heap Memory",
           "range": true,
@@ -809,7 +808,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "ExecutorMetrics_JVMOffHeapMemory{role=\"driver\", job=\"$spark_job_id\"}",
+          "expr": "ExecutorMetrics_JVMOffHeapMemory{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "legendFormat": "JVM Off Heap Memory",
           "range": true,
@@ -821,7 +820,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "ExecutorMetrics_OffHeapExecutionMemory{role=\"driver\", job=\"$spark_job_id\"}",
+          "expr": "ExecutorMetrics_OffHeapExecutionMemory{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "legendFormat": "JVM Off Heap Execution Memory",
           "range": true,
@@ -833,7 +832,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "ExecutorMetrics_OnHeapStorageMemory{role=\"driver\", job=\"$spark_job_id\"}",
+          "expr": "ExecutorMetrics_OnHeapStorageMemory{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "legendFormat": "JVM On Heap Storage Memory",
           "range": true,
@@ -845,7 +844,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "ExecutorMetrics_OnHeapExecutionMemory{role=\"driver\", job=\"$spark_job_id\"}",
+          "expr": "ExecutorMetrics_OnHeapExecutionMemory{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"driver\"}",
           "hide": false,
           "legendFormat": "JVM On Heap Execution Memory",
           "range": true,
@@ -913,8 +912,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -951,7 +949,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "executor_bytesRead{role=\"executor\", job=\"$spark_job_id\"}",
+          "expr": "executor_bytesRead{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}",
           "legendFormat": "Bytes Reads (#Executor {{number}})",
           "range": true,
           "refId": "A"
@@ -962,7 +960,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "executor_bytesWritten{role=\"executor\", job=\"$spark_job_id\"}",
+          "expr": "executor_bytesWritten{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}",
           "hide": false,
           "legendFormat": "Bytes Written (#Executor {{number}})",
           "range": true,
@@ -1017,8 +1015,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1056,7 +1053,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "ExecutorMetrics_JVMHeapMemory{role=\"executor\", job=\"$spark_job_id\"}",
+          "expr": "ExecutorMetrics_JVMHeapMemory{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}",
           "legendFormat": "JVM Heap Memory #{{number}}",
           "range": true,
           "refId": "A"
@@ -1067,7 +1064,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "ExecutorMetrics_JVMOffHeapMemory{role=\"executor\", job=\"$spark_job_id\"}",
+          "expr": "ExecutorMetrics_JVMOffHeapMemory{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}",
           "hide": false,
           "legendFormat": "JVM Off Heap Memory #{{number}}",
           "range": true,
@@ -1122,8 +1119,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1160,7 +1156,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "rate(executor_runTime{role=\"executor\", job=\"$spark_job_id\"}[$__rate_interval])",
+          "expr": "rate(executor_runTime{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}[$__rate_interval])",
           "legendFormat": "Runtime (Executor #{{number}})",
           "range": true,
           "refId": "A"
@@ -1214,8 +1210,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1252,7 +1247,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "executor_shuffleBytesWritten{role=\"executor\", job=\"$spark_job_id\"}",
+          "expr": "executor_shuffleBytesWritten{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}",
           "legendFormat": "Shuffle Bytes Writes (Executor #{{number}})",
           "range": true,
           "refId": "A"
@@ -1263,7 +1258,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "executor_shuffleLocalBytesRead{role=\"executor\", job=\"$spark_job_id\"}",
+          "expr": "executor_shuffleLocalBytesRead{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}",
           "hide": false,
           "legendFormat": "Shuffle Local Bytes Reads (Executor #{{number}})",
           "range": true,
@@ -1275,7 +1270,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "executor_shuffleRemoteBytesRead{role=\"executor\", job=\"$spark_job_id\"}",
+          "expr": "executor_shuffleRemoteBytesRead{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}",
           "hide": false,
           "legendFormat": "Shuffle Remote Bytes Reads (Executor #{{number}})",
           "range": true,
@@ -1330,8 +1325,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1393,7 +1387,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "increase(ExecutorMetrics_MinorGCCount{role=\"executor\", job=\"$spark_job_id\"}[$__rate_interval])",
+          "expr": "increase(ExecutorMetrics_MinorGCCount{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}[$__rate_interval])",
           "legendFormat": "Minor GC Count (Executor #{{number}}",
           "range": true,
           "refId": "A"
@@ -1404,7 +1398,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "increase(ExecutorMetrics_MajorGCCount{role=\"executor\", job=\"$spark_job_id\"}[$__rate_interval])",
+          "expr": "increase(ExecutorMetrics_MajorGCCount{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}[$__rate_interval])",
           "hide": false,
           "legendFormat": "Major GC Count (Executor #{{number}}",
           "range": true,
@@ -1459,8 +1453,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1497,7 +1490,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "rate(ExecutorMetrics_MajorGCTime{role=\"executor\", job=\"$spark_job_id\"}[$__rate_interval])",
+          "expr": "rate(ExecutorMetrics_MajorGCTime{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}[$__rate_interval])",
           "legendFormat": "Major GC time (Executor #{{number}})",
           "range": true,
           "refId": "A"
@@ -1508,7 +1501,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "rate(ExecutorMetrics_MinorGCTime{role=\"executor\", job=\"$spark_job_id\"}[$__rate_interval])",
+          "expr": "rate(ExecutorMetrics_MinorGCTime{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}[$__rate_interval])",
           "hide": false,
           "legendFormat": "Minor GC time (Executor #{{number}})",
           "range": true,
@@ -1520,7 +1513,7 @@
             "uid": "${prometheusds}"
           },
           "editorMode": "builder",
-          "expr": "rate(ExecutorMetrics_TotalGCTime{role=\"executor\", job=\"$spark_job_id\"}[$__rate_interval])",
+          "expr": "rate(ExecutorMetrics_TotalGCTime{exported_job=\"$spark_job_id\",juju_application=~\"$juju_application\",juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_unit=~\"$juju_unit\",role=\"executor\"}[$__rate_interval])",
           "hide": false,
           "legendFormat": "Total GC time (Executor #{{number}})",
           "range": true,
@@ -1531,8 +1524,9 @@
       "type": "timeseries"
     }
   ],
-  "refresh": false,
-  "schemaVersion": 37,
+  "refresh": "",
+  "revision": 1,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -1589,8 +1583,8 @@
       {
         "current": {
           "selected": false,
-          "text": "juju_cos_348d0940-98ce-4ac5-8dcc-4dce43d9c620_prometheus_0",
-          "value": "juju_cos_348d0940-98ce-4ac5-8dcc-4dce43d9c620_prometheus_0"
+          "text": "juju_cos_5072cf45-4e98-47aa-81e7-035c7073cf15_prometheus_0",
+          "value": "juju_cos_5072cf45-4e98-47aa-81e7-035c7073cf15_prometheus_0"
         },
         "hide": 0,
         "includeAll": false,
@@ -1691,44 +1685,16 @@
         "type": "query"
       },
       {
-        "allValue": ".*",
         "current": {
           "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "text": "spark-9eb4b3b60426452889299917f70a43ee",
+          "value": "spark-9eb4b3b60426452889299917f70a43ee"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "${prometheusds}"
         },
-        "definition": "label_values(up{juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_application=~\"$juju_application\"},job)",
-        "hide": 0,
-        "includeAll": true,
-        "label": "job",
-        "multi": true,
-        "name": "job",
-        "options": [],
-        "query": {
-          "query": "label_values(up{juju_model=~\"$juju_model\",juju_model_uuid=~\"$juju_model_uuid\",juju_application=~\"$juju_application\"},job)",
-          "refId": "StandardVariableQuery"
-        },
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "current": {
-          "selected": true,
-          "text": "spark-61ece15fea08483f9f4eb181fc14dfd8",
-          "value": "spark-61ece15fea08483f9f4eb181fc14dfd8"
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${prometheusds}"
-        },
-        "definition": "label_values(job)",
+        "definition": "label_values(exported_job)",
         "hide": 0,
         "includeAll": false,
         "label": "Spark Job ID ",
@@ -1736,7 +1702,7 @@
         "name": "spark_job_id",
         "options": [],
         "query": {
-          "query": "label_values(job)",
+          "query": "label_values(exported_job)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
