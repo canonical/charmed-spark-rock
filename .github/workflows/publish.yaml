@@ -105,31 +105,31 @@ jobs:
             docker push ${IMAGE_NAME}:${VERSION_TAG}
           fi
 
-      - name: Publish JupyterLab Image to Channel
-        run: |
-          
-          REPOSITORY="ghcr.io/canonical/"
-          RISK=${{ needs.release_checks.outputs.risk }}
-          TRACK=${{ needs.release_checks.outputs.track }}
-          if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
-                    
-          # Import artifact into docker with new tag
-          sudo make jupyter REPOSITORY=${REPOSITORY} TAG=${TAG}\
-            -o $(find .make_cache -name "*.tag")
-
-          IMAGE_NAME=$(make REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Jupyter\:" | cut -d ":" -f2  | xargs)
-
-          echo "Publishing ${IMAGE_NAME}:${TAG}"          
-          docker push ${IMAGE_NAME}:${TAG}
-          
-          if [[ "$RISK" == "edge" ]]; then           
-            VERSION_TAG="${{ needs.release_checks.outputs.version }}-${{ needs.release_checks.outputs.base }}_edge"
-
-            docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${VERSION_TAG} 
-            
-            echo "Publishing ${IMAGE_NAME}:${VERSION_TAG}"          
-            docker push ${IMAGE_NAME}:${VERSION_TAG}
-          fi
+      # - name: Publish JupyterLab Image to Channel
+      #   run: |
+      #
+      #     REPOSITORY="ghcr.io/canonical/"
+      #     RISK=${{ needs.release_checks.outputs.risk }}
+      #     TRACK=${{ needs.release_checks.outputs.track }}
+      #     if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
+      #
+      #     # Import artifact into docker with new tag
+      #     sudo make jupyter REPOSITORY=${REPOSITORY} TAG=${TAG}\
+      #       -o $(find .make_cache -name "*.tag")
+      #
+      #     IMAGE_NAME=$(make REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Jupyter\:" | cut -d ":" -f2  | xargs)
+      #
+      #     echo "Publishing ${IMAGE_NAME}:${TAG}"
+      #     docker push ${IMAGE_NAME}:${TAG}
+      #
+      #     if [[ "$RISK" == "edge" ]]; then
+      #       VERSION_TAG="${{ needs.release_checks.outputs.version }}-${{ needs.release_checks.outputs.base }}_edge"
+      #
+      #       docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${VERSION_TAG}
+      #
+      #       echo "Publishing ${IMAGE_NAME}:${VERSION_TAG}"
+      #       docker push ${IMAGE_NAME}:${VERSION_TAG}
+      #     fi
 
 
 

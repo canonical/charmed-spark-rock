@@ -15,6 +15,7 @@ REPOSITORY :=
 PREFIX :=
 TARGET := docker
 PLATFORM := amd64
+FLAVOUR := "base"
 
 # ======================
 # INTERNAL VARIABLES
@@ -35,13 +36,21 @@ BASE_NAME=$(IMAGE_NAME)_$(VERSION)_$(PLATFORM).tar
 _ROCK_OCI=$(IMAGE_NAME)_$(VERSION)_$(PLATFORM).rock
 
 _TMP_OCI_NAME := stage-$(IMAGE_NAME)
-_TMP_OCI_TAG := $(_MAKE_DIR)/$(_TMP_OCI_NAME)/$(TAG).tag
+_TMP_OCI_TAG := $(_MAKE_DIR)/$(_TMP_OCI_NAME)/$(TAG)
 
 CHARMED_OCI_FULL_NAME=$(REPOSITORY)$(PREFIX)$(IMAGE_NAME)
-CHARMED_OCI_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tag
+CHARMED_OCI_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG)
 
-CHARMED_OCI_JUPYTER=$(CHARMED_OCI_FULL_NAME)-jupyterlab4
-CHARMED_OCI_JUPYTER_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(TAG).tag
+CHARMED_OCI_JUPYTER=$(CHARMED_OCI_FULL_NAME)-jupyterlab
+CHARMED_OCI_JUPYTER_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(TAG)
+
+ifeq ($(FLAVOUR), jupyter)
+NAME=$(CHARMED_OCI_JUPYTER)
+FTAG=$(CHARMED_OCI_JUPYTER_TAG)
+else
+NAME=$(CHARMED_OCI_FULL_NAME)
+FTAG=$(CHARMED_OCI_TAG)
+endif
 
 help:
 	@echo "---------------HELP-----------------"
@@ -67,18 +76,13 @@ $(_ROCK_OCI): rockcraft.yaml
 	@echo "=== Building Charmed Image ==="
 	rockcraft pack
 
-$(_TMP_OCI_TAG): $(_ROCK_OCI)
+$(_TMP_OCI_TAG).tag: $(_ROCK_OCI)
 	skopeo --insecure-policy \
           copy \
           oci-archive:"$(_ROCK_OCI)" \
           docker-daemon:"$(_TMP_OCI_NAME):$(TAG)"
 	if [ ! -d "$(_MAKE_DIR)/$(_TMP_OCI_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(_TMP_OCI_NAME)"; fi
-	touch $(_TMP_OCI_TAG)
-
-$(CHARMED_OCI_TAG): $(_TMP_OCI_TAG) build/Dockerfile
-	docker build -t "$(CHARMED_OCI_FULL_NAME):$(TAG)" --build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(TAG)" -f build/Dockerfile .
-	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)"; fi
-	touch $(CHARMED_OCI_TAG)
+	touch $(_TMP_OCI_TAG).tag
 
 $(K8S_TAG):
 	@echo "=== Setting up and configure local Microk8s cluster ==="
@@ -88,42 +92,47 @@ $(K8S_TAG):
 
 microk8s: $(K8S_TAG)
 
+$(CHARMED_OCI_TAG).tag: $(_TMP_OCI_TAG).tag build/Dockerfile
+	docker build -t "$(CHARMED_OCI_FULL_NAME):$(TAG)" --build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(TAG)" -f build/Dockerfile .
+	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)"; fi
+	touch $(CHARMED_OCI_TAG).tag
+
+$(CHARMED_OCI_JUPYTER_TAG).tag: $(CHARMED_OCI_TAG).tag build/Dockerfile.jupyter files/jupyter
+	docker build -t "$(CHARMED_OCI_JUPYTER):$(TAG)" --build-arg BASE_IMAGE="$(CHARMED_OCI_FULL_NAME):$(TAG)" -f build/Dockerfile.jupyter .
+	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)"; fi
+	touch $(CHARMED_OCI_JUPYTER_TAG).tag
+
 $(_MAKE_DIR)/%/$(TAG).tar: $(_MAKE_DIR)/%/$(TAG).tag
 	docker save $*:$(TAG) > $(_MAKE_DIR)/$*/$(TAG).tar
 
-$(CHARMED_OCI_JUPYTER_TAG): $(CHARMED_OCI_TAG) build/Dockerfile.jupyter
-	docker build -t "$(CHARMED_OCI_JUPYTER):$(TAG)" --build-arg BASE_IMAGE="$(CHARMED_OCI_FULL_NAME):$(TAG)" -f build/Dockerfile.jupyter .
-	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)"; fi
-	touch $(CHARMED_OCI_JUPYTER_TAG)
-
-$(BASE_NAME): $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tar
-	@echo "=== Creating $(BASE_NAME) OCI archive ==="
-	cp $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tar $(BASE_NAME)
+$(BASE_NAME): $(FTAG).tar
+	@echo "=== Creating $(BASE_NAME) OCI archive (flavour: $(FLAVOUR)) ==="
+	cp $(FTAG).tar $(BASE_NAME)
 
 build: $(BASE_NAME)
 
-jupyter: $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(TAG).tar
-	@echo "=== Creating $(BASE_NAME) OCI jupyter archive ==="
-	cp $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(TAG).tar $(IMAGE_NAME)-jupyter_$(VERSION)_$(PLATFORM).tar
-
 ifeq ($(TARGET), docker)
 import: build
-	@echo "=== Importing image $(CHARMED_OCI_FULL_NAME):$(TAG) into docker ==="
+	@echo "=== Importing image $(NAME):$(TAG) into docker ==="
 	$(eval IMAGE := $(shell docker load -i $(BASE_NAME)))
-	docker tag $(lastword $(IMAGE)) $(CHARMED_OCI_FULL_NAME):$(TAG)
-	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)"; fi
-	touch $(CHARMED_OCI_TAG)
+	docker tag $(lastword $(IMAGE)) $(NAME):$(TAG)
+	if [ ! -d "$(_MAKE_DIR)/$(NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(NAME)"; fi
+	touch $(FTAG).tag
 endif
 
 ifeq ($(TARGET), microk8s)
 import: $(K8S_TAG) build
-	@echo "=== Importing image $(CHARMED_OCI_FULL_NAME):$(TAG) into Microk8s container registry ==="
-	microk8s ctr images import --base-name $(CHARMED_OCI_FULL_NAME):$(TAG) $(BASE_NAME)
+	@echo "=== Importing image $(NAME):$(TAG) into Microk8s container registry ==="
+	microk8s ctr images import --base-name $(NAME):$(TAG) $(BASE_NAME)
 endif
 
 tests:
 	@echo "=== Running Integration Tests ==="
+ifeq ($(FLAVOUR), jupyter)
+	/bin/bash ./tests/integration/integration-tests-jupyter.sh
+else
 	/bin/bash ./tests/integration/integration-tests.sh
+endif
 
 clean:
 	@echo "=== Cleaning environment ==="
