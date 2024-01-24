@@ -93,6 +93,8 @@ parts:
     overlay-script: |
       AWS_JAVA_SDK_BUNDLE_VERSION='1.12.540'
       HADOOP_AWS_VERSION='3.3.6'
+      ICEBERG_SPARK_RUNTIME_VERSION='3.4_2.12'
+      ICEBERG_VERSION='1.4.3'
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
       cd $CRAFT_PART_INSTALL/opt/spark/jars
       wget -q "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/${AWS_JAVA_SDK_BUNDLE_VERSION}/aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar"
@@ -117,6 +119,14 @@ parts:
       if  [[ $? -ne 0 ]]
         then
           echo "DOWNLOAD ERROR: spark-metrics-assembly-3.4-1.0.0.jar could not be downloaded properly! Exiting...." >&2
+          exit 1
+      fi
+      wget -q "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/${ICEBERG_VERSION}/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar"
+      wget -q "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/${ICEBERG_VERSION}/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar.sha1"
+      echo "`cat iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar.sha1`  iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar" | sha1sum --check
+      if  [[ $? -ne 0 ]]
+        then
+          echo "DOWNLOAD ERROR: iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar could not be downloaded properly! Exiting...." >&2
           exit 1
       fi
     stage:
