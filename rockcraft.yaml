@@ -95,19 +95,21 @@ parts:
       HADOOP_AWS_VERSION='3.3.6'
       ICEBERG_SPARK_RUNTIME_VERSION='3.4_2.12'
       ICEBERG_VERSION='1.4.3'
+      SHA1SUM_AWS_JAVA_SDK_BUNDLE_JAR='a351ebc4f81d20e0349b3c0f85f34f443a37ce9d'
+      SHA1SUM_HADOOP_AWS_JAR='d5e162564701848b0921b80aedef9e64435333cc'
+      SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='fc52ba79af46e008b1463da4c0852564f2bfce21668468b683550df1f1ff3e4f149641bbce1cffb24510569c1a441bb47f73dd2b0cff87073631c391dc248211'
+      SHA1SUM_ICEBERG_JAR='48d553e4e5496f731b9e0e6adb5bc0fd040cb0df'
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
       cd $CRAFT_PART_INSTALL/opt/spark/jars
       wget -q "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/${AWS_JAVA_SDK_BUNDLE_VERSION}/aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar"
-      wget -q "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/${AWS_JAVA_SDK_BUNDLE_VERSION}/aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar.sha1"
-      echo "`cat aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar.sha1`  aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar" | sha1sum --check
+      echo "${SHA1SUM_AWS_JAVA_SDK_BUNDLE_JAR} aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar" | sha1sum --check
       if  [[ $? -ne 0 ]]
         then
           echo "DOWNLOAD ERROR: aws-java-sdk-bundle-${AWS_JAVA_SDK_BUNDLE_VERSION}.jar could not be downloaded properly! Exiting...." >&2
           exit 1
       fi
       wget -q "https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_AWS_VERSION}/hadoop-aws-${HADOOP_AWS_VERSION}.jar"
-      wget -q "https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_AWS_VERSION}/hadoop-aws-${HADOOP_AWS_VERSION}.jar.sha1"
-      echo "`cat hadoop-aws-${HADOOP_AWS_VERSION}.jar.sha1`  hadoop-aws-${HADOOP_AWS_VERSION}.jar" | sha1sum --check
+      echo "${SHA1SUM_HADOOP_AWS_JAR}  hadoop-aws-${HADOOP_AWS_VERSION}.jar" | sha1sum --check
       if  [[ $? -ne 0 ]]
         then
           echo "DOWNLOAD ERROR: hadoop-aws-${HADOOP_AWS_VERSION}.jar could not be downloaded properly! Exiting...." >&2
@@ -115,15 +117,14 @@ parts:
       fi
       wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar"
       wget -q "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-3.4-1.0.0/spark-metrics-assembly-3.4-1.0.0.jar.sha512"
-      echo "`cat spark-metrics-assembly-3.4-1.0.0.jar.sha512`" | sha512sum --check
+      echo "${SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR} spark-metrics-assembly-3.4-1.0.0.jar" | sha512sum --check
       if  [[ $? -ne 0 ]]
         then
           echo "DOWNLOAD ERROR: spark-metrics-assembly-3.4-1.0.0.jar could not be downloaded properly! Exiting...." >&2
           exit 1
       fi
       wget -q "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/${ICEBERG_VERSION}/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar"
-      wget -q "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/${ICEBERG_VERSION}/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar.sha1"
-      echo "`cat iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar.sha1`  iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar" | sha1sum --check
+      echo "${SHA1SUM_ICEBERG_JAR} iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar" | sha1sum --check
       if  [[ $? -ne 0 ]]
         then
           echo "DOWNLOAD ERROR: iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar could not be downloaded properly! Exiting...." >&2
