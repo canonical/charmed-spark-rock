@@ -39,10 +39,6 @@ jobs:
           name: charmed-spark
           path: charmed-spark
 
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-
-
       - name: Run tests
         run: |
           # Unpack Artifact
@@ -58,3 +54,6 @@ jobs:
             -o $(find .make_cache -name "*.tag")
           
           sg microk8s -c "make tests"
+
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
