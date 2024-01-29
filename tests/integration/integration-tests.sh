@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 get_spark_version(){
   SPARK_VERSION=$(yq '(.version)' rockcraft.yaml)
@@ -185,15 +186,22 @@ create_s3_bucket(){
   echo "Created S3 bucket ${BUCKET_NAME}"
 }
 
+delete_s3_bucket(){
+  S3_ENDPOINT=$(get_s3_endpoint)
+  BUCKET_NAME=$1
+  aws --endpoint-url "http://$S3_ENDPOINT" s3 rb "s3://$BUCKET_NAME" --force
+  echo "Deleted S3 bucket ${BUCKET_NAME}"
+}
+
 copy_file_to_s3_bucket(){
   BUCKET_NAME=$1
   FILE_PATH=$2
   BASE_NAME=$(basename "$FILE_PATH")
-  aws s3 cp $FILE_PATH s3://"$BUCKET_NAME"/"$BASE_NAME"
+  aws --endpoint-url "http://$S3_ENDPOINT" s3 cp $FILE_PATH s3://"$BUCKET_NAME"/"$BASE_NAME"
   echo "Copied file ${FILE_PATH} to S3 bucket ${BUCKET_NAME}"
 }
 
-run_iceberg_example_in_pod(){
+test_iceberg_example_in_pod(){
   create_s3_bucket spark
   copy_file_to_s3_bucket spark ./tests/integration/resources/test-iceberg.py
 
@@ -202,27 +210,38 @@ run_iceberg_example_in_pod(){
   NUM_ROWS_TO_INSERT="4"
   PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods -n ${NAMESPACE} | grep driver | wc -l)
 
-  kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" IM="$(spark_image)" \
-      /bin/bash -c 'spark-client.spark-submit' \
-      --username $UU --namespace $NN \
-      --conf spark.kubernetes.driver.request.cores=100m \
-      --conf spark.kubernetes.executor.request.cores=100m \
-      --conf spark.kubernetes.container.image=$IM \
-      --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider \
-      --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
-      --conf spark.hadoop.fs.s3a.path.style.access=true \
-      --conf spark.hadoop.fs.s3a.access.key=$(get_s3_access_key) \
-      --conf spark.hadoop.fs.s3a.secret.key=$(get_s3_secret_key) \
-      --conf spark.jars.ivy=/tmp \
-      --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions \
-      --conf spark.sql.catalog.spark_catalog=org.apache.iceberg.spark.SparkSessionCatalog \
-      --conf spark.sql.catalog.spark_catalog.type=hive \
-      --conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
-      --conf spark.sql.catalog.local.type=hadoop \
-      --conf spark.sql.catalog.local.warehouse=s3a://spark/warehouse \
-      --conf spark.sql.defaultCatalog=local   
-      s3a://spark/test-iceberg.py -n ${NUM_ROWS_TO_INSERT}
+  kubectl exec testpod -- \
+      env \
+        UU="$USERNAME" \
+        NN="$NAMESPACE" \
+        IM="$(spark_image)" \
+        NUM_ROWS="$NUM_ROWS_TO_INSERT" \
+        ACCESS_KEY="$(get_s3_access_key)" \
+        SECRET_KEY="$(get_s3_secret_key)" \
+        S3_ENDPOINT="$(get_s3_endpoint)" \
+      /bin/bash -c '\
+        spark-client.spark-submit \
+        --username $UU --namespace $NN \
+        --conf spark.kubernetes.driver.request.cores=100m \
+        --conf spark.kubernetes.executor.request.cores=100m \
+        --conf spark.kubernetes.container.image=$IM \
+        --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider \
+        --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
+        --conf spark.hadoop.fs.s3a.path.style.access=true \
+        --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
+        --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
+        --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
+        --conf spark.jars.ivy=/tmp \
+        --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions \
+        --conf spark.sql.catalog.spark_catalog=org.apache.iceberg.spark.SparkSessionCatalog \
+        --conf spark.sql.catalog.spark_catalog.type=hive \
+        --conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
+        --conf spark.sql.catalog.local.type=hadoop \
+        --conf spark.sql.catalog.local.warehouse=s3a://spark/warehouse \
+        --conf spark.sql.defaultCatalog=local \
+        s3a://spark/test-iceberg.py -n $NUM_ROWS'
   
+  delete_s3_bucket spark
   DRIVER_PODS_COUNT=$(kubectl get pods -n ${NAMESPACE} | grep driver | wc -l)
 
   if [[ "${PREVIOUS_DRIVER_PODS_COUNT}" == "${DRIVER_PODS_COUNT}" ]]
