@@ -44,9 +44,6 @@ jobs:
           ARTIFACT=$(make help | grep 'Artifact: ')
           echo "name=${ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
-      - name: Change artifact permissions
-        run: sudo chmod a+r ${{ steps.artifact.outputs.name }}
-
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v3
         with:
