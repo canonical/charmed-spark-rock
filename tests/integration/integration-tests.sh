@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 
 get_spark_version(){
   SPARK_VERSION=$(yq '(.version)' rockcraft.yaml)
