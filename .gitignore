@@ -1,1 +1,4 @@
 .idea
+*.rock
+*.tar
+.make_cache
