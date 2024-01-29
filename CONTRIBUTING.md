@@ -13,6 +13,7 @@ cd charmed-spark-rock
 sudo snap install rockcraft --edge
 sudo snap install docker
 sudo snap install lxd
+sudo snap install yq
 sudo snap install skopeo --edge --devmode
 ```
 
