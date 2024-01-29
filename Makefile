@@ -89,7 +89,7 @@ $(AWS_TAG): $(K8S_TAG)
 microk8s: $(K8S_TAG)
 
 $(_MAKE_DIR)/%/$(TAG).tar: $(_MAKE_DIR)/%/$(TAG).tag
-	docker save $*:$(TAG) > $(_MAKE_DIR)/$*/$(TAG).tar
+	docker save $*:$(TAG) -o $(_MAKE_DIR)/$*/$(TAG).tar
 
 $(BASE_NAME): $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tar
 	@echo "=== Creating $(BASE_NAME) OCI archive ==="
