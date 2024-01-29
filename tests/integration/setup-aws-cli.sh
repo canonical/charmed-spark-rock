@@ -11,4 +11,5 @@ S3_BUCKET="spark"
 # Configure AWS CLI credentials
 aws configure set aws_access_key_id $ACCESS_KEY
 aws configure set aws_secret_access_key $SECRET_KEY
+aws configure set default.region us-east-2
 echo "AWS CLI credentials set successfully"
