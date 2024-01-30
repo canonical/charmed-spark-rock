@@ -531,7 +531,7 @@ echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
 echo -e "##################################"
 
-# teardown_test_pod
+teardown_test_pod
 
 echo -e "##################################"
 echo -e "END OF THE TEST"
