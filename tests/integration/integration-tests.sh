@@ -196,6 +196,7 @@ copy_file_to_s3_bucket(){
   BUCKET_NAME=$1
   FILE_PATH=$2
   BASE_NAME=$(basename "$FILE_PATH")
+  S3_ENDPOINT=$(get_s3_endpoint)
   aws --endpoint-url "http://$S3_ENDPOINT" s3 cp $FILE_PATH s3://"$BUCKET_NAME"/"$BASE_NAME"
   echo "Copied file ${FILE_PATH} to S3 bucket ${BUCKET_NAME}"
 }
