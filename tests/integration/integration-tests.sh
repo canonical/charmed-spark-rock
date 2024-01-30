@@ -525,7 +525,7 @@ echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
 echo -e "##################################"
 
-(setup_user_admin_context && test_iceberg_example_in_pod && cleanup_user_success) #|| cleanup_user_failure_in_pod
+(setup_user_admin_context && test_iceberg_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
