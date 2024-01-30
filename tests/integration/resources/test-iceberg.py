@@ -9,16 +9,12 @@ parser.add_argument("--num_rows", "-n", type=int)
 args = parser.parse_args()
 num_rows = args.num_rows
 
-spark = SparkSession\
-    .builder\
-    .appName("IcebergExample")\
-    .getOrCreate()
+spark = SparkSession.builder.appName("IcebergExample").getOrCreate()
 
 
-schema = StructType([
-  StructField("row_id", LongType(), True),
-  StructField("row_val", LongType(), True)
-])
+schema = StructType(
+    [StructField("row_id", LongType(), True), StructField("row_val", LongType(), True)]
+)
 
 data = []
 for idx in range(num_rows):
