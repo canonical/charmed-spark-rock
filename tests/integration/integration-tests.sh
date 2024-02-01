@@ -216,7 +216,7 @@ test_iceberg_example_in_pod(){
   # Test Iceberg integration in Charmed Spark Rock
 
   # First create S3 bucket named 'spark'
-  create_s3_bucket spark]
+  create_s3_bucket spark
 
   # Copy 'test-iceberg.py' script to 'spark' bucket
   copy_file_to_s3_bucket spark ./tests/integration/resources/test-iceberg.py
