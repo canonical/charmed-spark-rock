@@ -346,6 +346,28 @@ test_spark_shell_in_pod() {
   run_spark_shell_in_pod tests spark
 }
 
+run_spark_sql_in_pod() {
+  echo "run_spark_sql_in_pod ${1} ${2}"
+
+  NAMESPACE=$1
+  USERNAME=$2
+
+  SPARK_SHELL_COMMANDS=$(cat ./tests/integration/resources/test-spark-sql.sql)
+
+  echo -e "$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$SPARK_SHELL_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | spark-client.spark-sql --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > spark-sql.out
+  num_rows_inserted=$(cat spark-sql.out  | grep "^Inserted Rows:" | rev | cut -d' ' -f1 | rev )
+  echo -e "${num_rows_inserted} rows were inserted."
+  rm spark-sql.out
+  if [ "${num_rows_inserted}" != "3" ]; then
+      echo "ERROR: Testing spark-sql failed. ${num_rows_inserted} out of 3 rows were inserted. Aborting with exit code 1."
+      exit 1
+  fi
+}
+
+test_spark_sql_in_pod() {
+  run_spark_sql_in_pod tests spark
+}
+
 run_pyspark_in_pod() {
   echo "run_pyspark_in_pod ${1} ${2}"
 
@@ -353,10 +375,6 @@ run_pyspark_in_pod() {
   USERNAME=$2
 
   PYSPARK_COMMANDS=$(cat ./tests/integration/resources/test-pyspark.py)
-
-  # Check job output
-  # Sample output
-  # "Pi is roughly 3.13956232343"
 
   echo -e "$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$PYSPARK_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | spark-client.pyspark --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > pyspark.out
 
@@ -408,6 +426,12 @@ echo -e "##################################"
 (setup_user_admin_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
+echo -e "RUN SPARK SQL IN POD"
+echo -e "##################################"
+
+(setup_user_admin_context && test_spark_sql_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo -e "##################################"
 echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
 echo -e "##################################"
 
@@ -418,7 +442,6 @@ echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
 echo -e "########################################"
 
 (setup_user_admin_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
-
 
 echo -e "########################################"
 echo -e "RUN EXAMPLE JOB WITH ERRORS"
