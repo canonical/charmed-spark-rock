@@ -135,7 +135,7 @@ teardown_test_pod() {
 run_example_job_in_pod() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
 
-  PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+  PREVIOUS_JOB=$(kubectl get pods -n ${NAMESPACE}| grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
   USERNAME=$2
 
@@ -164,6 +164,136 @@ run_example_job_in_pod() {
   echo -e "Spark Pi Job Output: \n ${pi}"
 
   validate_pi_value $pi
+}
+
+get_s3_access_key(){
+  # Prints out S3 Access Key by reading it from K8s secret
+  kubectl get secret -n minio-operator microk8s-user-1 -o jsonpath='{.data.CONSOLE_ACCESS_KEY}' | base64 -d
+}
+
+get_s3_secret_key(){
+  # Prints out S3 Secret Key by reading it from K8s secret
+  kubectl get secret -n minio-operator microk8s-user-1 -o jsonpath='{.data.CONSOLE_SECRET_KEY}' | base64 -d
+}
+
+get_s3_endpoint(){
+  # Prints out the endpoint S3 bucket is exposed on.
+  kubectl get service minio -n minio-operator -o jsonpath='{.spec.clusterIP}'
+}
+
+create_s3_bucket(){
+  # Creates a S3 bucket with the given name.
+  S3_ENDPOINT=$(get_s3_endpoint)
+  BUCKET_NAME=$1
+  aws --endpoint-url "http://$S3_ENDPOINT" s3api create-bucket --bucket "$BUCKET_NAME"
+  echo "Created S3 bucket ${BUCKET_NAME}"
+}
+
+delete_s3_bucket(){
+  # Deletes a S3 bucket with the given name.
+  S3_ENDPOINT=$(get_s3_endpoint)
+  BUCKET_NAME=$1
+  aws --endpoint-url "http://$S3_ENDPOINT" s3 rb "s3://$BUCKET_NAME" --force
+  echo "Deleted S3 bucket ${BUCKET_NAME}"
+}
+
+copy_file_to_s3_bucket(){
+  # Copies a file from local to S3 bucket.
+  # The bucket name and the path to file that is to be uploaded is to be provided as arguments
+  BUCKET_NAME=$1
+  FILE_PATH=$2
+
+  # If file path is '/foo/bar/file.ext', the basename is 'file.ext'
+  BASE_NAME=$(basename "$FILE_PATH")
+  S3_ENDPOINT=$(get_s3_endpoint)
+
+  # Copy the file to S3 bucket
+  aws --endpoint-url "http://$S3_ENDPOINT" s3 cp $FILE_PATH s3://"$BUCKET_NAME"/"$BASE_NAME"
+  echo "Copied file ${FILE_PATH} to S3 bucket ${BUCKET_NAME}"
+}
+
+test_iceberg_example_in_pod(){
+  # Test Iceberg integration in Charmed Spark Rock
+
+  # First create S3 bucket named 'spark'
+  create_s3_bucket spark
+
+  # Copy 'test-iceberg.py' script to 'spark' bucket
+  copy_file_to_s3_bucket spark ./tests/integration/resources/test-iceberg.py
+
+  NAMESPACE="tests"
+  USERNAME="spark"
+
+  # Number of rows that are to be inserted during the test.
+  NUM_ROWS_TO_INSERT="4"
+
+  # Number of driver pods that exist in the namespace already.
+  PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods -n ${NAMESPACE} | grep driver | wc -l)
+
+  # Submit the job from inside 'testpod'
+  kubectl exec testpod -- \
+      env \
+        UU="$USERNAME" \
+        NN="$NAMESPACE" \
+        IM="$(spark_image)" \
+        NUM_ROWS="$NUM_ROWS_TO_INSERT" \
+        ACCESS_KEY="$(get_s3_access_key)" \
+        SECRET_KEY="$(get_s3_secret_key)" \
+        S3_ENDPOINT="$(get_s3_endpoint)" \
+      /bin/bash -c '\
+        spark-client.spark-submit \
+        --username $UU --namespace $NN \
+        --conf spark.kubernetes.driver.request.cores=100m \
+        --conf spark.kubernetes.executor.request.cores=100m \
+        --conf spark.kubernetes.container.image=$IM \
+        --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider \
+        --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
+        --conf spark.hadoop.fs.s3a.path.style.access=true \
+        --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
+        --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
+        --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
+        --conf spark.jars.ivy=/tmp \
+        --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions \
+        --conf spark.sql.catalog.spark_catalog=org.apache.iceberg.spark.SparkSessionCatalog \
+        --conf spark.sql.catalog.spark_catalog.type=hive \
+        --conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
+        --conf spark.sql.catalog.local.type=hadoop \
+        --conf spark.sql.catalog.local.warehouse=s3a://spark/warehouse \
+        --conf spark.sql.defaultCatalog=local \
+        s3a://spark/test-iceberg.py -n $NUM_ROWS'
+  
+  # Delete 'spark' bucket
+  delete_s3_bucket spark
+
+  # Number of driver pods after the job is completed.
+  DRIVER_PODS_COUNT=$(kubectl get pods -n ${NAMESPACE} | grep driver | wc -l)
+
+  # If the number of driver pods is same as before, job has not been run at all!
+  if [[ "${PREVIOUS_DRIVER_PODS_COUNT}" == "${DRIVER_PODS_COUNT}" ]]
+  then
+    echo "ERROR: Sample job has not run!"
+    exit 1
+  fi
+
+  # Find the ID of the driver pod that ran the job.
+  # tail -n 1       => Filter out the last line
+  # cut -d' ' -f1   => Split by spaces and pick the first part 
+  DRIVER_POD_ID=$(kubectl get pods -n ${NAMESPACE} | grep test-iceberg-.*-driver | tail -n 1 | cut -d' ' -f1)
+
+  # Filter out the output log line
+  OUTPUT_LOG_LINE=$(kubectl logs ${DRIVER_POD_ID} -n ${NAMESPACE} | grep 'Number of rows inserted:' )
+
+  # Fetch out the number of rows inserted
+  # rev             => Reverse the string
+  # cut -d' ' -f1   => Split by spaces and pick the first part 
+  # rev             => Reverse the string back
+  NUM_ROWS_INSERTED=$(echo $OUTPUT_LOG_LINE | rev | cut -d' ' -f1 | rev)
+
+  if [ "${NUM_ROWS_INSERTED}" != "${NUM_ROWS_TO_INSERT}" ]; then
+      echo "ERROR: ${NUM_ROWS_TO_INSERT} were supposed to be inserted. Found ${NUM_ROWS_INSERTED} rows. Aborting with exit code 1."
+      exit 1
+  fi
+
 }
 
 run_example_job_in_pod_with_pod_templates() {
@@ -425,6 +555,13 @@ echo -e "RUN EXAMPLE JOB WITH ERRORS"
 echo -e "########################################"
 
 (setup_user_admin_context && test_example_job_in_pod_with_errors && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo -e "##################################"
+echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
+echo -e "##################################"
+
+(setup_user_admin_context && test_iceberg_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
 echo -e "##################################"

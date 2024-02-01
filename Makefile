@@ -24,6 +24,7 @@ _MAKE_DIR := .make_cache
 $(shell mkdir -p $(_MAKE_DIR))
 
 K8S_TAG := $(_MAKE_DIR)/.k8s_tag
+AWS_TAG := $(_MAKE_DIR)/.aws_tag
 
 IMAGE_NAME := $(shell yq .name rockcraft.yaml)
 VERSION := $(shell yq .version rockcraft.yaml)
@@ -70,7 +71,7 @@ $(_TMP_OCI_TAG): $(_ROCK_OCI)
 	touch $(_TMP_OCI_TAG)
 
 $(CHARMED_OCI_TAG): $(_TMP_OCI_TAG)
-	docker build - -t "$(CHARMED_OCI_FULL_NAME):$(TAG)" --build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(TAG)" < Dockerfile
+	docker build -t "$(CHARMED_OCI_FULL_NAME):$(TAG)" --build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(TAG)" -f Dockerfile .
 	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)"; fi
 	touch $(CHARMED_OCI_TAG)
 
@@ -80,10 +81,15 @@ $(K8S_TAG):
 	sg microk8s ./tests/integration/config-microk8s.sh
 	@touch $(K8S_TAG)
 
+$(AWS_TAG): $(K8S_TAG)
+	@echo "=== Setting up and configure AWS CLI ==="
+	/bin/bash ./tests/integration/setup-aws-cli.sh
+	touch $(AWS_TAG)
+
 microk8s: $(K8S_TAG)
 
 $(_MAKE_DIR)/%/$(TAG).tar: $(_MAKE_DIR)/%/$(TAG).tag
-	docker save $*:$(TAG) > $(_MAKE_DIR)/$*/$(TAG).tar
+	docker save $*:$(TAG) -o $(_MAKE_DIR)/$*/$(TAG).tar
 
 $(BASE_NAME): $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tar
 	@echo "=== Creating $(BASE_NAME) OCI archive ==="
@@ -106,7 +112,7 @@ import: $(K8S_TAG) build
 	microk8s ctr images import --base-name $(CHARMED_OCI_FULL_NAME):$(TAG) $(BASE_NAME)
 endif
 
-tests:
+tests: $(K8S_TAG) $(AWS_TAG)
 	@echo "=== Running Integration Tests ==="
 	/bin/bash ./tests/integration/integration-tests.sh
 
