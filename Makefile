@@ -15,7 +15,7 @@ REPOSITORY :=
 PREFIX :=
 TARGET := docker
 PLATFORM := amd64
-FLAVOUR := "base"
+FLAVOUR := "spark"
 
 # ======================
 # INTERNAL VARIABLES
@@ -27,30 +27,33 @@ $(shell mkdir -p $(_MAKE_DIR))
 K8S_TAG := $(_MAKE_DIR)/.k8s_tag
 
 IMAGE_NAME := $(shell yq .name rockcraft.yaml)
+
 VERSION := $(shell yq .version rockcraft.yaml)
 
-TAG := $(VERSION)
-
-BASE_NAME=$(IMAGE_NAME)_$(VERSION)_$(PLATFORM).tar
+VERSION_FLAVOUR=$(shell grep "version:$(FLAVOUR)" rockcraft.yaml | sed "s/^#//" | cut -d ":" -f3)
 
 _ROCK_OCI=$(IMAGE_NAME)_$(VERSION)_$(PLATFORM).rock
 
-_TMP_OCI_NAME := stage-$(IMAGE_NAME)
-_TMP_OCI_TAG := $(_MAKE_DIR)/$(_TMP_OCI_NAME)/$(TAG)
-
 CHARMED_OCI_FULL_NAME=$(REPOSITORY)$(PREFIX)$(IMAGE_NAME)
-CHARMED_OCI_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG)
-
 CHARMED_OCI_JUPYTER=$(CHARMED_OCI_FULL_NAME)-jupyterlab
-CHARMED_OCI_JUPYTER_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(TAG)
 
 ifeq ($(FLAVOUR), jupyter)
 NAME=$(CHARMED_OCI_JUPYTER)
-FTAG=$(CHARMED_OCI_JUPYTER_TAG)
+TAG=$(VERSION)-$(VERSION_FLAVOUR)
+BASE_NAME=$(IMAGE_NAME)-jupyterlab_$(VERSION)_$(PLATFORM).tar
 else
 NAME=$(CHARMED_OCI_FULL_NAME)
-FTAG=$(CHARMED_OCI_TAG)
+TAG=$(VERSION)
+BASE_NAME=$(IMAGE_NAME)_$(VERSION)_$(PLATFORM).tar
 endif
+
+FTAG=$(_MAKE_DIR)/$(NAME)/$(TAG)
+
+CHARMED_OCI_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG)
+CHARMED_OCI_JUPYTER_TAG := $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(TAG)
+
+_TMP_OCI_NAME := stage-$(IMAGE_NAME)
+_TMP_OCI_TAG := $(_MAKE_DIR)/$(_TMP_OCI_NAME)/$(TAG)
 
 help:
 	@echo "---------------HELP-----------------"
@@ -58,10 +61,11 @@ help:
 	@echo "Version: $(VERSION)"
 	@echo "Platform: $(PLATFORM)"
 	@echo " "
-	@echo "Artifact: $(BASE_NAME)"
+	@echo "Flavour: $(FLAVOUR)"
 	@echo " "
-	@echo "Image: $(CHARMED_OCI_FULL_NAME)"
-	@echo "Jupyter: $(CHARMED_OCI_JUPYTER)"
+	@echo "Image: $(NAME)"
+	@echo "Tag: $(TAG)"
+	@echo "Artifact: $(BASE_NAME)"
 	@echo " "
 	@echo "Type 'make' followed by one of these keywords:"
 	@echo " "
@@ -93,12 +97,17 @@ $(K8S_TAG):
 microk8s: $(K8S_TAG)
 
 $(CHARMED_OCI_TAG).tag: $(_TMP_OCI_TAG).tag build/Dockerfile
-	docker build -t "$(CHARMED_OCI_FULL_NAME):$(TAG)" --build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(TAG)" -f build/Dockerfile .
+	docker build -t "$(CHARMED_OCI_FULL_NAME):$(TAG)" \
+		--build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(TAG)" \
+		-f build/Dockerfile .
 	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)"; fi
 	touch $(CHARMED_OCI_TAG).tag
 
 $(CHARMED_OCI_JUPYTER_TAG).tag: $(CHARMED_OCI_TAG).tag build/Dockerfile.jupyter files/jupyter
-	docker build -t "$(CHARMED_OCI_JUPYTER):$(TAG)" --build-arg BASE_IMAGE="$(CHARMED_OCI_FULL_NAME):$(TAG)" -f build/Dockerfile.jupyter .
+	docker build -t "$(CHARMED_OCI_JUPYTER):$(TAG)" \
+		--build-arg BASE_IMAGE="$(CHARMED_OCI_FULL_NAME):$(TAG)" \
+		--build-arg JUPYTERLAB_VERSION="$(VERSION_FLAVOUR)" \
+		-f build/Dockerfile.jupyter .
 	if [ ! -d "$(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)" ]; then mkdir -p "$(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)"; fi
 	touch $(CHARMED_OCI_JUPYTER_TAG).tag
 

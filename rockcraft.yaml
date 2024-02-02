@@ -4,7 +4,11 @@ description: Spark ROCK
 license: Apache-2.0
 
 version: "3.4.2"
+# version:spark:3.4.2
+# version:jupyter:4.0.11
+
 base: ubuntu@22.04
+
 platforms:
   amd64:
 
@@ -17,7 +21,6 @@ environment:
   PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3.10/site-packages
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
   HOME: /var/lib/spark
-  # KUBECONFIG: /var/lib/spark/.kube/config
   SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
 
@@ -133,7 +136,7 @@ parts:
       - python3-pip
     overlay-script: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
-      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist  git+https://github.com/canonical/spark-k8s-toolkit-py.git@dpe-3398-fix-service-account-permission
+      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist  https://github.com/canonical/spark-k8s-toolkit-py/releases/download/v0.0.3/spark8t-0.0.3-py3-none-any.whl
       rm usr/bin/pip*
     stage:
       - opt/spark8t/python/dist
