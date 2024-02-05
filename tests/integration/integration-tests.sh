@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# The integration tests are designed to tests that Spark Jobs can be submitted and/or shell processes are
+# working properly with restricted permission of the service account starting the process. For this reason,
+# in the tests we spawn two pods:
+#
+# 1. Admin pod, that is used to create and delete service accounts
+# 2. User pod, that is used to start and execute Spark Jobs
+#
+# The Admin pod is created once at the beginning of the tests and it is used to manage Spark service accounts
+# throughtout the integration tests. On the other hand, the User pod(s) are created together with the creation
+# of the Spark user (service accounts and secrets) at the beginning of each test, and they are destroyed at the
+# end of the test.
+
+
+NAMESPACE=tests
+
 get_spark_version(){
   SPARK_VERSION=$(yq '(.version)' rockcraft.yaml)
   echo "$SPARK_VERSION"
@@ -27,39 +42,30 @@ validate_metrics() {
   fi
 }
 
-test_restricted_account() {
-
-  kubectl config set-context spark-context --namespace=tests --cluster=prod --user=spark
-
-  run_example_job tests spark
-}
-
 setup_user() {
-  echo "setup_user() ${1} ${2} ${3}"
+  echo "setup_user() ${1} ${2}"
 
   USERNAME=$1
   NAMESPACE=$2
 
-  kubectl create namespace ${NAMESPACE}
+  kubectl -n $NAMESPACE exec testpod-admin -- env UU="$USERNAME" NN="$NAMESPACE" \
+                /bin/bash -c 'spark-client.service-account-registry create --username $UU --namespace $NN'
 
-  if [ "$#" -gt 2 ]
-  then
-    CONTEXT=$3 
-    kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CX="$CONTEXT" \
-                  /bin/bash -c 'spark-client.service-account-registry create --context $CX --username $UU --namespace $NN' 
-  else
-    kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" \
-                  /bin/bash -c 'spark-client.service-account-registry create --username $UU --namespace $NN' 
-  fi
+  # Create the pod with the Spark service account
+  yq ea ".spec.serviceAccountName = \"${USERNAME}\"" \
+    ./tests/integration/resources/testpod.yaml | \
+    kubectl -n tests apply -f -
 
+  wait_for_pod testpod $NAMESPACE
+
+  TEST_POD_TEMPLATE=$(cat tests/integration/resources/podTemplate.yaml)
+
+  kubectl -n $NAMESPACE exec testpod -- /bin/bash -c 'cp -r /opt/spark/python /var/lib/spark/'
+  kubectl -n $NAMESPACE exec testpod -- env PTEMPLATE="$TEST_POD_TEMPLATE" /bin/bash -c 'echo "$PTEMPLATE" > /etc/spark/conf/podTemplate.yaml'
 }
 
-setup_user_admin_context() {
-  setup_user spark tests
-}
-
-setup_user_restricted_context() {
-  setup_user spark tests microk8s
+setup_user_context() {
+  setup_user spark $NAMESPACE
 }
 
 cleanup_user() {
@@ -67,18 +73,18 @@ cleanup_user() {
   USERNAME=$2
   NAMESPACE=$3
 
-  kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" \
+  kubectl -n $NAMESPACE delete pod testpod --wait=true
+
+  kubectl -n $NAMESPACE exec testpod-admin -- env UU="$USERNAME" NN="$NAMESPACE" \
                   /bin/bash -c 'spark-client.service-account-registry delete --username $UU --namespace $NN'  
 
-  OUTPUT=$(kubectl exec testpod -- /bin/bash -c 'spark-client.service-account-registry list')
+  OUTPUT=$(kubectl -n $NAMESPACE exec testpod-admin -- /bin/bash -c 'spark-client.service-account-registry list')
 
   EXISTS=$(echo -e "$OUTPUT" | grep "$NAMESPACE:$USERNAME" | wc -l)
 
   if [ "${EXISTS}" -ne "0" ]; then
       exit 2
   fi
-
-  kubectl delete namespace ${NAMESPACE}
 
   if [ "${EXIT_CODE}" -ne "0" ]; then
       exit 1
@@ -87,27 +93,29 @@ cleanup_user() {
 
 cleanup_user_success() {
   echo "cleanup_user_success()......"
-  cleanup_user 0 spark tests
+  cleanup_user 0 spark $NAMESPACE
 }
 
 cleanup_user_failure() {
   echo "cleanup_user_failure()......"
-  cleanup_user 1 spark tests
+  cleanup_user 1 spark $NAMESPACE
 }
 
-setup_test_pod() {
-  kubectl apply -f ./tests/integration/resources/testpod.yaml
+wait_for_pod() {
+
+  POD=$1
+  NAMESPACE=$2
 
   SLEEP_TIME=1
   for i in {1..5}
   do
-    pod_status=$(kubectl get pod testpod | awk '{ print $3 }' | tail -n 1)
+    pod_status=$(kubectl -n ${NAMESPACE} get pod ${POD} | awk '{ print $3 }' | tail -n 1)
     echo $pod_status
-    if [ "${pod_status}" == "Running" ]
+    if [[ "${pod_status}" == "Running" ]]
     then
         echo "testpod is Running now!"
         break
-    elif [ "${i}" -le "5" ]
+    elif [[ "${i}" -le "5" ]]
     then
         echo "Waiting for the pod to come online..."
         sleep $SLEEP_TIME
@@ -117,29 +125,41 @@ setup_test_pod() {
     fi
     SLEEP_TIME=$(expr $SLEEP_TIME \* 2);
   done
+}
+
+setup_admin_test_pod() {
+  kubectl create ns $NAMESPACE
+
+  echo "Creating admin test-pod"
+
+  # Create a pod with admin service account
+  yq ea '.spec.containers[0].env[0].name = "KUBECONFIG" | .spec.containers[0].env[0].value = "/var/lib/spark/.kube/config" | .metadata.name = "testpod-admin"' \
+    ./tests/integration/resources/testpod.yaml | \
+    kubectl -n tests apply -f -
+
+  wait_for_pod testpod-admin $NAMESPACE
 
   MY_KUBE_CONFIG=$(cat /home/${USER}/.kube/config)
-  TEST_POD_TEMPLATE=$(cat tests/integration/resources/podTemplate.yaml)
 
-  kubectl exec testpod -- /bin/bash -c 'mkdir -p ~/.kube'
-  kubectl exec testpod -- env KCONFIG="$MY_KUBE_CONFIG" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
-  kubectl exec testpod -- /bin/bash -c 'cat ~/.kube/config'
-  kubectl exec testpod -- /bin/bash -c 'cp -r /opt/spark/python /var/lib/spark/'
-  kubectl exec testpod -- env PTEMPLATE="$TEST_POD_TEMPLATE" /bin/bash -c 'echo "$PTEMPLATE" > /etc/spark/conf/podTemplate.yaml'
+  kubectl -n $NAMESPACE exec testpod-admin -- /bin/bash -c 'mkdir -p ~/.kube'
+  kubectl -n $NAMESPACE exec testpod-admin -- env KCONFIG="$MY_KUBE_CONFIG" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
 }
 
 teardown_test_pod() {
-  kubectl delete pod testpod
+  kubectl -n $NAMESPACE delete pod testpod
+  kubectl -n $NAMESPACE delete pod testpod-admin
+
+  kubectl delete namespace $NAMESPACE
 }
 
 run_example_job_in_pod() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
 
-  PREVIOUS_JOB=$(kubectl get pods -n ${NAMESPACE}| grep driver | tail -n 1 | cut -d' ' -f1)
+  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
   USERNAME=$2
 
-  kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+  kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
                   /bin/bash -c 'spark-client.spark-submit \
                   --username $UU --namespace $NN \
                   --conf spark.kubernetes.driver.request.cores=100m \
@@ -231,7 +251,7 @@ test_iceberg_example_in_pod(){
   PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods -n ${NAMESPACE} | grep driver | wc -l)
 
   # Submit the job from inside 'testpod'
-  kubectl exec testpod -- \
+  kubectl -n $NAMESPACE exec testpod -- \
       env \
         UU="$USERNAME" \
         NN="$NAMESPACE" \
@@ -261,7 +281,7 @@ test_iceberg_example_in_pod(){
         --conf spark.sql.catalog.local.warehouse=s3a://spark/warehouse \
         --conf spark.sql.defaultCatalog=local \
         s3a://spark/test-iceberg.py -n $NUM_ROWS'
-  
+
   # Delete 'spark' bucket
   delete_s3_bucket spark
 
@@ -277,7 +297,7 @@ test_iceberg_example_in_pod(){
 
   # Find the ID of the driver pod that ran the job.
   # tail -n 1       => Filter out the last line
-  # cut -d' ' -f1   => Split by spaces and pick the first part 
+  # cut -d' ' -f1   => Split by spaces and pick the first part
   DRIVER_POD_ID=$(kubectl get pods -n ${NAMESPACE} | grep test-iceberg-.*-driver | tail -n 1 | cut -d' ' -f1)
 
   # Filter out the output log line
@@ -285,7 +305,7 @@ test_iceberg_example_in_pod(){
 
   # Fetch out the number of rows inserted
   # rev             => Reverse the string
-  # cut -d' ' -f1   => Split by spaces and pick the first part 
+  # cut -d' ' -f1   => Split by spaces and pick the first part
   # rev             => Reverse the string back
   NUM_ROWS_INSERTED=$(echo $OUTPUT_LOG_LINE | rev | cut -d' ' -f1 | rev)
 
@@ -299,11 +319,11 @@ test_iceberg_example_in_pod(){
 run_example_job_in_pod_with_pod_templates() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
 
-  PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods | grep driver | tail -n 1 | cut -d' ' -f1)
 
   NAMESPACE=$1
   USERNAME=$2
-  kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+  kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
                   /bin/bash -c 'spark-client.spark-submit \
                   --username $UU --namespace $NN \
                   --conf spark.kubernetes.driver.request.cores=100m \
@@ -345,7 +365,7 @@ run_example_job_in_pod_with_metrics() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
   LOG_FILE="/tmp/server.log"
   SERVER_PORT=9091
-  PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods | grep driver | tail -n 1 | cut -d' ' -f1)
   # start simple http server
   python3 tests/integration/resources/test_web_server.py $SERVER_PORT > $LOG_FILE &
   HTTP_SERVER_PID=$!
@@ -354,7 +374,7 @@ run_example_job_in_pod_with_metrics() {
   echo "IP: $IP_ADDRESS"
   NAMESPACE=$1
   USERNAME=$2
-  kubectl exec testpod -- env PORT="$SERVER_PORT" IP="$IP_ADDRESS" UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+  kubectl -n $NAMESPACE exec testpod -- env PORT="$SERVER_PORT" IP="$IP_ADDRESS" UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
                   /bin/bash -c 'spark-client.spark-submit \
                   --username $UU --namespace $NN \
                   --conf spark.kubernetes.driver.request.cores=100m \
@@ -392,11 +412,11 @@ run_example_job_in_pod_with_metrics() {
 run_example_job_with_error_in_pod() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
 
-  PREVIOUS_JOB=$(kubectl get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
   USERNAME=$2
 
-  kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+  kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
                   /bin/bash -c 'spark-client.spark-submit \
                   --username $UU --namespace $NN \
                   --conf spark.kubernetes.driver.request.cores=100m \
@@ -433,21 +453,21 @@ run_example_job_with_error_in_pod() {
 }
 
 test_example_job_in_pod_with_errors() {
-  run_example_job_with_error_in_pod tests spark
+  run_example_job_with_error_in_pod $NAMESPACE spark
 }
 
 
 test_example_job_in_pod_with_templates() {
-  run_example_job_in_pod_with_pod_templates tests spark
+  run_example_job_in_pod_with_pod_templates $NAMESPACE spark
 }
 
 
 test_example_job_in_pod() {
-  run_example_job_in_pod tests spark
+  run_example_job_in_pod $NAMESPACE spark
 }
 
 test_example_job_in_pod_with_metrics() {
-  run_example_job_in_pod_with_metrics tests spark
+  run_example_job_in_pod_with_metrics $NAMESPACE spark
 }
 
 
@@ -464,7 +484,7 @@ run_spark_shell_in_pod() {
   # Sample output
   # "Pi is roughly 3.13956232343"
 
-  echo -e "$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$SPARK_SHELL_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | spark-client.spark-shell --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > spark-shell.out
+  echo -e "$(kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$SPARK_SHELL_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | spark-client.spark-shell --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > spark-shell.out
 
   pi=$(cat spark-shell.out  | grep "^Pi is roughly" | rev | cut -d' ' -f1 | rev | cut -c 1-3)
   echo -e "Spark-shell Pi Job Output: \n ${pi}"
@@ -473,7 +493,7 @@ run_spark_shell_in_pod() {
 }
 
 test_spark_shell_in_pod() {
-  run_spark_shell_in_pod tests spark
+  run_spark_shell_in_pod $NAMESPACE spark
 }
 
 run_pyspark_in_pod() {
@@ -488,7 +508,7 @@ run_pyspark_in_pod() {
   # Sample output
   # "Pi is roughly 3.13956232343"
 
-  echo -e "$(kubectl exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$PYSPARK_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | spark-client.pyspark --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > pyspark.out
+  echo -e "$(kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$PYSPARK_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | spark-client.pyspark --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > pyspark.out
 
   cat pyspark.out
   pi=$(cat pyspark.out  | grep "Pi is roughly" | tail -n 1 | rev | cut -d' ' -f1 | rev | cut -c 1-3)
@@ -498,14 +518,7 @@ run_pyspark_in_pod() {
 }
 
 test_pyspark_in_pod() {
-  run_pyspark_in_pod tests spark
-}
-
-test_restricted_account_in_pod() {
-
-  kubectl config set-context spark-context --namespace=tests --cluster=prod --user=spark
-
-  run_example_job_in_pod tests spark
+  run_pyspark_in_pod $NAMESPACE spark
 }
 
 cleanup_user_failure_in_pod() {
@@ -517,50 +530,50 @@ echo -e "##################################"
 echo -e "SETUP TEST POD"
 echo -e "##################################"
 
-setup_test_pod
+setup_admin_test_pod
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE JOB"
 echo -e "##################################"
 
-(setup_user_admin_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN SPARK SHELL IN POD"
 echo -e "##################################"
 
-(setup_user_admin_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN PYSPARK IN POD"
 echo -e "##################################"
 
-(setup_user_admin_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
 echo -e "##################################"
 
-(setup_user_admin_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "########################################"
 echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
 echo -e "########################################"
 
-(setup_user_admin_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
 
 
 echo -e "########################################"
 echo -e "RUN EXAMPLE JOB WITH ERRORS"
 echo -e "########################################"
 
-(setup_user_admin_context && test_example_job_in_pod_with_errors && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_example_job_in_pod_with_errors && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
 echo -e "##################################"
 
-(setup_user_admin_context && test_iceberg_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_iceberg_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
