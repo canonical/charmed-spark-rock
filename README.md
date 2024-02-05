@@ -41,7 +41,7 @@ https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark
 The image can be used straight away when running Spark on Kubernetes by setting the appropriate configuration property:
 
 ```shell
-spark.kubernetes.container.image=ghcr.io/canonical/charmed-spark:3.4.2-22.04_edge
+spark.kubernetes.container.image=ghcr.io/canonical/charmed-spark:3.4-22.04_edge
 ```
 
 ### Using `spark8t` CLI 
@@ -49,7 +49,7 @@ spark.kubernetes.container.image=ghcr.io/canonical/charmed-spark:3.4.2-22.04_edg
 The `spark8t` CLI tooling interacts with the K8s API to create, manage and delete K8s resources representing the Spark service account. 
 Make sure that the kube config file is correctly loaded into the container, e.g.
 ```shell
-docker run --name chamed-spark -v /path/to/kube/config:/var/lib/spark/.kube/config ghcr.io/canonical/charmed-spark:3.4.2-22.04_edge
+docker run --name chamed-spark -v /path/to/kube/config:/var/lib/spark/.kube/config ghcr.io/canonical/charmed-spark:3.4-22.04_edge
 ```
 
 Note that this will start the image and a long-living service, allowing you to exec commands:
@@ -59,7 +59,7 @@ docker exec charmed-spark spark-client.service-account-registry list
 
 If you prefer to run one-shot commands, without having the Charmed Spark image running, use `\; exec` prefix, e.g.
 ```shell
-docker run -v ... ghcr.io/canonical/charmed-spark:3.4.2-22.04_edge \; exec spark-client.service-account-registry list
+docker run -v ... ghcr.io/canonical/charmed-spark:3.4-22.04_edge \; exec spark-client.service-account-registry list
 ```
 
 For more information about spark-client API and `spark8t` tooling, please refer to [here](https://discourse.charmhub.io/t/spark-client-snap-how-to-manage-spark-accounts/8959).
@@ -71,7 +71,7 @@ Charmed Spark Rock Image is delivered with Pebble already included in order to m
 #### Starting History Server
 
 ```shell
-docker run ghcr.io/canonical/charmed-spark:3.4.2-22.04_edge \; start history-server
+docker run ghcr.io/canonical/charmed-spark:3.4-22.04_edge \; start history-server
 ```
 
 ### Running Jupyter Lab
@@ -86,7 +86,7 @@ To start a JupyterLab server using the `charmed-spark-jupyter` image, use
 docker run \
   -v /path/to/kube/config:/var/lib/spark/.kube/config \
   -p <port>:8888
-  ghcr.io/canonical/charmed-spark-jupyter:3.4.1-22.04_edge \
+  ghcr.io/canonical/charmed-spark-jupyter:3.4-22.04_edge \
   --username <spark-service-account> --namespace <spark-namespace>
 ```
 
