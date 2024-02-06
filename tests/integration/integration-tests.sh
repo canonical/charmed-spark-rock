@@ -251,7 +251,7 @@ test_iceberg_example_in_pod(){
   PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods -n ${NAMESPACE} | grep driver | wc -l)
 
   # Submit the job from inside 'testpod'
-  kubectl exec testpod -- \
+  kubectl -n $NAMESPACE exec testpod -- \
       env \
         UU="$USERNAME" \
         NN="$NAMESPACE" \
