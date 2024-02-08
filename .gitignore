@@ -1,1 +1,5 @@
 .idea
+*.rock
+*.tar
+env/
+.make_cache/
