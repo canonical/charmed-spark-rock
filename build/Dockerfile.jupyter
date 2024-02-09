@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# This is an OCI image to deploy JupyterLab server instances on K8s, fully
+# integrated with Charmed Spark ecosystem and utilities. The image provides an
+# automated and seamless user-experience to deploy, operate, manage and monitor
+# SparkJob running on K8s cluster.
+# It is an open source, end-to-end, production ready data platform on top of
+# cloud native technologies.
+# ---------------------------------------------------------------------------
+
 ARG BASE_IMAGE=base-charmed-spark:latest
 ARG JUPYTERLAB_VERSION=4.0.0
 FROM $BASE_IMAGE
