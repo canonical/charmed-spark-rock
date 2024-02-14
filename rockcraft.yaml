@@ -1,9 +1,9 @@
 name: charmed-spark
 summary: Charmed Apache Spark ROCK
 description: |
-  This is an OCI image that bundles Apache Spark binaries together with other 
+  This is an OCI image that bundles Apache Spark binaries together with other
   tools of its ecosystem in order to be used in Charmed Operators, providing
-  an automated and seamless experience to deploy, operate, manage and monitor 
+  an automated and seamless experience to deploy, operate, manage and monitor
   SparkJob on K8s cluster.
   It is an open source, end-to-end, production ready data platform on top of
   cloud native technologies.
