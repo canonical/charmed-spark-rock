@@ -38,11 +38,17 @@ jobs:
       - name: Build image
         run: sudo make build
 
+      - name: Build image (Jupyter)
+        run: sudo make build FLAVOUR=jupyter
+
       - name: Get Artifact Name
         id: artifact
         run: |
           ARTIFACT=$(make help | grep 'Artifact: ')
           echo "name=${ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+
+      - name: Change artifact permissions
+        run: sudo chmod a+r ${{ steps.artifact.outputs.name }}
 
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v3

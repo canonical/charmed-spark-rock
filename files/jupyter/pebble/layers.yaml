@@ -1,0 +1,6 @@
+services:
+  jupyter:
+      command: "/opt/pebble/jupyterlab-server.sh"
+      summary: "This is the Spark-powered Jupyter service"
+      override: replace
+      startup: enabled
