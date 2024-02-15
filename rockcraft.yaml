@@ -183,6 +183,7 @@ parts:
       bin/history-server.sh: opt/pebble/history-server.sh
       bin/thrift-server.sh: opt/pebble/thrift-server.sh
       bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
+      bin/spark-client.spark-sql: opt/spark-client/python/bin/spark-client.spark-sql
       bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
       bin/spark-client.spark-shell: opt/spark-client/python/bin/spark-client.spark-shell
       bin/spark-client.spark-submit: opt/spark-client/python/bin/spark-client.spark-submit
@@ -192,6 +193,7 @@ parts:
       - opt/pebble/history-server.sh
       - opt/pebble/thrift-server.sh
       - opt/spark-client/python/bin/spark-client.pyspark
+      - opt/spark-client/python/bin/spark-client.spark-sql
       - opt/spark-client/python/bin/spark-client.service-account-registry
       - opt/spark-client/python/bin/spark-client.spark-shell
       - opt/spark-client/python/bin/spark-client.spark-submit

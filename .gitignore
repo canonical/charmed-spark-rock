@@ -3,3 +3,6 @@
 *.tar
 env/
 .make_cache/
+derby.log
+metastore_db/
+spark-sql.out
