@@ -205,7 +205,7 @@ create_s3_bucket(){
   # Creates a S3 bucket with the given name.
   S3_ENDPOINT=$(get_s3_endpoint)
   BUCKET_NAME=$1
-  aws --endpoint-url "http://$S3_ENDPOINT" s3api create-bucket --bucket "$BUCKET_NAME"
+  aws s3api create-bucket --bucket "$BUCKET_NAME"
   echo "Created S3 bucket ${BUCKET_NAME}"
 }
 
@@ -213,7 +213,7 @@ delete_s3_bucket(){
   # Deletes a S3 bucket with the given name.
   S3_ENDPOINT=$(get_s3_endpoint)
   BUCKET_NAME=$1
-  aws --endpoint-url "http://$S3_ENDPOINT" s3 rb "s3://$BUCKET_NAME" --force
+  aws s3 rb "s3://$BUCKET_NAME" --force
   echo "Deleted S3 bucket ${BUCKET_NAME}"
 }
 
@@ -228,7 +228,7 @@ copy_file_to_s3_bucket(){
   S3_ENDPOINT=$(get_s3_endpoint)
 
   # Copy the file to S3 bucket
-  aws --endpoint-url "http://$S3_ENDPOINT" s3 cp $FILE_PATH s3://"$BUCKET_NAME"/"$BASE_NAME"
+  aws s3 cp $FILE_PATH s3://"$BUCKET_NAME"/"$BASE_NAME"
   echo "Copied file ${FILE_PATH} to S3 bucket ${BUCKET_NAME}"
 }
 
@@ -496,6 +496,56 @@ test_spark_shell_in_pod() {
   run_spark_shell_in_pod $NAMESPACE spark
 }
 
+run_spark_sql_in_pod() {
+  echo "run_spark_sql_in_pod ${1} ${2}"
+
+  NAMESPACE=$1
+  USERNAME=$2
+
+  SPARK_SQL_COMMANDS=$(cat ./tests/integration/resources/test-spark-sql.sql)
+  create_s3_bucket test
+
+  echo -e "$(kubectl -n $NAMESPACE exec testpod -- \
+    env \
+      UU="$USERNAME" \
+      NN="$NAMESPACE" \
+      CMDS="$SPARK_SQL_COMMANDS" \
+      IM=$(spark_image) \
+      ACCESS_KEY=$(get_s3_access_key) \
+      SECRET_KEY=$(get_s3_secret_key) \
+      S3_ENDPOINT=$(get_s3_endpoint) \
+    /bin/bash -c 'echo "$CMDS" | spark-client.spark-sql \
+      --username $UU \
+      --namespace $NN \
+      --conf spark.kubernetes.container.image=$IM \
+      --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider \
+      --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
+      --conf spark.hadoop.fs.s3a.path.style.access=true \
+      --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
+      --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
+      --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
+      --conf spark.driver.extraJavaOptions='-Dderby.system.home=/tmp/derby' \
+      --conf spark.sql.warehouse.dir=s3a://test/warehouse')" > spark-sql.out
+
+  # derby.system.home=/tmp/derby is needed because 
+  # kubectl exec runs commands with `/` as working directory
+  # and by default derby.system.home has value `.`, the current working directory
+  # (for which _daemon_ user has no permission on)
+
+  num_rows_inserted=$(cat spark-sql.out  | grep "^Inserted Rows:" | rev | cut -d' ' -f1 | rev )
+  echo -e "${num_rows_inserted} rows were inserted."
+  rm spark-sql.out
+  delete_s3_bucket test
+  if [ "${num_rows_inserted}" != "3" ]; then
+      echo "ERROR: Testing spark-sql failed. ${num_rows_inserted} out of 3 rows were inserted. Aborting with exit code 1."
+      exit 1
+  fi
+}
+
+test_spark_sql_in_pod() {
+  run_spark_sql_in_pod tests spark
+}
+
 run_pyspark_in_pod() {
   echo "run_pyspark_in_pod ${1} ${2}"
 
@@ -551,6 +601,12 @@ echo -e "##################################"
 (setup_user_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
+echo -e "RUN SPARK SQL IN POD"
+echo -e "##################################"
+
+(setup_user_context && test_spark_sql_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo -e "##################################"
 echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
 echo -e "##################################"
 
@@ -561,7 +617,6 @@ echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
 echo -e "########################################"
 
 (setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
-
 
 echo -e "########################################"
 echo -e "RUN EXAMPLE JOB WITH ERRORS"
