@@ -93,6 +93,12 @@ jobs:
           sudo make import TARGET=docker REPOSITORY=${REPOSITORY} TAG=${TAG}\
             -o ${{ steps.artifact.outputs.name }} 
 
+          # Add relevant labels
+          COMMIT_ID=$(git log -1 --format=%H)
+          DESCRIPTION=$(yq .description rockcraft.yaml | xargs)
+          
+          echo "FROM ${IMAGE_NAME}:${TAG}" | docker build --label org.opencontainers.image.description="${DESCRIPTION}" --label org.opencontainers.image.revision="${COMMIT_ID}" --label org.opencontainers.image.source="${{ github.repositoryUrl }}" -t "${IMAGE_NAME}:${TAG}" -
+
           echo "Publishing ${IMAGE_NAME}:${TAG}"          
           docker push ${IMAGE_NAME}:${TAG}
           
@@ -119,6 +125,10 @@ jobs:
             -o $(find .make_cache -name "*.tag")
       
           IMAGE_NAME=$(make help FLAVOUR=jupyter REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
+
+          DESCRIPTION=$(sed -n '/^#\ \-/,/^#\ \-/  p' build/Dockerfile.jupyter | sed 's/^\#\ //g' | sed '$ d' | tail -n+2 | xargs)
+          
+          echo "FROM ${IMAGE_NAME}:${TAG}" | docker build --label org.opencontainers.image.description="${DESCRIPTION}" --label org.opencontainers.image.revision="${COMMIT_ID}" --label org.opencontainers.image.source="${{ github.repositoryUrl }}" -t "${IMAGE_NAME}:${TAG}" -
       
           echo "Publishing ${IMAGE_NAME}:${TAG}"
           docker push ${IMAGE_NAME}:${TAG}
