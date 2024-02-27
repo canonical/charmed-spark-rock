@@ -219,6 +219,7 @@ parts:
       bin/sparkd.sh: opt/pebble/sparkd.sh
       bin/history-server.sh: opt/pebble/history-server.sh
       bin/thrift-server.sh: opt/pebble/thrift-server.sh
+      bin/kyuubi.sh: opt/pebble/kyuubi.sh
       bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
       bin/spark-client.spark-sql: opt/spark-client/python/bin/spark-client.spark-sql
       bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
@@ -229,6 +230,7 @@ parts:
       - opt/pebble/sparkd.sh
       - opt/pebble/history-server.sh
       - opt/pebble/thrift-server.sh
+      - opt/pebble/kyuubi.sh
       - opt/spark-client/python/bin/spark-client.pyspark
       - opt/spark-client/python/bin/spark-client.spark-sql
       - opt/spark-client/python/bin/spark-client.service-account-registry
