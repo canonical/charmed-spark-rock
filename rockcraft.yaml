@@ -48,13 +48,11 @@ services:
     # working-dir: /opt/spark
     environment:
       SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
-  thrift-server:
-    command: "/bin/bash /opt/pebble/thrift-server.sh"
-    summary: "This is the Spark Thrift Server service"
+  kyuubi:
+    command: "/bin/bash /opt/pebble/kyuubi.sh"
+    summary: "This is the Kyuubi service"
     override: replace
     startup: disabled
-    environment:
-      SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
 
 parts:
   spark:
@@ -95,9 +93,41 @@ parts:
       - opt/spark/python
       - opt/spark/data
 
+  kyuubi:
+    plugin: dump
+    after: [ spark ]
+    source: https://dlcdn.apache.org/kyuubi/kyuubi-1.8.1/apache-kyuubi-1.8.1-bin.tgz
+    source-checksum: sha512/355ebbc184bbb0ab2fe521dda213a7769dae222a6a278a1fc0b3bf1173fd26091ccbc073038564ea8bb2ad2d5f5d1049c19508201ed710978d2ea79d20cd5726
+    organize:
+      beeline-jars: opt/kyuubi/beeline-jars
+      bin: opt/kyuubi/bin
+      charts: opt/kyuubi/charts
+      conf: opt/kyuubi/conf
+      db-scripts: opt/kyuubi/db-scripts
+      docker: opt/kyuubi/docker
+      externals: opt/kyuubi/externals
+      jars: opt/kyuubi/jars
+      logs: opt/kyuubi/logs
+      pid: opt/kyuubi/pid
+      web-ui: opt/kyuubi/web-ui
+      work: opt/kyuubi/work
+    stage:
+      - opt/kyuubi/beeline-jars
+      - opt/kyuubi/bin
+      - opt/kyuubi/charts
+      - opt/kyuubi/conf
+      - opt/kyuubi/db-scripts
+      - opt/kyuubi/docker
+      - opt/kyuubi/externals
+      - opt/kyuubi/jars
+      - opt/kyuubi/logs
+      - opt/kyuubi/pid
+      - opt/kyuubi/web-ui
+      - opt/kyuubi/work
+
   dependencies:
     plugin: nil
-    after: [ spark ]
+    after: [ kyuubi ]
     build-packages:
       - wget
     overlay-script: |
@@ -236,6 +266,9 @@ parts:
       # This is needed to run the spark job, as it requires RW+ access on the spark folder
       chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
       chmod -R 750 opt/spark
+
+      chown -R ${SPARK_GID}:${SPARK_UID} opt/kyuubi
+      chmod -R 750 opt/kyuubi
 
       mkdir -p var/lib/spark
       mkdir -p var/lib/spark/notebook
