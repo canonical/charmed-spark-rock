@@ -216,7 +216,6 @@ parts:
     source: files/spark
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
-      # conf/spark-defaults.conf: opt/spark/conf/spark-defaults.conf
       conf/kyuubi-env.sh: opt/kyuubi/conf/kyuubi-env.sh
       bin/sparkd.sh: opt/pebble/sparkd.sh
       bin/history-server.sh: opt/pebble/history-server.sh
