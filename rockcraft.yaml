@@ -98,32 +98,10 @@ parts:
     after: [ spark ]
     source: https://dlcdn.apache.org/kyuubi/kyuubi-1.8.1/apache-kyuubi-1.8.1-bin.tgz
     source-checksum: sha512/355ebbc184bbb0ab2fe521dda213a7769dae222a6a278a1fc0b3bf1173fd26091ccbc073038564ea8bb2ad2d5f5d1049c19508201ed710978d2ea79d20cd5726
-    organize:
-      beeline-jars: opt/kyuubi/beeline-jars
-      bin: opt/kyuubi/bin
-      charts: opt/kyuubi/charts
-      conf: opt/kyuubi/conf
-      db-scripts: opt/kyuubi/db-scripts
-      docker: opt/kyuubi/docker
-      externals: opt/kyuubi/externals
-      jars: opt/kyuubi/jars
-      logs: opt/kyuubi/logs
-      pid: opt/kyuubi/pid
-      web-ui: opt/kyuubi/web-ui
-      work: opt/kyuubi/work
+    override-build: |
+      mkdir -p $CRAFT_PART_INSTALL/opt/kyuubi && cp -r ./* $CRAFT_PART_INSTALL/opt/kyuubi
     stage:
-      - opt/kyuubi/beeline-jars
-      - opt/kyuubi/bin
-      - opt/kyuubi/charts
-      - opt/kyuubi/conf
-      - opt/kyuubi/db-scripts
-      - opt/kyuubi/docker
-      - opt/kyuubi/externals
-      - opt/kyuubi/jars
-      - opt/kyuubi/logs
-      - opt/kyuubi/pid
-      - opt/kyuubi/web-ui
-      - opt/kyuubi/work
+      - opt/kyuubi
 
   dependencies:
     plugin: nil
