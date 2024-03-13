@@ -48,13 +48,11 @@ services:
     # working-dir: /opt/spark
     environment:
       SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
-  thrift-server:
-    command: "/bin/bash /opt/pebble/thrift-server.sh"
-    summary: "This is the Spark Thrift Server service"
+  kyuubi:
+    command: "/bin/bash /opt/pebble/kyuubi.sh"
+    summary: "This is the Kyuubi service"
     override: replace
     startup: disabled
-    environment:
-      SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
 
 parts:
   spark:
@@ -95,9 +93,19 @@ parts:
       - opt/spark/python
       - opt/spark/data
 
+  kyuubi:
+    plugin: dump
+    after: [ spark ]
+    source: https://dlcdn.apache.org/kyuubi/kyuubi-1.8.1/apache-kyuubi-1.8.1-bin.tgz
+    source-checksum: sha512/355ebbc184bbb0ab2fe521dda213a7769dae222a6a278a1fc0b3bf1173fd26091ccbc073038564ea8bb2ad2d5f5d1049c19508201ed710978d2ea79d20cd5726
+    override-build: |
+      mkdir -p $CRAFT_PART_INSTALL/opt/kyuubi && cp -r ./* $CRAFT_PART_INSTALL/opt/kyuubi
+    stage:
+      - opt/kyuubi
+
   dependencies:
     plugin: nil
-    after: [ spark ]
+    after: [ kyuubi ]
     build-packages:
       - wget
     overlay-script: |
@@ -186,9 +194,11 @@ parts:
     source: files/spark
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
+      conf/kyuubi-env.sh: opt/kyuubi/conf/kyuubi-env.sh
       bin/sparkd.sh: opt/pebble/sparkd.sh
       bin/history-server.sh: opt/pebble/history-server.sh
       bin/thrift-server.sh: opt/pebble/thrift-server.sh
+      bin/kyuubi.sh: opt/pebble/kyuubi.sh
       bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
       bin/spark-client.spark-sql: opt/spark-client/python/bin/spark-client.spark-sql
       bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
@@ -199,6 +209,8 @@ parts:
       - opt/pebble/sparkd.sh
       - opt/pebble/history-server.sh
       - opt/pebble/thrift-server.sh
+      - opt/pebble/kyuubi.sh
+      - opt/kyuubi/conf/kyuubi-env.sh
       - opt/spark-client/python/bin/spark-client.pyspark
       - opt/spark-client/python/bin/spark-client.spark-sql
       - opt/spark-client/python/bin/spark-client.service-account-registry
@@ -236,6 +248,9 @@ parts:
       # This is needed to run the spark job, as it requires RW+ access on the spark folder
       chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
       chmod -R 750 opt/spark
+
+      chown -R ${SPARK_GID}:${SPARK_UID} opt/kyuubi
+      chmod -R 750 opt/kyuubi
 
       mkdir -p var/lib/spark
       mkdir -p var/lib/spark/notebook
