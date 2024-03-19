@@ -131,7 +131,6 @@ parts:
       "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-LIB_VERSION/spark-metrics-assembly-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
       "https://github.com/canonical/central-uploader/releases/download/servlet-filters-LIB_VERSION/servlet-filters-LIB_VERSION.jar $SERVLET_FILTERS_VERSION sha512sum $SHA512SUM_SPARK_SERVLET_FILTER_JAR"
       )
-
       for ENTRY in "${JARS[@]}"; do
         echo "$ENTRY"
         URL_BASE=$(echo "$ENTRY" | awk '{print $1}')
@@ -140,11 +139,12 @@ parts:
         EXPECTED_SHA=$(echo "$ENTRY" | awk '{print $4}')
         URL=$(echo "$URL_BASE" | sed "s/LIB_VERSION/$LIB_VERSION/g")
         JAR_FILE=$(echo "${URL##*/}")
+        echo "Download from URL: $URL"
         wget "$URL"
         ACTUAL_SHA=$("$SHA" "$JAR_FILE" | awk '{print $1}')
         echo "$ACTUAL_SHA"
         echo "$EXPECTED_SHA"
-        [ $ACTUAL_SHA != $EXPECTED_SHA ] && echo "ERROR!" && exit 1
+        [ $ACTUAL_SHA != $EXPECTED_SHA ] && echo "ERROR"  && exit 1
       done
     stage:
       - opt/spark/jars
