@@ -109,6 +109,9 @@ parts:
     build-packages:
       - wget
     overlay-script: |
+      mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
+      cd $CRAFT_PART_INSTALL/opt/spark/jars
+      
       AWS_JAVA_SDK_BUNDLE_VERSION='1.12.540'
       HADOOP_AWS_VERSION='3.3.6'
       ICEBERG_SPARK_RUNTIME_VERSION='3.4_2.12'
