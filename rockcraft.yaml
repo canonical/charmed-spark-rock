@@ -140,7 +140,7 @@ parts:
         URL=$(echo "$URL_BASE" | sed "s/LIB_VERSION/$LIB_VERSION/g")
         JAR_FILE=$(echo "${URL##*/}")
         echo "Download from URL: $URL"
-        wget "$URL"
+        wget -q "$URL"
         ACTUAL_SHA=$("$SHA" "$JAR_FILE" | awk '{print $1}')
         echo "$ACTUAL_SHA"
         echo "$EXPECTED_SHA"
