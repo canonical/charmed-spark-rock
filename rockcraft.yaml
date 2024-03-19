@@ -142,7 +142,9 @@ parts:
         JAR_FILE=$(echo "${URL##*/}")
         wget "$URL"
         ACTUAL_SHA=$("$SHA" "$JAR_FILE" | awk '{print $1}')
-        [ $ACTUAL_SHA != $EXPECTED_SHA ] && exit 1
+        echo "$ACTUAL_SHA"
+        echo "$EXPECTED_SHA"
+        [ $ACTUAL_SHA != $EXPECTED_SHA ] && echo "ERROR!" && exit 1
       done
     stage:
       - opt/spark/jars
