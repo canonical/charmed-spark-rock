@@ -146,6 +146,7 @@ parts:
         echo "$EXPECTED_SHA"
         [ $ACTUAL_SHA != $EXPECTED_SHA ] && echo "ERROR"  && exit 1
       done
+      echo "All dependecies downloaded!"
     stage:
       - opt/spark/jars
 
