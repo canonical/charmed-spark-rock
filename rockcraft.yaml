@@ -97,10 +97,11 @@ parts:
   kyuubi:
     plugin: dump
     after: [ spark ]
-    source: https://dlcdn.apache.org/kyuubi/kyuubi-1.8.1/apache-kyuubi-1.8.1-bin.tgz
-    source-checksum: sha512/355ebbc184bbb0ab2fe521dda213a7769dae222a6a278a1fc0b3bf1173fd26091ccbc073038564ea8bb2ad2d5f5d1049c19508201ed710978d2ea79d20cd5726
+    source: https://dlcdn.apache.org/kyuubi/kyuubi-1.9.0/apache-kyuubi-1.9.0-bin.tgz
+    source-checksum: sha512/54721812f35743aec60104466c3527e6d68f2a75afb3bdbd68d06c9bd7e09a5f35f71d9edb9f24cc2189d403ef5aa65ee54fe594ca1c78e9ab621177bab32054
     override-build: |
       mkdir -p $CRAFT_PART_INSTALL/opt/kyuubi && cp -r ./* $CRAFT_PART_INSTALL/opt/kyuubi
+      cp ./jars/postgresql* $CRAFT_PART_INSTALL/opt/spark/jars/
     stage:
       - opt/kyuubi
 
