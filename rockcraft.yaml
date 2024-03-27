@@ -241,6 +241,9 @@ parts:
       chown -R ${SPARK_GID}:${SPARK_UID} var/log/spark
       chmod -R 750 var/log/spark
 
+      # Make PostgreSQL JDBC available for Spark as well
+      cp opt/kyuubi/jars/postgresql* opt/spark/jars/
+
       # This is needed to run the spark job, as it requires RW+ access on the spark folder
       chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
       chmod -R 750 opt/spark
@@ -255,5 +258,3 @@ parts:
       mv opt/spark/decom.sh opt/decom.sh
       chmod a+x opt/decom.sh
 
-      # Make PostgreSQL JDBC available for Spark as well
-      cp opt/kyuubi/jars/postgresql* opt/spark/jars/
