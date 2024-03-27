@@ -101,7 +101,6 @@ parts:
     source-checksum: sha512/54721812f35743aec60104466c3527e6d68f2a75afb3bdbd68d06c9bd7e09a5f35f71d9edb9f24cc2189d403ef5aa65ee54fe594ca1c78e9ab621177bab32054
     override-build: |
       mkdir -p $CRAFT_PART_INSTALL/opt/kyuubi && cp -r ./* $CRAFT_PART_INSTALL/opt/kyuubi
-      cp ./jars/postgresql* $CRAFT_PART_INSTALL/opt/spark/jars/
     stage:
       - opt/kyuubi
 
@@ -255,3 +254,6 @@ parts:
       chmod -R 770 var/lib/spark
       mv opt/spark/decom.sh opt/decom.sh
       chmod a+x opt/decom.sh
+
+      # Make PostgreSQL JDBC available for Spark as well
+      cp opt/kyuubi/jars/postgresql* opt/spark/jars/
