@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install skopeo
         run: |
           sudo snap install --devmode --channel edge skopeo
@@ -23,7 +23,7 @@ jobs:
           ARTIFACT=$(make help | grep 'Artifact: ')
           echo "name=${ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: charmed-spark
           path: charmed-spark

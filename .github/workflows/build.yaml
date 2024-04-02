@@ -9,7 +9,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install yamllint
         run: python3 -m pip install yamllint
       - name: YAML Lint
@@ -24,7 +24,7 @@ jobs:
       - lint
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup LXD
         uses: canonical/setup-lxd@main
@@ -51,7 +51,7 @@ jobs:
         run: sudo chmod a+r ${{ steps.artifact.outputs.name }}
 
       - name: Upload locally built artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: charmed-spark
           path:  ${{ steps.artifact.outputs.name }}
