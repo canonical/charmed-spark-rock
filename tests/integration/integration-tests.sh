@@ -578,6 +578,8 @@ cleanup_user_failure_in_pod() {
   cleanup_user_failure
 }
 
+set -x
+
 echo -e "##################################"
 echo -e "SETUP TEST POD"
 echo -e "##################################"
@@ -641,3 +643,5 @@ teardown_test_pod
 echo -e "##################################"
 echo -e "END OF THE TEST"
 echo -e "##################################"
+
+set +x
