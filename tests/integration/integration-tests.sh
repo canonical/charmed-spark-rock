@@ -148,7 +148,7 @@ setup_admin_test_pod() {
 teardown_test_pod() {
   kubectl logs testpod-admin -n $NAMESPACE 
   kubectl logs testpod -n $NAMESPACE 
-  kubectl logs -l spark-version=3.4.2
+  kubectl logs -l spark-version=3.4.2 -n $NAMESPACE 
   kubectl -n $NAMESPACE delete pod testpod
   kubectl -n $NAMESPACE delete pod testpod-admin
 
