@@ -595,25 +595,25 @@ echo -e "##################################"
 echo -e "RUN EXAMPLE JOB"
 echo -e "##################################"
 
-# (setup_user_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN SPARK SHELL IN POD"
 echo -e "##################################"
 
-# (setup_user_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN PYSPARK IN POD"
 echo -e "##################################"
 
-# (setup_user_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN SPARK SQL IN POD"
 echo -e "##################################"
 
-# (setup_user_context && test_spark_sql_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_spark_sql_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
