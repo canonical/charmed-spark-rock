@@ -171,6 +171,7 @@ run_example_job_in_pod() {
                   local:///opt/spark/examples/jars/$JJ 1000'
 
   # kubectl --kubeconfig=${KUBE_CONFIG} get pods
+  DRIVER_PODS=$(kubectl get pods -n ${NAMESPACE} | grep driver )
   DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
 
   if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
@@ -337,6 +338,7 @@ run_example_job_in_pod_with_pod_templates() {
                   local:///opt/spark/examples/jars/$JJ 100'
 
   # kubectl --kubeconfig=${KUBE_CONFIG} get pods
+  DRIVER_PODS=$(kubectl get pods -n ${NAMESPACE} | grep driver )
   DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
   echo "DRIVER JOB: $DRIVER_JOB"
 
@@ -388,6 +390,7 @@ run_example_job_in_pod_with_metrics() {
                   local:///opt/spark/examples/jars/$JJ 1000'
 
   # kubectl --kubeconfig=${KUBE_CONFIG} get pods
+  DRIVER_PODS=$(kubectl get pods -n ${NAMESPACE} | grep driver )
   DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
 
   if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
@@ -428,6 +431,7 @@ run_example_job_with_error_in_pod() {
                   local:///opt/spark/examples/jars/$JJ -1'
 
   # kubectl --kubeconfig=${KUBE_CONFIG} get pods
+  DRIVER_PODS=$(kubectl get pods -n ${NAMESPACE} | grep driver )
   DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
 
   if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
