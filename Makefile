@@ -16,6 +16,7 @@ PREFIX :=
 TARGET := docker
 PLATFORM := amd64
 FLAVOUR := "spark"
+MICROK8S := "1.28/stable"
 
 # ======================
 # INTERNAL VARIABLES
@@ -91,7 +92,7 @@ $(_TMP_OCI_TAG).tag: $(_ROCK_OCI)
 
 $(K8S_TAG):
 	@echo "=== Setting up and configure local Microk8s cluster ==="
-	/bin/bash ./tests/integration/setup-microk8s.sh
+	/bin/bash ./tests/integration/setup-microk8s.sh $(MICROK8S)
 	sg microk8s ./tests/integration/config-microk8s.sh
 	@touch $(K8S_TAG)
 

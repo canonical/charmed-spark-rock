@@ -146,6 +146,9 @@ setup_admin_test_pod() {
 }
 
 teardown_test_pod() {
+  kubectl logs testpod-admin -n $NAMESPACE 
+  kubectl logs testpod -n $NAMESPACE 
+  kubectl logs -l spark-version=3.4.2 -n $NAMESPACE 
   kubectl -n $NAMESPACE delete pod testpod
   kubectl -n $NAMESPACE delete pod testpod-admin
 
@@ -155,7 +158,7 @@ teardown_test_pod() {
 run_example_job_in_pod() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
 
-  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
   USERNAME=$2
 
@@ -169,7 +172,8 @@ run_example_job_in_pod() {
                   local:///opt/spark/examples/jars/$JJ 1000'
 
   # kubectl --kubeconfig=${KUBE_CONFIG} get pods
-  DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
+  DRIVER_PODS=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver )
+  DRIVER_JOB=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
 
   if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
   then
@@ -180,7 +184,7 @@ run_example_job_in_pod() {
   # Check job output
   # Sample output
   # "Pi is roughly 3.13956232343"
-  pi=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE} | grep 'Pi is roughly' | rev | cut -d' ' -f1 | rev | cut -c 1-3)
+  pi=$(kubectl logs $(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE} | grep 'Pi is roughly' | rev | cut -d' ' -f1 | rev | cut -c 1-3)
   echo -e "Spark Pi Job Output: \n ${pi}"
 
   validate_pi_value $pi
@@ -248,7 +252,7 @@ test_iceberg_example_in_pod(){
   NUM_ROWS_TO_INSERT="4"
 
   # Number of driver pods that exist in the namespace already.
-  PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods -n ${NAMESPACE} | grep driver | wc -l)
+  PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
 
   # Submit the job from inside 'testpod'
   kubectl -n $NAMESPACE exec testpod -- \
@@ -286,7 +290,7 @@ test_iceberg_example_in_pod(){
   delete_s3_bucket spark
 
   # Number of driver pods after the job is completed.
-  DRIVER_PODS_COUNT=$(kubectl get pods -n ${NAMESPACE} | grep driver | wc -l)
+  DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
 
   # If the number of driver pods is same as before, job has not been run at all!
   if [[ "${PREVIOUS_DRIVER_PODS_COUNT}" == "${DRIVER_PODS_COUNT}" ]]
@@ -298,7 +302,7 @@ test_iceberg_example_in_pod(){
   # Find the ID of the driver pod that ran the job.
   # tail -n 1       => Filter out the last line
   # cut -d' ' -f1   => Split by spaces and pick the first part
-  DRIVER_POD_ID=$(kubectl get pods -n ${NAMESPACE} | grep test-iceberg-.*-driver | tail -n 1 | cut -d' ' -f1)
+  DRIVER_POD_ID=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep test-iceberg-.*-driver | tail -n 1 | cut -d' ' -f1)
 
   # Filter out the output log line
   OUTPUT_LOG_LINE=$(kubectl logs ${DRIVER_POD_ID} -n ${NAMESPACE} | grep 'Number of rows inserted:' )
@@ -319,7 +323,7 @@ test_iceberg_example_in_pod(){
 run_example_job_in_pod_with_pod_templates() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
 
-  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
 
   NAMESPACE=$1
   USERNAME=$2
@@ -335,7 +339,8 @@ run_example_job_in_pod_with_pod_templates() {
                   local:///opt/spark/examples/jars/$JJ 100'
 
   # kubectl --kubeconfig=${KUBE_CONFIG} get pods
-  DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
+  DRIVER_PODS=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver )
+  DRIVER_JOB=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
   echo "DRIVER JOB: $DRIVER_JOB"
 
   if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
@@ -343,7 +348,7 @@ run_example_job_in_pod_with_pod_templates() {
     echo "ERROR: Sample job has not run!"
     exit 1
   fi
-  DRIVER_JOB_LABEL=$(kubectl get pods -n ${NAMESPACE} -lproduct=charmed-spark | grep driver | tail -n 1 | cut -d' ' -f1)
+  DRIVER_JOB_LABEL=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} -lproduct=charmed-spark | grep driver | tail -n 1 | cut -d' ' -f1)
   echo "DRIVER JOB_LABEL: $DRIVER_JOB_LABEL"
   if [[ "${DRIVER_JOB}" != "${DRIVER_JOB_LABEL}" ]]
   then
@@ -354,7 +359,7 @@ run_example_job_in_pod_with_pod_templates() {
   # Check job output
   # Sample output
   # "Pi is roughly 3.13956232343"
-  pi=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE} | grep 'Pi is roughly' | rev | cut -d' ' -f1 | rev | cut -c 1-3)
+  pi=$(kubectl logs $(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE} | grep 'Pi is roughly' | rev | cut -d' ' -f1 | rev | cut -c 1-3)
   echo -e "Spark Pi Job Output: \n ${pi}"
 
   validate_pi_value $pi
@@ -365,7 +370,7 @@ run_example_job_in_pod_with_metrics() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
   LOG_FILE="/tmp/server.log"
   SERVER_PORT=9091
-  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   # start simple http server
   python3 tests/integration/resources/test_web_server.py $SERVER_PORT > $LOG_FILE &
   HTTP_SERVER_PID=$!
@@ -386,7 +391,8 @@ run_example_job_in_pod_with_metrics() {
                   local:///opt/spark/examples/jars/$JJ 1000'
 
   # kubectl --kubeconfig=${KUBE_CONFIG} get pods
-  DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
+  DRIVER_PODS=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver )
+  DRIVER_JOB=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
 
   if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
   then
@@ -397,7 +403,7 @@ run_example_job_in_pod_with_metrics() {
   # Check job output
   # Sample output
   # "Pi is roughly 3.13956232343"
-  pi=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE} | grep 'Pi is roughly' | rev | cut -d' ' -f1 | rev | cut -c 1-3)
+  pi=$(kubectl logs $(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE} | grep 'Pi is roughly' | rev | cut -d' ' -f1 | rev | cut -c 1-3)
   echo -e "Spark Pi Job Output: \n ${pi}"
 
   validate_pi_value $pi
@@ -412,7 +418,7 @@ run_example_job_in_pod_with_metrics() {
 run_example_job_with_error_in_pod() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
 
-  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods | grep driver | tail -n 1 | cut -d' ' -f1)
+  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
   USERNAME=$2
 
@@ -426,7 +432,8 @@ run_example_job_with_error_in_pod() {
                   local:///opt/spark/examples/jars/$JJ -1'
 
   # kubectl --kubeconfig=${KUBE_CONFIG} get pods
-  DRIVER_JOB=$(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
+  DRIVER_PODS=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver )
+  DRIVER_JOB=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
 
   if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
   then
@@ -435,13 +442,13 @@ run_example_job_with_error_in_pod() {
   fi
 
   # Check job output
-  res=$(kubectl logs $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1) -n ${NAMESPACE} | grep 'Exception in thread' | wc -l)
+  res=$(kubectl logs $(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1) -n ${NAMESPACE} | grep 'Exception in thread' | wc -l)
   echo -e "Number of errors: \n ${res}"
   if [ "${res}" != "1" ]; then
       echo "ERROR: Error is not captured."
       exit 1
   fi
-  status=$(kubectl get pod $(kubectl get pods -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1) -n ${NAMESPACE} | tail -1 | cut -d " " -f 9)
+  status=$(kubectl get pod $(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1) -n ${NAMESPACE} | tail -1 | cut -d " " -f 9)
   if [ "${status}" = "Completed" ]; then
       echo "ERROR: Status should not be set to Completed."
       exit 1
@@ -575,6 +582,7 @@ cleanup_user_failure_in_pod() {
   teardown_test_pod
   cleanup_user_failure
 }
+
 
 echo -e "##################################"
 echo -e "SETUP TEST POD"
