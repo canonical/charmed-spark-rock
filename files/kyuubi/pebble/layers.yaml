@@ -1,0 +1,6 @@
+services:
+  kyuubi:
+    command: "/bin/bash /opt/pebble/kyuubi.sh"
+    summary: "This is the Kyuubi service"
+    override: replace
+    startup: enabled
