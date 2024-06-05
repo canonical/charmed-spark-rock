@@ -297,6 +297,8 @@ tests: $(K8S_TAG_FILE) $(AWS_TAG_FILE)
 	@echo "=== Running Integration Tests ==="
 ifeq ($(FLAVOUR), jupyter)
 	/bin/bash ./tests/integration/integration-tests-jupyter.sh
+else ifeq ($(FLAVOUR), kyuubi)
+	/bin/bash ./tests/integration/integration-tests-kyuubi.sh
 else
 	/bin/bash ./tests/integration/integration-tests.sh
 endif

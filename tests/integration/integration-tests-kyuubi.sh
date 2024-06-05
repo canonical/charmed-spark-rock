@@ -74,7 +74,7 @@ setup_kyuubi_pod() {
   s3_secret_key=$(get_s3_secret_key)
 
   # Write Spark configs inside the Kyuubi container
-  kubectl -n $NAMESPACE exec kyuubi-test -- env IMG="$IMAGE" /bin/bash -c 'echo spark.kubernetes.container.image=$IMG > /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env IMG="$image" /bin/bash -c 'echo spark.kubernetes.container.image=$IMG > /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- env NN="$NAMESPACE" /bin/bash -c 'echo spark.kubernetes.namespace=$NN >> /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- env UU="$USERNAME" /bin/bash -c 'echo spark.kubernetes.authenticate.driver.serviceAccountName=$UU >> /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- env ENDPOINT="$s3_endpoint" /bin/bash -c 'echo spark.hadoop.fs.s3a.endpoint=$ENDPOINT >> /etc/spark8t/conf/spark-defaults.conf'
@@ -102,18 +102,18 @@ cleanup_user() {
   username=$2
   namespace=$3
 
-  delete_s3_bucket kyuubi
-
-  kubectl -n $NAMESPACE delete pod kyuubi-test --wait=true
-
-  kubectl -n $NAMESPACE exec testpod-admin -- env UU="$username" NN="$namespace" \
+  # Delete user pod and service account
+  kubectl -n $NAMESPACE delete pod $USER_POD_NAME --wait=true
+  kubectl -n $NAMESPACE exec $ADMIN_POD_NAME -- env UU="$username" NN="$namespace" \
                   /bin/bash -c 'spark-client.service-account-registry delete --username $UU --namespace $NN'  
 
-  output=$(kubectl -n $NAMESPACE exec testpod-admin -- /bin/bash -c 'spark-client.service-account-registry list')
+  # Delete S3 bucket
+  delete_s3_bucket kyuubi
 
+  # Verify deletion of service account
+  output=$(kubectl -n $NAMESPACE exec $ADMIN_POD_NAME -- /bin/bash -c 'spark-client.service-account-registry list')
   exists=$(echo -e "$output" | grep "$namespace:$username" | wc -l)
-
-  if [ "${EXISTS}" -ne "0" ]; then
+  if [ "${exists}" -ne "0" ]; then
       exit 2
   fi
 
@@ -137,15 +137,15 @@ cleanup_user_failure() {
 
 
 teardown_test_pods() {
-  kubectl -n $NAMESPACE delete pod $ADMIN_POD_NAME
-  kubectl delete namespace $NAMESPACE
+  kubectl -n $NAMESPACE delete pod $ADMIN_POD_NAME $USER_POD_NAME
 }
 
 
 test_jdbc_connection(){
   # Test the JDBC endpoint exposed by Kyuubi by running a few SQL queries
-
   jdbc_endpoint=$(kubectl -n $NAMESPACE exec kyuubi-test -- pebble logs kyuubi | grep 'Starting and exposing JDBC connection at:' | rev | cut -d' ' -f1 | rev)
+  echo "Testing JDBC endpoint '$jdbc_endpoint'..."
+ 
   commands=$(cat ./tests/integration/resources/test-kyuubi.sql)
 
   echo -e "$(kubectl exec kyuubi-test -n $NAMESPACE -- \
@@ -170,6 +170,7 @@ echo -e "##################################"
 echo -e "SETUP ADMIN TEST POD"
 echo -e "##################################"
 
+kubectl create namespace $NAMESPACE
 setup_admin_pod $ADMIN_POD_NAME $(kyuubi_image) $NAMESPACE
 
 echo -e "##################################"
@@ -183,6 +184,7 @@ echo -e "TEARDOWN ADMIN POD"
 echo -e "##################################"
 
 teardown_test_pods
+kubectl delete namespace $NAMESPACE
 
 echo -e "##################################"
 echo -e "END OF THE TEST"

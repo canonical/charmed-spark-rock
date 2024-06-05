@@ -23,7 +23,7 @@ wait_for_pod() {
     pod_name=$1
     namespace=$2
 
-    echo "Waiting for pod $1 to become ready..."
+    echo "Waiting for pod '$pod_name' to become ready..."
     kubectl wait --for condition=Ready pod/$pod_name -n $namespace --timeout 60s
 }
 
@@ -40,10 +40,10 @@ create_serviceaccount_using_pod(){
     namespace=$2
     pod_name=$3
 
-    echo "Creating service account $username in namespace $namespace..."
+    echo "Creating service account '$username' in namespace '$namespace'..."
     kubectl -n $namespace exec $pod_name -- env UU="$username" NN="$namespace" \
                     /bin/bash -c 'spark-client.service-account-registry create --username $UU --namespace $NN'
-    echo "Service account $username in namespace $namespace created successfully."
+    echo "Service account '$username' in namespace '$namespace' created successfully."
 }
 
 
@@ -59,10 +59,10 @@ delete_serviceaccount_using_pod(){
     namespace=$2
     pod_name=$3
 
-    echo "Deleting service account $username in namespace $namespace..."
+    echo "Deleting service account '$username' in namespace '$namespace'..."
     kubectl -n $namespace exec $pod_name -- env UU="$username" NN="$namespace" \
                     /bin/bash -c 'spark-client.service-account-registry delete --username $UU --namespace $NN'
-    echo "Service account $username in namespace $namespace deleted successfully."
+    echo "Service account '$username' in namespace '$namespace' deleted successfully."
 }
 
 
@@ -79,7 +79,7 @@ setup_admin_pod(){
     image=$2
     namespace=$3
 
-    echo "Creating admin pod with name $pod_name"
+    echo "Creating admin pod with name $pod_name and image $image..."
     kubectl run $pod_name --image=$image --env="KUBECONFIG=/var/lib/spark/.kube/config" --namespace=${namespace}
 
     # Wait for pod to be ready
@@ -89,5 +89,5 @@ setup_admin_pod(){
     kubectl -n $namespace exec $pod_name -- /bin/bash -c 'mkdir -p ~/.kube'
     kubectl -n $namespace exec $pod_name -- env KCONFIG="$user_kubeconfig" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
 
-    echo "Admin pod with name $pod_name created and configured successfully."
+    echo "Admin pod with name '$pod_name' created and configured successfully."
 }

@@ -142,3 +142,36 @@ jobs:
             echo "Publishing ${IMAGE_NAME}:${VERSION_TAG}"
             docker push ${IMAGE_NAME}:${VERSION_TAG}
           fi
+
+
+      - name: Publish Kyuubi Image to Channel
+        run: |
+      
+          REPOSITORY="ghcr.io/canonical/"
+          RISK=${{ needs.release_checks.outputs.risk }}
+          TRACK=${{ needs.release_checks.outputs.track }}
+          if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
+      
+          # Import artifact into docker with new tag
+          sudo make import TARGET=docker FLAVOUR=kyuubi \
+            REPOSITORY=${REPOSITORY} TAG=${TAG}\
+            -o $(find .make_cache -name "*.tag")
+      
+          IMAGE_NAME=$(make help FLAVOUR=kyuubi REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
+
+          DESCRIPTION='Charmed Spark Kyuubi Image'
+          
+          echo "FROM ${IMAGE_NAME}:${TAG}" | docker build --label org.opencontainers.image.description="${DESCRIPTION}" --label org.opencontainers.image.revision="${COMMIT_ID}" --label org.opencontainers.image.source="${{ github.repositoryUrl }}" -t "${IMAGE_NAME}:${TAG}" -
+      
+          echo "Publishing ${IMAGE_NAME}:${TAG}"
+          docker push ${IMAGE_NAME}:${TAG}
+      
+          if [[ "$RISK" == "edge" ]]; then
+            VERSION_LONG=$(make help FLAVOUR=kyuubi | grep "Tag\:" | cut -d ":" -f2  | xargs)
+            VERSION_TAG="${VERSION_LONG}-${{ needs.release_checks.outputs.base }}_edge"
+      
+            docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${VERSION_TAG}
+      
+            echo "Publishing ${IMAGE_NAME}:${VERSION_TAG}"
+            docker push ${IMAGE_NAME}:${VERSION_TAG}
+          fi
