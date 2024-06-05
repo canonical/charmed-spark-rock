@@ -12,131 +12,143 @@
 # of the Spark user (service accounts and secrets) at the beginning of each test, and they are destroyed at the
 # end of the test. 
 
+
+# Import reusable utilities
+source ./tests/integration/utils/s3-utils.sh
+source ./tests/integration/utils/k8s-utils.sh
+
+
+# Global Variables
 NAMESPACE=tests
+SERVICE_ACCOUNT=spark
+ADMIN_POD_NAME=testpod-admin
+USER_POD_NAME=kyuubi-test
+S3_BUCKET=kyuubi
+
 
 get_spark_version(){
-  SPARK_VERSION=$(yq '(.version)' rockcraft.yaml)
-  echo "$SPARK_VERSION"
+  # Fetch Spark version from rockcraft.yaml
+  yq '(.version)' rockcraft.yaml
 }
+
+
+get_kyuubi_version(){
+  # Fetch Kyuubi version from rockcraft.yaml
+  grep "version:kyuubi" rockcraft.yaml | sed "s/^#//" | cut -d ":" -f3
+}
+
 
 kyuubi_image(){
-  echo "ghcr.io/canonical/test-charmed-spark-kyuubi:$(get_spark_version)"
+  # The Kyuubi image that is going to be used for test
+  echo "ghcr.io/canonical/test-charmed-spark-kyuubi:$(get_spark_version)-$(get_kyuubi_version)"
 }
 
-setup_kyuubi() {
-  echo "setup_kyuubi() ${1} ${2}"
 
-  USERNAME=$1
-  NAMESPACE=$2
+setup_kyuubi_pod() {
+  # Setup Kyuubi pod for testing
+  #
+  # Arguments:
+  # $1: The service account to be used for creating Kyuubi pod
+  # $1: The namespace to be used for creating Kyuubi pod
 
-  kubectl -n $NAMESPACE exec testpod-admin -- env UU="$USERNAME" NN="$NAMESPACE" \
-                /bin/bash -c 'spark-client.service-account-registry create --username $UU --namespace $NN'
+  # Create service account using the admin pod
+  create_serviceaccount_using_pod $SERVICE_ACCOUNT $NAMESPACE $ADMIN_POD_NAME
 
-  IMAGE=$(kyuubi_image)
-  echo $IMAGE
+  image=$(kyuubi_image)
 
-  # Create the pod with the Spark service account
-  sed -e "s%<IMAGE>%${IMAGE}%g" \
-      -e "s/<SERVICE_ACCOUNT>/${USERNAME}/g" \
+  # Create the pod with the newly created service account
+  sed -e "s%<IMAGE>%${image}%g" \
+      -e "s/<SERVICE_ACCOUNT>/${SERVICE_ACCOUNT}/g" \
       -e "s/<NAMESPACE>/${NAMESPACE}/g" \
+      -e "s/<POD_NAME>/${USER_POD_NAME}/g" \
       ./tests/integration/resources/kyuubi.yaml | \
     kubectl -n tests apply -f -
+  
+  wait_for_pod $USER_POD_NAME $NAMESPACE
 
-  wait_for_pod kyuubi-test $NAMESPACE
+  # Prepare S3 bucket
+  create_s3_bucket $S3_BUCKET
 
-  # WAIT FOR SERVER TO BE UP AND RUNNING
+  s3_endpoint=$(get_s3_endpoint)
+  s3_access_key=$(get_s3_access_key)
+  s3_secret_key=$(get_s3_secret_key)
+
+  # Write Spark configs inside the Kyuubi container
+  kubectl -n $NAMESPACE exec kyuubi-test -- env IMG="$IMAGE" /bin/bash -c 'echo spark.kubernetes.container.image=$IMG > /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env NN="$NAMESPACE" /bin/bash -c 'echo spark.kubernetes.namespace=$NN >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env UU="$USERNAME" /bin/bash -c 'echo spark.kubernetes.authenticate.driver.serviceAccountName=$UU >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env ENDPOINT="$s3_endpoint" /bin/bash -c 'echo spark.hadoop.fs.s3a.endpoint=$ENDPOINT >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env ACCESS_KEY="$s3_access_key" /bin/bash -c 'echo spark.hadoop.fs.s3a.access.key=$ACCESS_KEY >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env SECRET_KEY="$s3_secret_key" /bin/bash -c 'echo spark.hadoop.fs.s3a.secret.key=$SECRET_KEY >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- /bin/bash -c 'echo spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- /bin/bash -c 'echo spark.hadoop.fs.s3a.connection.ssl.enabled=false >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- /bin/bash -c 'echo spark.hadoop.fs.s3a.path.style.access=true >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env BUCKET="$S3_BUCKET" /bin/bash -c 'echo spark.sql.warehouse.dir=s3a://$BUCKET/warehouse >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env BUCKET="$S3_BUCKET" /bin/bash -c 'echo spark.kubernetes.file.upload.path=s3a://$BUCKET >> /etc/spark8t/conf/spark-defaults.conf'
+
+  # Wait some time for the server to be up and running
   sleep 10
 }
 
 cleanup_user() {
-  EXIT_CODE=$1
-  USERNAME=$2
-  NAMESPACE=$3
+  # Cleanup user resources.
+  # 
+  # Arguments:
+  # $1: Exit code of the accompanying process (used to decide how to clean up)
+  # $2: Service account name
+  # $3: Namespace 
+
+  exit_code=$1
+  username=$2
+  namespace=$3
+
+  delete_s3_bucket kyuubi
 
   kubectl -n $NAMESPACE delete pod kyuubi-test --wait=true
 
-  kubectl -n $NAMESPACE exec testpod-admin -- env UU="$USERNAME" NN="$NAMESPACE" \
+  kubectl -n $NAMESPACE exec testpod-admin -- env UU="$username" NN="$namespace" \
                   /bin/bash -c 'spark-client.service-account-registry delete --username $UU --namespace $NN'  
 
-  OUTPUT=$(kubectl -n $NAMESPACE exec testpod-admin -- /bin/bash -c 'spark-client.service-account-registry list')
+  output=$(kubectl -n $NAMESPACE exec testpod-admin -- /bin/bash -c 'spark-client.service-account-registry list')
 
-  EXISTS=$(echo -e "$OUTPUT" | grep "$NAMESPACE:$USERNAME" | wc -l)
+  exists=$(echo -e "$output" | grep "$namespace:$username" | wc -l)
 
   if [ "${EXISTS}" -ne "0" ]; then
       exit 2
   fi
 
-  if [ "${EXIT_CODE}" -ne "0" ]; then
+  if [ "${exit_code}" -ne "0" ]; then
       kubectl delete ns $NAMESPACE
       exit 1
   fi
 }
 
+
 cleanup_user_success() {
   echo "cleanup_user_success()......"
-  cleanup_user 0 spark $NAMESPACE
+  cleanup_user 0 $SERVICE_ACCOUNT $NAMESPACE
 }
+
 
 cleanup_user_failure() {
   echo "cleanup_user_failure()......"
-  cleanup_user 1 spark $NAMESPACE
+  cleanup_user 1 $SERVICE_ACCOUNT $NAMESPACE
 }
 
-wait_for_pod() {
-
-  POD=$1
-  NAMESPACE=$2
-
-  SLEEP_TIME=1
-  for i in {1..5}
-  do
-    pod_status=$(kubectl -n ${NAMESPACE} get pod ${POD} | awk '{ print $3 }' | tail -n 1)
-    echo $pod_status
-    if [[ "${pod_status}" == "Running" ]]
-    then
-        echo "testpod is Running now!"
-        break
-    elif [[ "${i}" -le "5" ]]
-    then
-        echo "Waiting for the pod to come online..."
-        sleep $SLEEP_TIME
-    else
-        echo "testpod did not come up. Test Failed!"
-        exit 3
-    fi
-    SLEEP_TIME=$(expr $SLEEP_TIME \* 2);
-  done
-}
-
-setup_admin_test_pod() {
-  kubectl create ns $NAMESPACE
-
-  echo "Creating admin test-pod"
-
-  # Create a pod with admin service account
-  yq ea '.spec.containers[0].env[0].name = "KUBECONFIG" | .spec.containers[0].env[0].value = "/var/lib/spark/.kube/config" | .metadata.name = "testpod-admin"' \
-    ./tests/integration/resources/testpod.yaml | \
-    kubectl -n tests apply -f -
-
-  wait_for_pod testpod-admin $NAMESPACE
-
-  MY_KUBE_CONFIG=$(cat /home/${USER}/.kube/config)
-
-  kubectl -n $NAMESPACE exec testpod-admin -- /bin/bash -c 'mkdir -p ~/.kube'
-  kubectl -n $NAMESPACE exec testpod-admin -- env KCONFIG="$MY_KUBE_CONFIG" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
-}
 
 teardown_test_pods() {
-  kubectl -n $NAMESPACE delete pod testpod-admin
+  kubectl -n $NAMESPACE delete pod $ADMIN_POD_NAME
   kubectl delete namespace $NAMESPACE
 }
 
 
 test_jdbc_connection(){
+  # Test the JDBC endpoint exposed by Kyuubi by running a few SQL queries
+
   jdbc_endpoint=$(kubectl -n $NAMESPACE exec kyuubi-test -- pebble logs kyuubi | grep 'Starting and exposing JDBC connection at:' | rev | cut -d' ' -f1 | rev)
   commands=$(cat ./tests/integration/resources/test-kyuubi.sql)
 
-  echo -e "$(kubectl exec kyuubi-test -- \
+  echo -e "$(kubectl exec kyuubi-test -n $NAMESPACE -- \
           env CMDS="$commands" ENDPOINT="$jdbc_endpoint" \
           /bin/bash -c 'echo "$CMDS" | /opt/kyuubi/bin/beeline -u $ENDPOINT'
       )" > /tmp/test_beeline.out
@@ -150,20 +162,21 @@ test_jdbc_connection(){
   fi
 
   rm /tmp/test_beeline.out
-
 }
+
+
 
 echo -e "##################################"
 echo -e "SETUP ADMIN TEST POD"
 echo -e "##################################"
 
-setup_admin_test_pod
+setup_admin_pod $ADMIN_POD_NAME $(kyuubi_image) $NAMESPACE
 
 echo -e "##################################"
 echo -e "START KYUUBI POD AND BEGIN TESTING"
 echo -e "##################################"
 
-(setup_kyuubi spark tests && test_jdbc_connection && cleanup_user_success) || cleanup_user_failure
+(setup_kyuubi_pod && test_jdbc_connection && cleanup_user_success) || cleanup_user_failure
 
 echo -e "##################################"
 echo -e "TEARDOWN ADMIN POD"

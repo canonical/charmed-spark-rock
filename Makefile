@@ -45,7 +45,8 @@ AWS_TAG_FILE := $(_MAKE_DIR)/aws.tag
 IMAGE_NAME := $(shell yq .name rockcraft.yaml)
 # eg, 3.4.2 
 VERSION := $(shell yq .version rockcraft.yaml)
-
+# Tag for the Spark Image (will always be VERSION)
+BASE_TAG := $(VERSION)
 # Picks up the version of the flavor, from rockcraft.yaml. For this, there are comments in
 # rockcraft.yaml in the pattern 'version:spark:x.x.x' and 'version:jupyter:x.x.x'.
 # We pick the 'x.x.x' part from those comments.
@@ -76,50 +77,50 @@ CHARMED_OCI_KYUUBI=$(CHARMED_OCI_FULL_NAME)-kyuubi
 # TAG: The tag for the image
 #
 # For eg,
-# BASE_NAME = "charmed-spark_3.4.2_amd64.tar" 				TAG = "3.4.2"			DISPLAY_NAME = "ghcr.io/canonical/charmed-spark"
+# BASE_NAME = "charmed-spark_3.4.2_amd64.tar" 				FLAVOUR_TAG = "3.4.2"			DISPLAY_NAME = "ghcr.io/canonical/charmed-spark"
 # or,
-# BASE_NAME = "charmed-spark-jupyterlab_3.4.2_amd64.tar"	TAG = "3.4.2-4.0.11"	DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-jupyterlab"
+# BASE_NAME = "charmed-spark-jupyterlab_3.4.2_amd64.tar"	FLAVOUR_TAG = "3.4.2-4.0.11"	DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-jupyterlab"
 # or,
-# BASE_NAME = "charmed-spark-kyuubi_3.4.2_amd64.tar"		TAG = "3.4.2-1.9.0"		DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-kyuubi"
+# BASE_NAME = "charmed-spark-kyuubi_3.4.2_amd64.tar"		FLAVOUR_TAG = "3.4.2-1.9.0"		DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-kyuubi"
 #
 ifeq ($(FLAVOUR), jupyter)
 	DISPLAY_NAME=$(CHARMED_OCI_JUPYTER)
-	TAG=$(VERSION)-$(VERSION_FLAVOUR)
+	FLAVOUR_TAG=$(BASE_TAG)-$(VERSION_FLAVOUR)
 	BASE_NAME=$(IMAGE_NAME)-jupyterlab_$(VERSION)_$(PLATFORM).tar
 else ifeq ($(FLAVOUR), kyuubi)
 	DISPLAY_NAME=$(CHARMED_OCI_KYUUBI)
-	TAG=$(VERSION)-$(VERSION_FLAVOUR)
+	FLAVOUR_TAG=$(BASE_TAG)-$(VERSION_FLAVOUR)
 	BASE_NAME=$(IMAGE_NAME)-kyuubi_$(VERSION)_$(PLATFORM).tar
 else
 	DISPLAY_NAME=$(CHARMED_OCI_FULL_NAME)
-	TAG=$(VERSION)
+	FLAVOUR_TAG=$(BASE_TAG)
 	BASE_NAME=$(IMAGE_NAME)_$(VERSION)_$(PLATFORM).tar
 endif
 
 # The file marker that signifies the final tar build has been created.
 # eg, .make_cache/charmed-spark/3.4.2.tag
-FINAL_BUILD_TAG_FILE=$(_MAKE_DIR)/$(DISPLAY_NAME)/$(TAG).tag
+FINAL_BUILD_TAG_FILE=$(_MAKE_DIR)/$(DISPLAY_NAME)/$(FLAVOUR_TAG).tag
 
 # The path of the tar file that is created at the end of the build step
 # eg, .make_cache/charmed-spark/3.4.2.tag
-FINAL_BUILD_TAR_FILEPATH=$(_MAKE_DIR)/$(DISPLAY_NAME)/$(TAG).tar
+FINAL_BUILD_TAR_FILEPATH=$(_MAKE_DIR)/$(DISPLAY_NAME)/$(FLAVOUR_TAG).tar
 
 # A file marker, whose existence signifies that base Spark image has been built.
 # eg, .make_cache/ghcr.io/canonical/charmed-spark/3.4.2.tag
-CHARMED_OCI_TAG_FILE := $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(TAG).tag
+CHARMED_OCI_TAG_FILE := $(_MAKE_DIR)/$(CHARMED_OCI_FULL_NAME)/$(BASE_TAG).tag
 
 # A file marker, whose existence signifies that the Jupyter Spark image has been built.
-# eg, .make_cache/ghcr.io/canonical/charmed-spark-jupyterlab/3.4.2.tag
-CHARMED_OCI_JUPYTER_TAG_FILE := $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(TAG).tag
+# eg, .make_cache/ghcr.io/canonical/charmed-spark-jupyterlab/3.4.2-4.0.11.tag
+CHARMED_OCI_JUPYTER_TAG_FILE := $(_MAKE_DIR)/$(CHARMED_OCI_JUPYTER)/$(FLAVOUR_TAG).tag
 
 # A file marker, whose existence signifies that the Kyuubi Spark image has been built.
-# eg, .make_cache/ghcr.io/canonical/charmed-spark-kyuubi/3.4.2.tag
-CHARMED_OCI_KYUUBI_TAG_FILE := $(_MAKE_DIR)/$(CHARMED_OCI_KYUUBI)/$(TAG).tag
+# eg, .make_cache/ghcr.io/canonical/charmed-spark-kyuubi/3.4.2-1.9.0.tag
+CHARMED_OCI_KYUUBI_TAG_FILE := $(_MAKE_DIR)/$(CHARMED_OCI_KYUUBI)/$(FLAVOUR_TAG).tag
 
 # Name and file marker for a intermediary image created temporarily during the build process
 # eg, stage-charmed-spark and .make_cache/stage-charmed-spark/3.4.2.tag
 _TMP_OCI_NAME := stage-$(IMAGE_NAME)
-_TMP_OCI_TAG_FILE := $(_MAKE_DIR)/$(_TMP_OCI_NAME)/$(TAG).tag
+_TMP_OCI_TAG_FILE := $(_MAKE_DIR)/$(_TMP_OCI_NAME).tag
 
 
 # ======================
@@ -138,7 +139,7 @@ help:
 	@echo "Flavour: $(FLAVOUR)"
 	@echo " "
 	@echo "Image: $(DISPLAY_NAME)"
-	@echo "Tag: $(TAG)"
+	@echo "Tag: $(FLAVOUR_TAG)"
 	@echo "Artifact: $(BASE_NAME)"
 	@echo " "
 	@echo "Type 'make' followed by one of these keywords:"
@@ -171,7 +172,7 @@ $(_TMP_OCI_TAG_FILE): $(_ROCK_OCI)
 	skopeo --insecure-policy \
           copy \
           oci-archive:"$(_ROCK_OCI)" \
-          docker-daemon:"$(_TMP_OCI_NAME):$(TAG)"
+          docker-daemon:"$(_TMP_OCI_NAME):latest"
 	
 	mkdir -p $$(dirname $(_TMP_OCI_TAG_FILE)) && touch $(_TMP_OCI_TAG_FILE)
 
@@ -209,8 +210,8 @@ microk8s: $(K8S_TAG_FILE)
 # CHARMED_OCI_TAG_FILE => .make_cache/ghcr.io/canonical/charmed-spark/3.4.2.tag
 #
 $(CHARMED_OCI_TAG_FILE): $(_TMP_OCI_TAG_FILE) build/Dockerfile
-	docker build -t "$(CHARMED_OCI_FULL_NAME):$(TAG)" \
-		--build-arg BASE_IMAGE="$(_TMP_OCI_NAME):$(TAG)" \
+	docker build -t "$(CHARMED_OCI_FULL_NAME):$(BASE_TAG)" \
+		--build-arg BASE_IMAGE="$(_TMP_OCI_NAME):latest" \
 		-f build/Dockerfile .
 	
 	mkdir -p $$(dirname $(CHARMED_OCI_TAG_FILE)) && touch $(CHARMED_OCI_TAG_FILE)
@@ -222,8 +223,8 @@ $(CHARMED_OCI_TAG_FILE): $(_TMP_OCI_TAG_FILE) build/Dockerfile
 # CHARMED_OCI_JUPYTER_TAG_FILE => .make_cache/ghcr.io/canonical/charmed-spark-jupyterlab/3.4.2.tag
 #
 $(CHARMED_OCI_JUPYTER_TAG_FILE): $(CHARMED_OCI_TAG_FILE) build/Dockerfile.jupyter files/jupyter/bin/jupyterlab-server.sh files/jupyter/pebble/layers.yaml
-	docker build -t "$(CHARMED_OCI_JUPYTER):$(TAG)" \
-		--build-arg BASE_IMAGE="$(CHARMED_OCI_FULL_NAME):$(TAG)" \
+	docker build -t "$(CHARMED_OCI_JUPYTER):$(FLAVOUR_TAG)" \
+		--build-arg BASE_IMAGE="$(CHARMED_OCI_FULL_NAME):$(BASE_TAG)" \
 		--build-arg JUPYTERLAB_VERSION="$(VERSION_FLAVOUR)" \
 		-f build/Dockerfile.jupyter .
 
@@ -236,8 +237,8 @@ $(CHARMED_OCI_JUPYTER_TAG_FILE): $(CHARMED_OCI_TAG_FILE) build/Dockerfile.jupyte
 # CHARMED_OCI_KYUUBI_TAG_FILE => .make_cache/ghcr.io/canonical/charmed-spark-kyuubi/3.4.2.tag
 #
 $(CHARMED_OCI_KYUUBI_TAG_FILE): $(CHARMED_OCI_TAG_FILE) build/Dockerfile.kyuubi files/kyuubi/bin/kyuubi.sh files/kyuubi/pebble/layers.yaml
-	docker build -t "$(CHARMED_OCI_KYUUBI):$(TAG)" \
-		--build-arg BASE_IMAGE="$(CHARMED_OCI_FULL_NAME):$(TAG)" \
+	docker build -t "$(CHARMED_OCI_KYUUBI):$(FLAVOUR_TAG)" \
+		--build-arg BASE_IMAGE="$(CHARMED_OCI_FULL_NAME):$(BASE_TAG)" \
 		-f build/Dockerfile.kyuubi .
 
 	mkdir -p $$(dirname $(CHARMED_OCI_KYUUBI_TAG_FILE)) && touch $(CHARMED_OCI_KYUUBI_TAG_FILE)
@@ -245,16 +246,16 @@ $(CHARMED_OCI_KYUUBI_TAG_FILE): $(CHARMED_OCI_TAG_FILE) build/Dockerfile.kyuubi 
 
 # Recipe for creating a TAR file for the corresponding OCI image.
 # Once it has been ensured that the appropriate file marker for OCI image is in place (thus ensuring
-# that the image has been created successfully), this recipe just proceeds to `docker save` the
+# that the image has been created successfully in docker), this recipe just proceeds to `docker save` the
 # image to a tarfile.
 #
 # At the end of the process, a tar file for the image is created at the path of tag marker file. 
 #
-# $(_MAKE_DIR)/%/$(TAG).tar => .make_cache/ghcr.io/canonical/charmed-spark/3.4.2.tar
-# $(_MAKE_DIR)/%/$(TAG).tag => .make_cache/ghcr.io/canonical/charmed-spark/3.4.2.tag
+# $(_MAKE_DIR)/%/$(FLAVOUR_TAG).tar => .make_cache/ghcr.io/canonical/charmed-spark/3.4.2.tar
+# $(_MAKE_DIR)/%/$(FLAVOUR_TAG).tag => .make_cache/ghcr.io/canonical/charmed-spark/3.4.2.tag
 #
-$(_MAKE_DIR)/%/$(TAG).tar: $(_MAKE_DIR)/%/$(TAG).tag
-	docker save $*:$(TAG) -o $(_MAKE_DIR)/$*/$(TAG).tar
+$(_MAKE_DIR)/%/$(FLAVOUR_TAG).tar: $(_MAKE_DIR)/%/$(FLAVOUR_TAG).tag
+	docker save $*:$(FLAVOUR_TAG) -o $(_MAKE_DIR)/$*/$(FLAVOUR_TAG).tar
 
 
 # Recipe that copies the final build of the TAR artifact in TAR to current directory,
@@ -266,7 +267,6 @@ $(BASE_NAME): $(FINAL_BUILD_TAR_FILEPATH)
 
 
 # Shorthand recipe to build the image
-# The following is the sample build process when called `make build PREFIX=test- REPOSITORY=ghcr.io/canonical`
 #
 # BASE_NAME => charmed-spark_3.4.2_amd64.tar
 build: $(BASE_NAME)
@@ -276,9 +276,9 @@ build: $(BASE_NAME)
 # Recipe that imports the image into docker container registry
 ifeq ($(TARGET), docker)
 import: build
-	@echo "=== Importing image $(DISPLAY_NAME):$(TAG) into docker ==="
+	@echo "=== Importing image $(DISPLAY_NAME):$(FLAVOUR_TAG) into docker ==="
 	$(eval IMAGE := $(shell docker load -i $(BASE_NAME)))
-	docker tag $(lastword $(IMAGE)) $(DISPLAY_NAME):$(TAG)
+	docker tag $(lastword $(IMAGE)) $(DISPLAY_NAME):$(FLAVOUR_TAG)
 
 	mkdir -p $$(dirname $(FINAL_BUILD_TAG_FILE)) && touch $(FINAL_BUILD_TAG_FILE)
 endif
@@ -287,8 +287,8 @@ endif
 # Recipe that imports the image into microk8s container registry
 ifeq ($(TARGET), microk8s)
 import: $(K8S_TAG_FILE) build
-	@echo "=== Importing image $(DISPLAY_NAME):$(TAG) into Microk8s container registry ==="
-	microk8s ctr images import --base-name $(DISPLAY_NAME):$(TAG) $(BASE_NAME)
+	@echo "=== Importing image $(DISPLAY_NAME):$(FLAVOUR_TAG) into Microk8s container registry ==="
+	microk8s ctr images import --base-name $(DISPLAY_NAME):$(FLAVOUR_TAG) $(BASE_NAME)
 endif
 
 

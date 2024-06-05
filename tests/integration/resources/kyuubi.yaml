@@ -1,13 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: kyuubi-test
+  name: <POD_NAME>
 spec:
   serviceAccountName: "<SERVICE_ACCOUNT>"
   containers:
   - image: <IMAGE>
     name: kyuubi
-    # IT WOULD BE NICE IF THESE PARAMETERS COULD BE AUTO-INFERRED FROM THE
-    # SERVICE ACCOUNT USED TO RUN THE JOB
-    # (JIRA TICKET https://warthogs.atlassian.net/browse/DPE-3460)
-    # args: ["--username", "<SERVICE_ACCOUNT>", "--namespace", "<NAMESPACE>"]
