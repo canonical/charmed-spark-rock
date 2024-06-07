@@ -154,4 +154,3 @@ clean:
 	@echo "=== Cleaning environment ==="
 	rockcraft clean
 	rm -rf $(_MAKE_DIR) *.rock *.tar
-
