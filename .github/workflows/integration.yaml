@@ -56,9 +56,6 @@ jobs:
           
           # sg microk8s -c "make tests"
 
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-
       - name: Run tests (Jupyter)
         run: |
           # Import artifact into docker with new tag
@@ -68,7 +65,10 @@ jobs:
             REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
             -o $(find .make_cache -name "*.tag")
 
-          sg microk8s -c "make tests FLAVOUR=jupyter"
+          # sg microk8s -c "make tests FLAVOUR=jupyter"
+
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
 
       - name: Run tests (Kyuubi)
         run: |
