@@ -25,7 +25,9 @@ get_jupyter_version(){
 }
 
 spark_image(){
-  echo "ghcr.io/canonical/test-charmed-spark-jupyterlab:$(get_spark_version)-$(get_jupyter_version)"
+  # echo "ghcr.io/canonical/test-charmed-spark-jupyterlab:$(get_spark_version)-$(get_jupyter_version)"
+  echo "ghcr.io/canonical/test-charmed-spark-jupyterlab:$(get_spark_version)"
+
 }
 
 setup_jupyter() {
