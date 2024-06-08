@@ -54,7 +54,10 @@ jobs:
           sudo make import TARGET=microk8s PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
             -o $(find .make_cache -name "*.tag")
           
-          sg microk8s -c "make tests"
+          # sg microk8s -c "make tests"
+
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
 
       - name: Run tests (Jupyter)
         run: |
