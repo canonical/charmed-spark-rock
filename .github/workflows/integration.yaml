@@ -54,11 +54,11 @@ jobs:
 
           # Import artifact into docker with new tag
           sudo make import TARGET=docker REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
-            -o ${{ steps.artifact.outputs.name }} 
+            -o ${{ steps.artifact.outputs.base_artifact_name }} 
 
           # Import artifact into microk8s to be used in integration tests
           sudo make import TARGET=microk8s PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
-            -o $(find .make_cache -name "*.tag")
+            -o ${{ steps.artifact.outputs.base_artifact_name }}
           
           sg microk8s -c "make tests"
 
@@ -72,7 +72,7 @@ jobs:
             FLAVOUR=jupyter TARGET=microk8s \
             TAG=$(yq .version rockcraft.yaml) \
             REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
-            -o $(find .make_cache -name "*.tag")
+            -o ${{ steps.artifact.outputs.jupyter_artifact_name }}
 
           sg microk8s -c "make tests FLAVOUR=jupyter"
 
@@ -87,6 +87,6 @@ jobs:
             FLAVOUR=kyuubi TARGET=microk8s \
             TAG=$(yq .version rockcraft.yaml) \
             REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
-            -o $(find .make_cache -name "*.tag")
+            -o ${{ steps.artifact.outputs.kyuubi_artifact_name }}
 
           sg microk8s -c "make tests FLAVOUR=kyuubi"
