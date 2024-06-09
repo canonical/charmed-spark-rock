@@ -27,8 +27,12 @@ jobs:
       - name: Get Artifact Name
         id: artifact
         run: |
-          ARTIFACT=$(make help | grep 'Artifact: ')
-          echo "name=${ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          BASE_ARTIFACT=$(make help | grep 'Artifact: ')
+          echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          JUPYTER_ARTIFACT=$(make help FLAVOUR=jupyter | grep 'Artifact: ')
+          echo "jupyter_artifact_name=${JUPYTER_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
+          echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Install and configure microk8s
         run: |
@@ -40,11 +44,13 @@ jobs:
           name: charmed-spark
           path: charmed-spark
 
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+
       - name: Run tests
         run: |
           # Unpack Artifact
-          mv charmed-spark/${{ steps.artifact.outputs.name }} .
-          rmdir charmed-spark
+          mv charmed-spark/${{ steps.artifact.outputs.base_artifact_name }} .
 
           # Import artifact into docker with new tag
           sudo make import TARGET=docker REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
@@ -54,10 +60,13 @@ jobs:
           sudo make import TARGET=microk8s PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
             -o $(find .make_cache -name "*.tag")
           
-          # sg microk8s -c "make tests"
+          sg microk8s -c "make tests"
 
       - name: Run tests (Jupyter)
         run: |
+          # Unpack Artifact
+          mv charmed-spark/${{ steps.artifact.outputs.jupyter_artifact_name }} .
+
           # Import artifact into docker with new tag
           sudo make import \
             FLAVOUR=jupyter TARGET=microk8s \
@@ -65,13 +74,14 @@ jobs:
             REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
             -o $(find .make_cache -name "*.tag")
 
-          # sg microk8s -c "make tests FLAVOUR=jupyter"
-
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
+          sg microk8s -c "make tests FLAVOUR=jupyter"
 
       - name: Run tests (Kyuubi)
         run: |
+          # Unpack Artifact
+          mv charmed-spark/${{ steps.artifact.outputs.kyuubi_artifact_name }} .
+          rmdir charmed-spark
+
           # Import artifact into docker with new tag
           sudo make import \
             FLAVOUR=kyuubi TARGET=microk8s \
