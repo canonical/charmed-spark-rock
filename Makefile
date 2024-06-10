@@ -86,6 +86,7 @@ K8s_MARKER=$(_MAKE_DIR)/k8s.tag
 AWS_MARKER=$(_MAKE_DIR)/aws.tag
 
 
+STAGED_IMAGE_DOCKER_ALIAS=staged-charmed-spark:$(SPARK_VERSION)
 SPARK_DOCKER_ALIAS=charmed-spark:$(SPARK_VERSION)
 JUPYTER_DOCKER_ALIAS=charmed-spark-jupyter:$(SPARK_VERSION)-$(JUPYTER_VERSION)
 KYUUBI_DOCKER_ALIAS=charmed-spark-kyuubi:$(SPARK_VERSION)-$(KYUUBI_VERSION)
@@ -183,15 +184,11 @@ kyuubi: $(KYUUBI_MARKER)
 $(ARTIFACT):
 ifeq ($(FLAVOUR), jupyter)
 	make jupyter
-	# DOCKER_ALIAS=$(JUPYTER_DOCKER_ALIAS)
 else ifeq ($(FLAVOUR), kyuubi)
 	make kyuubi
-	# DOCKER_ALIAS=$(KYUUBI_DOCKER_ALIAS)
 else
 	make spark
-	# DOCKER_ALIAS=$(SPARK_DOCKER_ALIAS)
 endif
-	# docker save $(DOCKER_ALIAS) -o $(ARTIFACT)
 
 
 
