@@ -20,8 +20,8 @@ jobs:
       - name: Get Artifact Name
         id: artifact
         run: |
-          ARTIFACT=$(make help | grep 'Artifact: ')
-          echo "name=${ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          BASE_ARTIFACT=$(make help | grep 'Artifact: ')
+          echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
@@ -30,10 +30,10 @@ jobs:
       - name: Import locally
         run: |
           # Unpack artifact
-          mv charmed-spark/${{ steps.artifact.outputs.name }} .
+          mv charmed-spark/${{ steps.artifact.outputs.base_artifact_name }} .
           rmdir charmed-spark
           sudo skopeo --insecure-policy copy \
-            docker-archive:${{ steps.artifact.outputs.name }} \
+            docker-archive:${{ steps.artifact.outputs.base_artifact_name }} \
             docker-daemon:trivy/charmed-spark:test
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master

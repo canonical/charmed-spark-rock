@@ -19,9 +19,12 @@ REPOSITORY :=
 # eg, test- [To be passed when you 'make' the recipe]
 PREFIX := 
 
-TARGET := docker
 PLATFORM := amd64
+
+# The flavor of the image, (one of spark, jupyter and kyuubi)
 FLAVOUR := "spark"
+
+# The channel of `microk8s` snap to be used for testing
 MICROK8S_CHANNEL := "1.28/stable"
 
 # ======================
@@ -33,28 +36,39 @@ _MAKE_DIR := .make_cache
 $(shell mkdir -p $(_MAKE_DIR))
 
 
-# Fetch name of image and it's version from rockcraft.yaml
 # eg, charmed-spark
 ROCK_NAME := $(shell yq .name rockcraft.yaml)
 
+# eg, 3.4.2
 SPARK_VERSION := $(shell yq .version rockcraft.yaml)
+
+# eg, 1.9.0
 KYUUBI_VERSION=$(shell grep "version:kyuubi" rockcraft.yaml | sed "s/^#//" | cut -d ":" -f3)
+
+# eg, 4.0.11
 JUPYTER_VERSION=$(shell grep "version:jupyter" rockcraft.yaml | sed "s/^#//" | cut -d ":" -f3)
 
 # The filename of the Rock file built during the build process.
 # eg, charmed-spark_3.4.2_amd64.rock
 ROCK_FILE=$(ROCK_NAME)_$(SPARK_VERSION)_$(PLATFORM).rock
 
-
+# The filename of the final artifact built for Spark image
+# eg, charmed-spark_3.4.2_amd64.tar
 SPARK_ARTIFACT=$(ROCK_NAME)_$(SPARK_VERSION)_$(PLATFORM).tar
+
+# The filename of the final artifact built for Jupyter image
+# eg, charmed-spark-jupyterlab_3.4.2_amd64.tar
 JUPYTER_ARTIFACT=$(ROCK_NAME)-jupyterlab_$(SPARK_VERSION)_$(PLATFORM).tar
+
+# The filename of the final artifact built for Kyuubi image
+# eg, charmed-spark-kyuubi_3.4.2_amd64.tar
 KYUUBI_ARTIFACT=$(ROCK_NAME)-kyuubi_$(SPARK_VERSION)_$(PLATFORM).tar
 
 
-# Decide on what the base name, display name and tag for the image will be.
+# Decide on what the  name of artifact, display name and tag for the image will be.
 # 
-# ARTIFACT: The name of the tarfile that will be generated after building the image
-# DISPLAY_NAME: The fully qualified name of the image without OCI tags
+# ARTIFACT: The name of the tarfile (artifact) that will be generated after building the image
+# DISPLAY_NAME: The fully qualified name of the image without tags
 # TAG: The tag for the image
 #
 # For eg,
@@ -79,13 +93,21 @@ else
 endif
 
 
+# Marker files that are used to specify certain make targets have been rebuilt.
+#
+# SPARK_MARKER: The Spark image has been built and has been registered with docker registry
+# JUPYTER_MARKER: The Jupyter image has been built and has been registered with docker registry
+# KYUUBI_MARKER: The Kyuubi image has been built and has been registered with docker registry
+# K8S_MARKER: The MicroK8s cluster has been installed and configured successfully
+# AWS_MARKER: The AWS CLI has been installed and configured with valid S3 credentials from MinIO
 SPARK_MARKER=$(_MAKE_DIR)/spark-$(SPARK_VERSION).tag
 JUPYTER_MARKER=$(_MAKE_DIR)/jupyter-$(JUPYTER_VERSION).tag
 KYUUBI_MARKER=$(_MAKE_DIR)/kyuubi-$(KYUUBI_VERSION).tag
-K8s_MARKER=$(_MAKE_DIR)/k8s.tag
+K8S_MARKER=$(_MAKE_DIR)/k8s.tag
 AWS_MARKER=$(_MAKE_DIR)/aws.tag
 
 
+# The names of different flavours of the image in the docker container registry
 STAGED_IMAGE_DOCKER_ALIAS=staged-charmed-spark:$(SPARK_VERSION)
 SPARK_DOCKER_ALIAS=charmed-spark:$(SPARK_VERSION)
 JUPYTER_DOCKER_ALIAS=charmed-spark-jupyter:$(SPARK_VERSION)-$(JUPYTER_VERSION)
@@ -101,7 +123,7 @@ KYUUBI_DOCKER_ALIAS=charmed-spark-kyuubi:$(SPARK_VERSION)-$(KYUUBI_VERSION)
 # Display the help message that includes the available recipes provided by this Makefile,
 # the name of the artifacts, instructions, etc.
 help:
-	@echo "---------------HELP-----------------"
+	@echo "-------------------------HELP---------------------------"
 	@echo "Name: $(ROCK_NAME)"
 	@echo "Version: $(VERSION)"
 	@echo "Platform: $(PLATFORM)"
@@ -114,12 +136,15 @@ help:
 	@echo " "
 	@echo "Type 'make' followed by one of these keywords:"
 	@echo " "
-	@echo "  - build for creating the OCI Images"
-	@echo "  - import for importing the images to a container registry"
-	@echo "  - microk8s setup a local Microk8s cluster for running integration tests"
-	@echo "  - tests for running integration tests"
-	@echo "  - clean for removing cache file"
-	@echo "------------------------------------"
+	@echo "  - rock                 for building the rock image to a rock file"
+	@echo "  - build FLAVOUR=xxxx   for creating the OCI Images with flavour xxxx"
+	@echo "  - docker-import        for importing the images to Docker container registry"
+	@echo "  - microk8s-import      for importing the images to MicroK8s container registry"
+	@echo "  - microk8s-setup       to setup a local Microk8s cluster for running integration tests"
+	@echo "  - aws-cli-setup        to setup the AWS CLI and S3 credentials for running integration tests"
+	@echo "  - tests FLAVOUR=xxxx   for running integration tests for flavour xxxx"
+	@echo "  - clean                for removing cache files, artifact file and rock file"
+	@echo "--------------------------------------------------------"
 
 
 
@@ -135,6 +160,7 @@ $(ROCK_FILE): rockcraft.yaml $(wildcard files/spark/*/*)
 rock: $(ROCK_FILE)
 
 
+# Recipe that builds Spark image and exports it to a tarfile in the current directory
 $(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
 	skopeo --insecure-policy \
           copy \
@@ -150,9 +176,11 @@ $(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
 	touch $(SPARK_MARKER)
 
 
+# Shorthand recipe for building Spark image
 spark: $(SPARK_MARKER)
 
 
+# Recipe that builds Jupyter image and exports it to a tarfile in the current directory
 $(JUPYTER_MARKER): $(SPARK_MARKER) build/Dockerfile.jupyter files/jupyter/bin/jupyterlab-server.sh files/jupyter/pebble/layers.yaml
 	docker build -t $(JUPYTER_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
@@ -164,9 +192,11 @@ $(JUPYTER_MARKER): $(SPARK_MARKER) build/Dockerfile.jupyter files/jupyter/bin/ju
 	touch $(JUPYTER_MARKER)
 
 
+# Shorthand recipe for building Jupyter image
 jupyter: $(JUPYTER_MARKER)
 
 
+# Recipe that builds Kyuubi image and exports it to a tarfile in the current directory
 $(KYUUBI_MARKER): $(SPARK_MARKER) build/Dockerfile.kyuubi files/kyuubi/bin/kyuubi.sh files/kyuubi/pebble/layers.yaml
 	docker build -t $(KYUUBI_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
@@ -177,8 +207,8 @@ $(KYUUBI_MARKER): $(SPARK_MARKER) build/Dockerfile.kyuubi files/kyuubi/bin/kyuub
 	touch $(KYUUBI_MARKER)
 
 
+# Shorthand recipe for building Kyuubi image
 kyuubi: $(KYUUBI_MARKER)
-
 
 
 $(ARTIFACT):
@@ -191,10 +221,9 @@ else
 endif
 
 
-
-# Shorthand recipe to build the image
+# Shorthand recipe to build the image. The flavour is picked from FLAVOUR variable to `make`.
 #
-# ARTIFACT => charmed-spark_3.4.2_amd64.tar
+# eg, ARTIFACT => charmed-spark_3.4.2_amd64.tar
 build: $(ARTIFACT)
 
 
@@ -235,24 +264,18 @@ microk8s-setup: $(K8s_MARKER)
 # Shorthand recipe for setup and configuration of AWS CLI.
 aws-cli-setup: $(AWS_MARKER)
 
+
 # Recipe for setting up and configuring the K8s cluster. 
-# At the end of the process, a file marker is created to signify that this process is complete. 
-#
-# K8S_MARKER => .make_cache/k8s.tag
-#
-$(K8s_MARKER):
+$(K8S_MARKER):
 	@echo "=== Setting up and configuring local Microk8s cluster ==="
 	/bin/bash ./tests/integration/setup-microk8s.sh $(MICROK8S_CHANNEL)
 	sg microk8s ./tests/integration/config-microk8s.sh
 	touch $(K8s_MARKER)
 
-# Recipe for setting up and configuring the AWS CLI and credentials. 
-# At the end of the process, a file marker is created to signify that this process is complete. 
-# Depends upon K8S_MARKER because the S3 credentials to AWS CLI is provided by MinIO, which is a MicroK8s plugin
 
-# AWS_MARKER => .make_cache/aws.tag
-#
-$(AWS_MARKER): $(K8s_MARKER)
+# Recipe for setting up and configuring the AWS CLI and credentials. 
+# Depends upon K8S_MARKER because the S3 credentials to AWS CLI is provided by MinIO, which is a MicroK8s plugin
+$(AWS_MARKER): $(K8S_MARKER)
 	@echo "=== Setting up and configure AWS CLI ==="
 	/bin/bash ./tests/integration/setup-aws-cli.sh
 	touch $(AWS_MARKER)

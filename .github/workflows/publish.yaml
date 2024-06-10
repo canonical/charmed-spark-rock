@@ -67,8 +67,12 @@ jobs:
       - name: Get Artifact Name
         id: artifact
         run: |
-          ARTIFACT=$(make help | grep 'Artifact: ')
-          echo "name=${ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          BASE_ARTIFACT=$(make help | grep 'Artifact: ')
+          echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          JUPYTER_ARTIFACT=$(make help FLAVOUR=jupyter | grep 'Artifact: ')
+          echo "jupyter_artifact_name=${JUPYTER_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
+          echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -79,8 +83,7 @@ jobs:
       - name: Publish Image to Channel
         run: |
           # Unpack artifact
-          mv charmed-spark/${{ steps.artifact.outputs.name }} .
-          rmdir charmed-spark
+          mv charmed-spark/${{ steps.artifact.outputs.base_artifact_name }} .
           
           REPOSITORY="ghcr.io/canonical/"
           RISK=${{ needs.release_checks.outputs.risk }}
@@ -90,7 +93,7 @@ jobs:
           IMAGE_NAME=$(make help REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
                     
           # Import artifact into docker with new tag
-          sudo make import TARGET=docker REPOSITORY=${REPOSITORY} TAG=${TAG}\
+          sudo make docker-import REPOSITORY=${REPOSITORY} TAG=${TAG}\
             -o ${{ steps.artifact.outputs.name }} 
 
           # Add relevant labels
@@ -113,16 +116,20 @@ jobs:
 
       - name: Publish JupyterLab Image to Channel
         run: |
-      
+          # Unpack artifact
+          mv charmed-spark/${{ steps.artifact.outputs.jupyter_artifact_name }} .
+
           REPOSITORY="ghcr.io/canonical/"
           RISK=${{ needs.release_checks.outputs.risk }}
           TRACK=${{ needs.release_checks.outputs.track }}
           if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
       
           # Import artifact into docker with new tag
-          sudo make import TARGET=docker FLAVOUR=jupyter \
-            REPOSITORY=${REPOSITORY} TAG=${TAG}\
-            -o $(find .make_cache -name "*.tag")
+          sudo make docker-import \
+            FLAVOUR=jupyter \
+            REPOSITORY=${REPOSITORY} \
+            TAG=${TAG} \
+            -o ${{ steps.artifact.outputs.jupyter_artifact_name }}
       
           IMAGE_NAME=$(make help FLAVOUR=jupyter REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
 
@@ -146,16 +153,21 @@ jobs:
 
       - name: Publish Kyuubi Image to Channel
         run: |
-      
+          # Unpack artifact
+          mv charmed-spark/${{ steps.artifact.outputs.kyuubi_artifact_name }} .
+          rmdir charmed-spark
+
           REPOSITORY="ghcr.io/canonical/"
           RISK=${{ needs.release_checks.outputs.risk }}
           TRACK=${{ needs.release_checks.outputs.track }}
           if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
       
           # Import artifact into docker with new tag
-          sudo make import TARGET=docker FLAVOUR=kyuubi \
-            REPOSITORY=${REPOSITORY} TAG=${TAG}\
-            -o $(find .make_cache -name "*.tag")
+          sudo make docker-import \
+            FLAVOUR=kyuubi \
+            REPOSITORY=${REPOSITORY} \
+            TAG=${TAG} \
+            -o ${{ steps.artifact.outputs.kyuubi_artifact_name }}
       
           IMAGE_NAME=$(make help FLAVOUR=kyuubi REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
 

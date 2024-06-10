@@ -74,21 +74,22 @@ setup_kyuubi_pod() {
   s3_secret_key=$(get_s3_secret_key)
 
   # Write Spark configs inside the Kyuubi container
-  kubectl -n $NAMESPACE exec kyuubi-test -- env IMG="$image" /bin/bash -c 'echo spark.kubernetes.container.image=$IMG > /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env NN="$NAMESPACE" /bin/bash -c 'echo spark.kubernetes.namespace=$NN >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env UU="$USERNAME" /bin/bash -c 'echo spark.kubernetes.authenticate.driver.serviceAccountName=$UU >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env ENDPOINT="$s3_endpoint" /bin/bash -c 'echo spark.hadoop.fs.s3a.endpoint=$ENDPOINT >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env IMG="$image"                /bin/bash -c 'echo spark.kubernetes.container.image=$IMG  > /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env NN="$NAMESPACE"             /bin/bash -c 'echo spark.kubernetes.namespace=$NN         >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env UU="$USERNAME"              /bin/bash -c 'echo spark.kubernetes.authenticate.driver.serviceAccountName=$UU >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env ENDPOINT="$s3_endpoint"     /bin/bash -c 'echo spark.hadoop.fs.s3a.endpoint=$ENDPOINT >> /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- env ACCESS_KEY="$s3_access_key" /bin/bash -c 'echo spark.hadoop.fs.s3a.access.key=$ACCESS_KEY >> /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- env SECRET_KEY="$s3_secret_key" /bin/bash -c 'echo spark.hadoop.fs.s3a.secret.key=$SECRET_KEY >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- /bin/bash -c 'echo spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- /bin/bash -c 'echo spark.hadoop.fs.s3a.connection.ssl.enabled=false >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- /bin/bash -c 'echo spark.hadoop.fs.s3a.path.style.access=true >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env BUCKET="$S3_BUCKET" /bin/bash -c 'echo spark.sql.warehouse.dir=s3a://$BUCKET/warehouse >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env BUCKET="$S3_BUCKET" /bin/bash -c 'echo spark.kubernetes.file.upload.path=s3a://$BUCKET >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test --                                 /bin/bash -c 'echo spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test --                                 /bin/bash -c 'echo spark.hadoop.fs.s3a.connection.ssl.enabled=false >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test --                                 /bin/bash -c 'echo spark.hadoop.fs.s3a.path.style.access=true       >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env BUCKET="$S3_BUCKET"         /bin/bash -c 'echo spark.sql.warehouse.dir=s3a://$BUCKET/warehouse  >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env BUCKET="$S3_BUCKET"         /bin/bash -c 'echo spark.kubernetes.file.upload.path=s3a://$BUCKET  >> /etc/spark8t/conf/spark-defaults.conf'
 
   # Wait some time for the server to be up and running
   sleep 10
 }
+
 
 cleanup_user() {
   # Cleanup user resources.
