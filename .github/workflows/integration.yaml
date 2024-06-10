@@ -73,7 +73,7 @@ jobs:
             FLAVOUR=jupyter TARGET=microk8s \
             TAG=$(yq .version rockcraft.yaml) \
             REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
-            -o ${{ steps.artifact.outputs.jupyter_artifact_name }} -o $(find .make_cache -name "*.tag")
+            -o $(find .make_cache -name "*.tag")
 
           sg microk8s -c "make tests FLAVOUR=jupyter"
 
@@ -88,6 +88,6 @@ jobs:
             FLAVOUR=kyuubi TARGET=microk8s \
             TAG=$(yq .version rockcraft.yaml) \
             REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
-            -o ${{ steps.artifact.outputs.kyuubi_artifact_name }} -o $(find .make_cache -name "*.tag")
+            -o $(find .make_cache -name "*.tag")
 
           sg microk8s -c "make tests FLAVOUR=kyuubi"
