@@ -43,10 +43,10 @@ ROCK_NAME := $(shell yq .name rockcraft.yaml)
 SPARK_VERSION := $(shell yq .version rockcraft.yaml)
 
 # eg, 1.9.0
-KYUUBI_VERSION=$(shell grep "version:kyuubi" rockcraft.yaml | sed "s/^#//" | cut -d ":" -f3)
+KYUUBI_VERSION=$(shell yq .flavours.kyuubi.version metadata.yaml)
 
 # eg, 4.0.11
-JUPYTER_VERSION=$(shell grep "version:jupyter" rockcraft.yaml | sed "s/^#//" | cut -d ":" -f3)
+JUPYTER_VERSION=$(shell yq .flavours.jupyter.version metadata.yaml)
 
 # The filename of the Rock file built during the build process.
 # eg, charmed-spark_3.4.2_amd64.rock
@@ -241,13 +241,13 @@ docker-import: $(ARTIFACT)
 
 
 # Recipe that imports the image into microk8s container registry
-microk8s-import: $(ARTIFACT) $(K8s_MARKER)
+microk8s-import: $(ARTIFACT) $(K8S_MARKER)
 	$(eval IMAGE := $(shell microk8s ctr images import $(ARTIFACT) | cut -d' ' -f2))
 	microk8s ctr images tag $(IMAGE) $(DISPLAY_NAME):$(TAG)
 
 
 # Recipe that runs the integration tests
-tests: $(K8s_MARKER) $(AWS_MARKER)
+tests: $(K8S_MARKER) $(AWS_MARKER)
 	@echo "=== Running Integration Tests ==="
 ifeq ($(FLAVOUR), jupyter)
 	/bin/bash ./tests/integration/integration-tests-jupyter.sh
@@ -259,7 +259,7 @@ endif
 
 
 # Shorthand recipe for setup and configuration of K8s cluster.
-microk8s-setup: $(K8s_MARKER)
+microk8s-setup: $(K8S_MARKER)
 
 # Shorthand recipe for setup and configuration of AWS CLI.
 aws-cli-setup: $(AWS_MARKER)
@@ -270,7 +270,7 @@ $(K8S_MARKER):
 	@echo "=== Setting up and configuring local Microk8s cluster ==="
 	/bin/bash ./tests/integration/setup-microk8s.sh $(MICROK8S_CHANNEL)
 	sg microk8s ./tests/integration/config-microk8s.sh
-	touch $(K8s_MARKER)
+	touch $(K8S_MARKER)
 
 
 # Recipe for setting up and configuring the AWS CLI and credentials. 
