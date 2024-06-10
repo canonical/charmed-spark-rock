@@ -181,7 +181,7 @@ spark: $(SPARK_MARKER)
 
 
 # Recipe that builds Jupyter image and exports it to a tarfile in the current directory
-$(JUPYTER_MARKER): $(SPARK_MARKER) build/Dockerfile.jupyter files/jupyter/bin/jupyterlab-server.sh files/jupyter/pebble/layers.yaml
+$(JUPYTER_MARKER): $(SPARK_MARKER) build/Dockerfile.jupyter $(wildcard files/jupyter/*/*)
 	docker build -t $(JUPYTER_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
 		--build-arg JUPYTERLAB_VERSION="$(JUPYTER_VERSION)" \
@@ -197,7 +197,7 @@ jupyter: $(JUPYTER_MARKER)
 
 
 # Recipe that builds Kyuubi image and exports it to a tarfile in the current directory
-$(KYUUBI_MARKER): $(SPARK_MARKER) build/Dockerfile.kyuubi files/kyuubi/bin/kyuubi.sh files/kyuubi/pebble/layers.yaml
+$(KYUUBI_MARKER): $(SPARK_MARKER) build/Dockerfile.kyuubi $(wildcard files/kyuubi/*/*)
 	docker build -t $(KYUUBI_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
 		-f build/Dockerfile.kyuubi .
