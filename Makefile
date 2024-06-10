@@ -233,7 +233,7 @@ endif
 
 
 # Shorthand recipe for setup and configuration of K8s cluster.
-microk8s-setup: $(K8S_TAG_FILE)
+microk8s-setup: $(K8s_MARKER)
 
 
 # Recipe for setting up and configuring the K8s cluster. 
