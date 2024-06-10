@@ -31,7 +31,6 @@ jobs:
         run: |
           # Unpack artifact
           mv charmed-spark/${{ steps.artifact.outputs.base_artifact_name }} .
-          rmdir charmed-spark
           sudo skopeo --insecure-policy copy \
             docker-archive:${{ steps.artifact.outputs.base_artifact_name }} \
             docker-daemon:trivy/charmed-spark:test
