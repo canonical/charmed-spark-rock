@@ -19,16 +19,11 @@ get_spark_version(){
   echo "$SPARK_VERSION"
 }
 
-get_jupyter_version(){
-  # Fetch Jupyter version from rockcraft.yaml
-  grep "version:jupyter" rockcraft.yaml | sed "s/^#//" | cut -d ":" -f3
-}
 
 spark_image(){
-  # echo "ghcr.io/canonical/test-charmed-spark-jupyterlab:$(get_spark_version)-$(get_jupyter_version)"
   echo "ghcr.io/canonical/test-charmed-spark-jupyterlab:$(get_spark_version)"
-
 }
+
 
 setup_jupyter() {
   echo "setup_jupyter() ${1} ${2}"
