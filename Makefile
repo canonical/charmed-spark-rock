@@ -46,6 +46,11 @@ JUPYTER_VERSION=$(shell grep "version:jupyter" rockcraft.yaml | sed "s/^#//" | c
 ROCK_FILE=$(ROCK_NAME)_$(SPARK_VERSION)_$(PLATFORM).rock
 
 
+SPARK_ARTIFACT=$(ROCK_NAME)_$(SPARK_VERSION)_$(PLATFORM).tar
+JUPYTER_ARTIFACT=$(ROCK_NAME)-jupyterlab_$(SPARK_VERSION)_$(PLATFORM).tar
+KYUUBI_ARTIFACT=$(ROCK_NAME)-kyuubi_$(SPARK_VERSION)_$(PLATFORM).tar
+
+
 # Decide on what the base name, display name and tag for the image will be.
 # 
 # ARTIFACT: The name of the tarfile that will be generated after building the image
@@ -62,15 +67,15 @@ ROCK_FILE=$(ROCK_NAME)_$(SPARK_VERSION)_$(PLATFORM).rock
 ifeq ($(FLAVOUR), jupyter)
 	DISPLAY_NAME=$(REPOSITORY)$(PREFIX)$(ROCK_NAME)-jupyterlab
 	TAG=$(SPARK_VERSION)-$(JUPYTER_VERSION)
-	ARTIFACT=$(ROCK_NAME)-jupyterlab_$(SPARK_VERSION)_$(PLATFORM).tar
+	ARTIFACT=$(JUPYTER_ARTIFACT)
 else ifeq ($(FLAVOUR), kyuubi)
-	DISPLAY_NAME=(REPOSITORY)$(PREFIX)$(ROCK_NAME)-kyuubi
+	DISPLAY_NAME=$(REPOSITORY)$(PREFIX)$(ROCK_NAME)-kyuubi
 	TAG=$(SPARK_VERSION)-$(KYUUBI_VERSION)
-	ARTIFACT=$(ROCK_NAME)-kyuubi_$(SPARK_VERSION)_$(PLATFORM).tar
+	ARTIFACT=$(KYUUBI_ARTIFACT)
 else
-	DISPLAY_NAME=(REPOSITORY)$(PREFIX)$(ROCK_NAME)-kyuubi
+	DISPLAY_NAME=$(REPOSITORY)$(PREFIX)$(ROCK_NAME)
 	TAG=$(SPARK_VERSION)
-	ARTIFACT=$(ROCK_NAME)_$(VERSION)_$(PLATFORM).tar
+	ARTIFACT=$(SPARK_ARTIFACT)
 endif
 
 
@@ -81,9 +86,9 @@ K8s_MARKER=$(_MAKE_DIR)/k8s.tag
 AWS_MARKER=$(_MAKE_DIR)/aws.tag
 
 
-SPARK_DOCKER_ALIAS="charmed-spark":$(SPARK_VERSION)
-JUPYTER_DOCKER_ALIAS="charmed-spark-jupyter":$(SPARK_VERSION)-$(JUPYTER_VERSION)
-KYUUBI_DOCKER_ALIAS="charmed-spark-kyuubi":$(SPARK_VERSION)-$(KYUUBI_VERSION)
+SPARK_DOCKER_ALIAS=charmed-spark:$(SPARK_VERSION)
+JUPYTER_DOCKER_ALIAS=charmed-spark-jupyter:$(SPARK_VERSION)-$(JUPYTER_VERSION)
+KYUUBI_DOCKER_ALIAS=charmed-spark-kyuubi:$(SPARK_VERSION)-$(KYUUBI_VERSION)
 
 
 
@@ -121,7 +126,7 @@ help:
 # 
 # ROCK_FILE => charmed-spark_3.4.2_amd64.rock 
 #
-$(ROCK_FILE): rockcraft.yaml
+$(ROCK_FILE): rockcraft.yaml $(wildcard files/spark/*/*)
 	@echo "=== Building Charmed Image ==="
 	rockcraft pack
 
@@ -129,17 +134,17 @@ $(ROCK_FILE): rockcraft.yaml
 rock: $(ROCK_FILE)
 
 
-$(SPARK_MARKER): rock build/Dockerfile
+$(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
 	skopeo --insecure-policy \
           copy \
           oci-archive:"$(ROCK_FILE)" \
           docker-daemon:"staged-charmed-spark:$(SPARK_VERSION)"
 
 	docker build -t $(SPARK_DOCKER_ALIAS) \
-		--build-arg BASE_IMAGE="stage-charmed-spark:$(SPARK_VERSION)" \
+		--build-arg BASE_IMAGE="staged-charmed-spark:$(SPARK_VERSION)" \
 		-f build/Dockerfile .
 
-	docker save $(SPARK_DOCKER_ALIAS) -o $(ARTIFACT)
+	docker save $(SPARK_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
 
 	touch $(SPARK_MARKER)
 
@@ -147,13 +152,13 @@ $(SPARK_MARKER): rock build/Dockerfile
 spark: $(SPARK_MARKER)
 
 
-$(JUPYTER_MARKER): spark build/Dockerfile.jupyter files/jupyter/bin/jupyterlab-server.sh files/jupyter/pebble/layers.yaml
+$(JUPYTER_MARKER): $(SPARK_MARKER) build/Dockerfile.jupyter files/jupyter/bin/jupyterlab-server.sh files/jupyter/pebble/layers.yaml
 	docker build -t $(JUPYTER_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
 		--build-arg JUPYTERLAB_VERSION="$(JUPYTER_VERSION)" \
 		-f build/Dockerfile.jupyter .
 
-	docker save $(JUPYTER_DOCKER_ALIAS) -o $(ARTIFACT)
+	docker save $(JUPYTER_DOCKER_ALIAS) -o $(JUPYTER_ARTIFACT)
 
 	touch $(JUPYTER_MARKER)
 
@@ -161,12 +166,12 @@ $(JUPYTER_MARKER): spark build/Dockerfile.jupyter files/jupyter/bin/jupyterlab-s
 jupyter: $(JUPYTER_MARKER)
 
 
-$(KYUUBI_MARKER): spark build/Dockerfile.kyuubi files/kyuubi/bin/kyuubi.sh files/kyuubi/pebble/layers.yaml
+$(KYUUBI_MARKER): $(SPARK_MARKER) build/Dockerfile.kyuubi files/kyuubi/bin/kyuubi.sh files/kyuubi/pebble/layers.yaml
 	docker build -t $(KYUUBI_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
 		-f build/Dockerfile.kyuubi .
 
-	docker save $(KYUUBI_DOCKER_ALIAS) -o $(ARTIFACT)
+	docker save $(KYUUBI_DOCKER_ALIAS) -o $(KYUUBI_ARTIFACT)
 
 	touch $(KYUUBI_MARKER)
 
@@ -174,11 +179,12 @@ $(KYUUBI_MARKER): spark build/Dockerfile.kyuubi files/kyuubi/bin/kyuubi.sh files
 kyuubi: $(KYUUBI_MARKER)
 
 
+
 $(ARTIFACT):
 ifeq ($(FLAVOUR), jupyter)
 	make jupyter
 	# DOCKER_ALIAS=$(JUPYTER_DOCKER_ALIAS)
-else ifeq($(FLAVOUR), kyuubi)
+else ifeq ($(FLAVOUR), kyuubi)
 	make kyuubi
 	# DOCKER_ALIAS=$(KYUUBI_DOCKER_ALIAS)
 else
@@ -195,24 +201,23 @@ endif
 build: $(ARTIFACT)
 
 
-
 # Recipe for cleaning up the build files and environment
 # Cleans the make cache directory along with .rock and .tar files
 clean:
 	@echo "=== Cleaning environment ==="
-	rockcraft clean
 	rm -rf $(_MAKE_DIR) *.rock *.tar
 
 
 # Recipe that imports the image into docker container registry
-docker-import:
+docker-import: $(ARTIFACT)
 	$(eval IMAGE := $(shell docker load -i $(ARTIFACT)))
 	docker tag $(lastword $(IMAGE)) $(DISPLAY_NAME):$(TAG)
 
 
 # Recipe that imports the image into microk8s container registry
-micok8s-import:
-	microk8s ctr images import --base-name $(DISPLAY_NAME):$(TAG) $(ARTIFACT)
+microk8s-import: $(ARTIFACT) $(K8s_MARKER)
+	$(eval IMAGE := $(shell microk8s ctr images import $(ARTIFACT) | cut -d' ' -f2))
+	microk8s ctr images tag $(IMAGE) $(DISPLAY_NAME):$(TAG)
 
 
 # Recipe that runs the integration tests
