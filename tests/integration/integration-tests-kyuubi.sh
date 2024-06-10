@@ -40,7 +40,7 @@ get_kyuubi_version(){
 
 kyuubi_image(){
   # The Kyuubi image that is going to be used for test
-  echo "ghcr.io/canonical/test-charmed-spark-kyuubi:$(get_spark_version)-$(get_kyuubi_version)"
+  echo "ghcr.io/canonical/test-charmed-spark-kyuubi:$(get_spark_version)"
 }
 
 

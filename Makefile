@@ -221,7 +221,7 @@ microk8s-import: $(ARTIFACT) $(K8s_MARKER)
 
 
 # Recipe that runs the integration tests
-tests: $(K8S_TAG_FILE) $(AWS_TAG_FILE)
+tests: $(K8s_MARKER) $(AWS_MARKER)
 	@echo "=== Running Integration Tests ==="
 ifeq ($(FLAVOUR), jupyter)
 	/bin/bash ./tests/integration/integration-tests-jupyter.sh
@@ -235,6 +235,8 @@ endif
 # Shorthand recipe for setup and configuration of K8s cluster.
 microk8s-setup: $(K8s_MARKER)
 
+# Shorthand recipe for setup and configuration of AWS CLI.
+aws-cli-setup: $(AWS_MARKER)
 
 # Recipe for setting up and configuring the K8s cluster. 
 # At the end of the process, a file marker is created to signify that this process is complete. 

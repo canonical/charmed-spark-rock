@@ -53,12 +53,12 @@ jobs:
           mv charmed-spark/${{ steps.artifact.outputs.base_artifact_name }} .
 
           # Import artifact into docker with new tag
-          sudo make import TARGET=docker REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
+          sudo make docker-import REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
             -o ${{ steps.artifact.outputs.base_artifact_name }} 
 
           # Import artifact into microk8s to be used in integration tests
-          sudo make import TARGET=microk8s PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
-            -o ${{ steps.artifact.outputs.base_artifact_name }} -o $(find .make_cache -name "*.tag")
+          sudo make microk8s-import PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
+            -o ${{ steps.artifact.outputs.base_artifact_name }}
           
           sg microk8s -c "make tests"
 
@@ -68,11 +68,12 @@ jobs:
           mv charmed-spark/${{ steps.artifact.outputs.jupyter_artifact_name }} .
 
           # Import artifact into docker with new tag
-          sudo make import \
-            FLAVOUR=jupyter TARGET=microk8s \
+          sudo make microk8s-import \
+            FLAVOUR=jupyter \
             TAG=$(yq .version rockcraft.yaml) \
-            REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
-            -o $(find .make_cache -name "*.tag")
+            REPOSITORY=ghcr.io/canonical/ \
+            PREFIX=test- \
+            -o ${{ steps.artifact.outputs.jupyter_artifact_name }}
 
           sg microk8s -c "make tests FLAVOUR=jupyter"
 
@@ -83,10 +84,10 @@ jobs:
           rmdir charmed-spark
 
           # Import artifact into docker with new tag
-          sudo make import \
-            FLAVOUR=kyuubi TARGET=microk8s \
+          sudo make microk8s-import \
+            FLAVOUR=kyuubi \
             TAG=$(yq .version rockcraft.yaml) \
             REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
-            -o $(find .make_cache -name "*.tag")
+            -o ${{ steps.artifact.outputs.kyuubi_artifact_name }}
 
           sg microk8s -c "make tests FLAVOUR=kyuubi"
