@@ -6,3 +6,4 @@ env/
 derby.log
 metastore_db/
 spark-sql.out
+.vscode
