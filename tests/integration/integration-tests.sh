@@ -13,11 +13,19 @@
 # end of the test.
 
 
+# Import reusable utilities
+source ./tests/integration/utils/s3-utils.sh
+source ./tests/integration/utils/k8s-utils.sh
+
+
+# Global Variables
 NAMESPACE=tests
+ADMIN_POD_NAME=testpod-admin
+
 
 get_spark_version(){
-  SPARK_VERSION=$(yq '(.version)' rockcraft.yaml)
-  echo "$SPARK_VERSION"
+  # Fetch Spark version from rockcraft.yaml
+  yq '(.version)' rockcraft.yaml
 }
 
 
@@ -101,57 +109,13 @@ cleanup_user_failure() {
   cleanup_user 1 spark $NAMESPACE
 }
 
-wait_for_pod() {
 
-  POD=$1
-  NAMESPACE=$2
-
-  SLEEP_TIME=1
-  for i in {1..5}
-  do
-    pod_status=$(kubectl -n ${NAMESPACE} get pod ${POD} | awk '{ print $3 }' | tail -n 1)
-    echo $pod_status
-    if [[ "${pod_status}" == "Running" ]]
-    then
-        echo "testpod is Running now!"
-        break
-    elif [[ "${i}" -le "5" ]]
-    then
-        echo "Waiting for the pod to come online..."
-        sleep $SLEEP_TIME
-    else
-        echo "testpod did not come up. Test Failed!"
-        exit 3
-    fi
-    SLEEP_TIME=$(expr $SLEEP_TIME \* 2);
-  done
-}
-
-setup_admin_test_pod() {
-  kubectl create ns $NAMESPACE
-
-  echo "Creating admin test-pod"
-
-  # Create a pod with admin service account
-  yq ea '.spec.containers[0].env[0].name = "KUBECONFIG" | .spec.containers[0].env[0].value = "/var/lib/spark/.kube/config" | .metadata.name = "testpod-admin"' \
-    ./tests/integration/resources/testpod.yaml | \
-    kubectl -n tests apply -f -
-
-  wait_for_pod testpod-admin $NAMESPACE
-
-  MY_KUBE_CONFIG=$(cat /home/${USER}/.kube/config)
-
-  kubectl -n $NAMESPACE exec testpod-admin -- /bin/bash -c 'mkdir -p ~/.kube'
-  kubectl -n $NAMESPACE exec testpod-admin -- env KCONFIG="$MY_KUBE_CONFIG" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
-}
 
 teardown_test_pod() {
   kubectl logs testpod-admin -n $NAMESPACE 
   kubectl logs testpod -n $NAMESPACE 
   kubectl logs -l spark-version=3.4.2 -n $NAMESPACE 
-  kubectl -n $NAMESPACE delete pod testpod-admin
-
-  kubectl delete namespace $NAMESPACE
+  kubectl -n $NAMESPACE delete pod $ADMIN_POD_NAME
 }
 
 run_example_job_in_pod() {
@@ -189,51 +153,6 @@ run_example_job_in_pod() {
   validate_pi_value $pi
 }
 
-get_s3_access_key(){
-  # Prints out S3 Access Key by reading it from K8s secret
-  kubectl get secret -n minio-operator microk8s-user-1 -o jsonpath='{.data.CONSOLE_ACCESS_KEY}' | base64 -d
-}
-
-get_s3_secret_key(){
-  # Prints out S3 Secret Key by reading it from K8s secret
-  kubectl get secret -n minio-operator microk8s-user-1 -o jsonpath='{.data.CONSOLE_SECRET_KEY}' | base64 -d
-}
-
-get_s3_endpoint(){
-  # Prints out the endpoint S3 bucket is exposed on.
-  kubectl get service minio -n minio-operator -o jsonpath='{.spec.clusterIP}'
-}
-
-create_s3_bucket(){
-  # Creates a S3 bucket with the given name.
-  S3_ENDPOINT=$(get_s3_endpoint)
-  BUCKET_NAME=$1
-  aws s3api create-bucket --bucket "$BUCKET_NAME"
-  echo "Created S3 bucket ${BUCKET_NAME}"
-}
-
-delete_s3_bucket(){
-  # Deletes a S3 bucket with the given name.
-  S3_ENDPOINT=$(get_s3_endpoint)
-  BUCKET_NAME=$1
-  aws s3 rb "s3://$BUCKET_NAME" --force
-  echo "Deleted S3 bucket ${BUCKET_NAME}"
-}
-
-copy_file_to_s3_bucket(){
-  # Copies a file from local to S3 bucket.
-  # The bucket name and the path to file that is to be uploaded is to be provided as arguments
-  BUCKET_NAME=$1
-  FILE_PATH=$2
-
-  # If file path is '/foo/bar/file.ext', the basename is 'file.ext'
-  BASE_NAME=$(basename "$FILE_PATH")
-  S3_ENDPOINT=$(get_s3_endpoint)
-
-  # Copy the file to S3 bucket
-  aws s3 cp $FILE_PATH s3://"$BUCKET_NAME"/"$BASE_NAME"
-  echo "Copied file ${FILE_PATH} to S3 bucket ${BUCKET_NAME}"
-}
 
 test_iceberg_example_in_pod(){
   # Test Iceberg integration in Charmed Spark Rock
@@ -586,8 +505,8 @@ cleanup_user_failure_in_pod() {
 echo -e "##################################"
 echo -e "SETUP TEST POD"
 echo -e "##################################"
-
-setup_admin_test_pod
+kubectl create namespace $NAMESPACE
+setup_admin_pod $ADMIN_POD_NAME $(spark_image) $NAMESPACE
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE JOB"
@@ -642,6 +561,7 @@ echo -e "TEARDOWN TEST POD"
 echo -e "##################################"
 
 teardown_test_pod
+kubectl delete namespace $NAMESPACE
 
 echo -e "##################################"
 echo -e "END OF THE TEST"
