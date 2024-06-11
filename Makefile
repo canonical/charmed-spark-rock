@@ -232,6 +232,7 @@ build: $(ARTIFACT)
 clean:
 	@echo "=== Cleaning environment ==="
 	rm -rf $(_MAKE_DIR) *.rock *.tar
+	rockcraft clean
 
 
 # Recipe that imports the image into docker container registry
