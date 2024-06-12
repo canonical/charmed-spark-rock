@@ -27,6 +27,10 @@ FLAVOUR := "spark"
 # The channel of `microk8s` snap to be used for testing
 MICROK8S_CHANNEL := "1.28/stable"
 
+# The Azure credentials supplied as environment variables
+AZURE_STORAGE_ACCOUNT := ${AZURE_STORAGE_ACCOUNT}
+AZURE_STORAGE_KEY := ${AZURE_STORAGE_KEY}
+
 # ======================
 # INTERNAL VARIABLES
 # ======================
@@ -248,14 +252,16 @@ microk8s-import: $(ARTIFACT) $(K8S_MARKER)
 
 
 # Recipe that runs the integration tests
-tests: $(K8S_MARKER) $(AWS_MARKER)
+tests: $(K8S_MARKER) $(AWS_MARKER) $(AZURE_MARKER)
 	@echo "=== Running Integration Tests ==="
 ifeq ($(FLAVOUR), jupyter)
 	/bin/bash ./tests/integration/integration-tests-jupyter.sh
 else ifeq ($(FLAVOUR), kyuubi)
 	/bin/bash ./tests/integration/integration-tests-kyuubi.sh
 else
-	/bin/bash ./tests/integration/integration-tests.sh
+	@export AZURE_STORAGE_ACCOUNT=$(AZURE_STORAGE_ACCOUNT) \
+			AZURE_STORAGE_KEY=$(AZURE_STORAGE_KEY) \
+	&& /bin/bash ./tests/integration/integration-tests.sh
 endif
 
 
@@ -265,6 +271,8 @@ microk8s-setup: $(K8S_MARKER)
 # Shorthand recipe for setup and configuration of AWS CLI.
 aws-cli-setup: $(AWS_MARKER)
 
+# Shorthand recipe for setup and configuration of Azure CLI.
+azure-cli-setup: $(AZURE_MARKER)
 
 # Recipe for setting up and configuring the K8s cluster. 
 $(K8S_MARKER):
@@ -280,3 +288,10 @@ $(AWS_MARKER): $(K8S_MARKER)
 	@echo "=== Setting up and configure AWS CLI ==="
 	/bin/bash ./tests/integration/setup-aws-cli.sh
 	touch $(AWS_MARKER)
+
+
+# Recipe for setting up and configuring the Azure CLI and credentials. 
+$(AZURE_MARKER):
+	@echo "=== Setup and configure Azure CLI ==="
+	/bin/bash ./tests/integration/setup-azure-cli.sh
+	touch $(AZURE_MARKER)

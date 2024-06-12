@@ -16,6 +16,7 @@
 # Import reusable utilities
 source ./tests/integration/utils/s3-utils.sh
 source ./tests/integration/utils/k8s-utils.sh
+source ./tests/integration/utils/azure-utils.sh
 
 
 # Global Variables
@@ -56,8 +57,7 @@ setup_user() {
   USERNAME=$1
   NAMESPACE=$2
 
-  kubectl -n $NAMESPACE exec testpod-admin -- env UU="$USERNAME" NN="$NAMESPACE" \
-                /bin/bash -c 'spark-client.service-account-registry create --username $UU --namespace $NN'
+  create_serviceaccount_using_pod $USERNAME $NAMESPACE $ADMIN_POD_NAME
 
   # Create the pod with the Spark service account
   yq ea ".spec.serviceAccountName = \"${USERNAME}\"" \
@@ -237,6 +237,91 @@ test_iceberg_example_in_pod(){
   fi
 
 }
+
+
+test_iceberg_example_in_pod_with_azure(){
+  # Test Iceberg integration in Charmed Spark Rock with Azure Storage
+
+  # First create S3 bucket named 'spark'
+  create_azure_container spark
+
+  # Copy 'test-iceberg.py' script to 'spark' bucket
+  copy_file_to_azure_container spark ./tests/integration/resources/test-iceberg.py
+
+  STORAGE_ACCOUNT_NAME=$(get_storage_account)
+  STORAGE_ACCOUNT_KEY=$(get_azure_secret_key)
+  USERNAME="spark"
+
+  # Number of rows that are to be inserted during the test.
+  NUM_ROWS_TO_INSERT="4"
+
+  # Number of driver pods that exist in the namespace already.
+  PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
+
+  iceberg_script=$(construct_resource_uri spark test-iceberg.py)
+  warehouse_path=$(construct_resource_uri spark warehouse)
+  # Submit the job from inside 'testpod'
+  kubectl -n $NAMESPACE exec testpod -- \
+      env \
+        UU="$USERNAME" \
+        NN="$NAMESPACE" \
+        IM="$(spark_image)" \
+        NUM_ROWS="$NUM_ROWS_TO_INSERT" \
+        ACCOUNT_NAME="$STORAGE_ACCOUNT_NAME" \
+        SECRET_KEY="$STORAGE_ACCOUNT_KEY" \
+        SCRIPT="$iceberg_script" \
+        WAREHOUSE="$warehouse_path" \
+      /bin/bash -c '\
+        spark-client.spark-submit \
+        --username $UU --namespace $NN \
+        --conf spark.kubernetes.driver.request.cores=100m \
+        --conf spark.kubernetes.executor.request.cores=100m \
+        --conf spark.kubernetes.container.image=$IM \
+        --conf spark.hadoop.fs.azure.account.key.$ACCOUNT_NAME.dfs.core.windows.net=$SECRET_KEY \
+        --conf spark.jars.ivy=/tmp \
+        --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions \
+        --conf spark.sql.catalog.spark_catalog=org.apache.iceberg.spark.SparkSessionCatalog \
+        --conf spark.sql.catalog.spark_catalog.type=hive \
+        --conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
+        --conf spark.sql.catalog.local.type=hadoop \
+        --conf spark.sql.catalog.local.warehouse=$WAREHOUSE \
+        --conf spark.sql.defaultCatalog=local \
+        $SCRIPT -n $NUM_ROWS'
+
+  # Delete 'spark' bucket
+  delete_azure_container spark
+
+  # Number of driver pods after the job is completed.
+  DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
+
+  # If the number of driver pods is same as before, job has not been run at all!
+  if [[ "${PREVIOUS_DRIVER_PODS_COUNT}" == "${DRIVER_PODS_COUNT}" ]]
+  then
+    echo "ERROR: Sample job has not run!"
+    exit 1
+  fi
+
+  # Find the ID of the driver pod that ran the job.
+  # tail -n 1       => Filter out the last line
+  # cut -d' ' -f1   => Split by spaces and pick the first part
+  DRIVER_POD_ID=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep test-iceberg-.*-driver | tail -n 1 | cut -d' ' -f1)
+
+  # Filter out the output log line
+  OUTPUT_LOG_LINE=$(kubectl logs ${DRIVER_POD_ID} -n ${NAMESPACE} | grep 'Number of rows inserted:' )
+
+  # Fetch out the number of rows inserted
+  # rev             => Reverse the string
+  # cut -d' ' -f1   => Split by spaces and pick the first part
+  # rev             => Reverse the string back
+  NUM_ROWS_INSERTED=$(echo $OUTPUT_LOG_LINE | rev | cut -d' ' -f1 | rev)
+
+  if [ "${NUM_ROWS_INSERTED}" != "${NUM_ROWS_TO_INSERT}" ]; then
+      echo "ERROR: ${NUM_ROWS_TO_INSERT} were supposed to be inserted. Found ${NUM_ROWS_INSERTED} rows. Aborting with exit code 1."
+      exit 1
+  fi
+
+}
+
 
 run_example_job_in_pod_with_pod_templates() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
@@ -477,7 +562,7 @@ run_pyspark_in_pod() {
   NAMESPACE=$1
   USERNAME=$2
 
-  PYSPARK_COMMANDS=$(cat ./tests/integration/resources/test-pyspark.py)
+  PYSPARK_COMMANDS=$(cat ./tests/integration/resources/compute_pi.py)
 
   # Check job output
   # Sample output
@@ -508,53 +593,59 @@ echo -e "##################################"
 kubectl create namespace $NAMESPACE
 setup_admin_pod $ADMIN_POD_NAME $(spark_image) $NAMESPACE
 
+# echo -e "##################################"
+# echo -e "RUN EXAMPLE JOB"
+# echo -e "##################################"
+
+# (setup_user_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+# echo -e "##################################"
+# echo -e "RUN SPARK SHELL IN POD"
+# echo -e "##################################"
+
+# (setup_user_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+# echo -e "##################################"
+# echo -e "RUN PYSPARK IN POD"
+# echo -e "##################################"
+
+# (setup_user_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+# echo -e "##################################"
+# echo -e "RUN SPARK SQL IN POD"
+# echo -e "##################################"
+
+# (setup_user_context && test_spark_sql_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+# echo -e "##################################"
+# echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
+# echo -e "##################################"
+
+# (setup_user_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
+
+# echo -e "########################################"
+# echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
+# echo -e "########################################"
+
+# (setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
+
+# echo -e "########################################"
+# echo -e "RUN EXAMPLE JOB WITH ERRORS"
+# echo -e "########################################"
+
+# (setup_user_context && test_example_job_in_pod_with_errors && cleanup_user_success) || cleanup_user_failure_in_pod
+
+# echo -e "##################################"
+# echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
+# echo -e "##################################"
+
+# (setup_user_context && test_iceberg_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
 echo -e "##################################"
-echo -e "RUN EXAMPLE JOB"
+echo -e "RUN EXAMPLE THAT USES AZURE STORAGE"
 echo -e "##################################"
 
-(setup_user_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
-
-echo -e "##################################"
-echo -e "RUN SPARK SHELL IN POD"
-echo -e "##################################"
-
-(setup_user_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
-
-echo -e "##################################"
-echo -e "RUN PYSPARK IN POD"
-echo -e "##################################"
-
-(setup_user_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
-
-echo -e "##################################"
-echo -e "RUN SPARK SQL IN POD"
-echo -e "##################################"
-
-(setup_user_context && test_spark_sql_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
-
-echo -e "##################################"
-echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
-echo -e "##################################"
-
-(setup_user_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
-
-echo -e "########################################"
-echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
-echo -e "########################################"
-
-(setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
-
-echo -e "########################################"
-echo -e "RUN EXAMPLE JOB WITH ERRORS"
-echo -e "########################################"
-
-(setup_user_context && test_example_job_in_pod_with_errors && cleanup_user_success) || cleanup_user_failure_in_pod
-
-echo -e "##################################"
-echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
-echo -e "##################################"
-
-(setup_user_context && test_iceberg_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_iceberg_example_in_pod_with_azure && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
