@@ -33,7 +33,12 @@ jobs:
         run: |
           sudo snap install yq
           sudo snap install rockcraft --classic --edge    
-          sudo apt-get install skopeo -y
+
+          # Installing latest version of skopeo (TODO: remove these lines when latest version is there in Jammy apt list)
+          echo 'deb http://download.opensuse.org/repositories/home:/alvistack/xUbuntu_22.04/ /' | sudo tee /etc/apt/sources.list.d/home:alvistack.list
+          curl -fsSL https://download.opensuse.org/repositories/home:alvistack/xUbuntu_22.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/home_alvistack.gpg > /dev/null
+          sudo apt update -y
+          sudo apt install skopeo -y
 
       - name: Build image
         run: sudo make build
