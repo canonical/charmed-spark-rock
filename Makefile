@@ -112,7 +112,7 @@ AWS_MARKER=$(_MAKE_DIR)/aws.tag
 
 
 # The names of different flavours of the image in the docker container registry
-STAGED_IMAGE_DOCKER_ALIAS=staged-charmed-spark:$(SPARK_VERSION)
+STAGED_IMAGE_DOCKER_ALIAS=staged-charmed-spark:latest
 SPARK_DOCKER_ALIAS=charmed-spark:$(SPARK_VERSION)
 JUPYTER_DOCKER_ALIAS=charmed-spark-jupyter:$(SPARK_VERSION)-$(JUPYTER_VERSION)
 KYUUBI_DOCKER_ALIAS=charmed-spark-kyuubi:$(SPARK_VERSION)-$(KYUUBI_VERSION)
@@ -169,10 +169,10 @@ $(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
 	skopeo --insecure-policy \
           copy \
           oci-archive:"$(ROCK_FILE)" \
-          docker-daemon:"staged-charmed-spark:$(SPARK_VERSION)"
+          docker-daemon:"$(STAGED_IMAGE_DOCKER_ALIAS)"
 
 	docker build -t $(SPARK_DOCKER_ALIAS) \
-		--build-arg BASE_IMAGE="staged-charmed-spark:$(SPARK_VERSION)" \
+		--build-arg BASE_IMAGE="$(STAGED_IMAGE_DOCKER_ALIAS)" \
 		-f build/Dockerfile .
 
 	docker save $(SPARK_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
