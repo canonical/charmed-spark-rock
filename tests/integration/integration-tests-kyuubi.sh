@@ -72,7 +72,7 @@ setup_kyuubi_pod_with_s3() {
   # Write Spark configs inside the Kyuubi container
   kubectl -n $NAMESPACE exec kyuubi-test -- env IMG="$image"                /bin/bash -c 'echo spark.kubernetes.container.image=$IMG  > /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- env NN="$NAMESPACE"             /bin/bash -c 'echo spark.kubernetes.namespace=$NN         >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env UU="$USERNAME"              /bin/bash -c 'echo spark.kubernetes.authenticate.driver.serviceAccountName=$UU >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- env UU="$SERVICE_ACCOUNT"       /bin/bash -c 'echo spark.kubernetes.authenticate.driver.serviceAccountName=$UU >> /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- env ENDPOINT="$s3_endpoint"     /bin/bash -c 'echo spark.hadoop.fs.s3a.endpoint=$ENDPOINT >> /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- env ACCESS_KEY="$s3_access_key" /bin/bash -c 'echo spark.hadoop.fs.s3a.access.key=$ACCESS_KEY >> /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- env SECRET_KEY="$s3_secret_key" /bin/bash -c 'echo spark.hadoop.fs.s3a.secret.key=$SECRET_KEY >> /etc/spark8t/conf/spark-defaults.conf'
@@ -125,7 +125,7 @@ setup_kyuubi_pod_with_azure_abfss() {
       env NN="$NAMESPACE" \
           /bin/bash -c 'echo spark.kubernetes.namespace=$NN >> /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- \
-      env UU="$USERNAME" \
+      env UU="$SERVICE_ACCOUNT" \
           /bin/bash -c 'echo spark.kubernetes.authenticate.driver.serviceAccountName=$UU >> /etc/spark8t/conf/spark-defaults.conf'
   kubectl -n $NAMESPACE exec kyuubi-test -- \
       env ACCOUNT_NAME="$storage_account_name" SECRET_KEY="$storage_account_key"\
@@ -228,11 +228,11 @@ echo -e "##################################"
 kubectl create namespace $NAMESPACE
 setup_admin_pod $ADMIN_POD_NAME $(kyuubi_image) $NAMESPACE
 
-# echo -e "##################################"
-# echo -e "START KYUUBI POD AND BEGIN TESTING (USING S3)"
-# echo -e "##################################"
+echo -e "##################################"
+echo -e "START KYUUBI POD AND BEGIN TESTING (USING S3)"
+echo -e "##################################"
 
-# (setup_kyuubi_pod_with_s3 && test_jdbc_connection && cleanup_user_success) || cleanup_user_failure
+(setup_kyuubi_pod_with_s3 && test_jdbc_connection && cleanup_user_success) || cleanup_user_failure
 
 echo -e "##################################"
 echo -e "START KYUUBI POD AND BEGIN TESTING (USING Azure Storage)"
