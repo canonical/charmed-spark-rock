@@ -33,8 +33,7 @@ jobs:
         run: |
           sudo snap install yq
           sudo snap install rockcraft --classic --edge    
-          sudo apt install skopeo -y
-          sudo snap install --devmode --channel edge skopeo
+          sudo apt-get install skopeo -y
 
       - name: Build image
         run: sudo make build
