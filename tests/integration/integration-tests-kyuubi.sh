@@ -15,6 +15,7 @@
 
 # Import reusable utilities
 source ./tests/integration/utils/s3-utils.sh
+source ./tests/integration/utils/azure-utils.sh
 source ./tests/integration/utils/k8s-utils.sh
 
 
@@ -24,6 +25,7 @@ SERVICE_ACCOUNT=spark
 ADMIN_POD_NAME=testpod-admin
 USER_POD_NAME=kyuubi-test
 S3_BUCKET=kyuubi
+AZURE_CONTAINER=$S3_BUCKET
 
 
 get_spark_version(){
@@ -38,8 +40,8 @@ kyuubi_image(){
 }
 
 
-setup_kyuubi_pod() {
-  # Setup Kyuubi pod for testing
+setup_kyuubi_pod_with_s3() {
+  # Setup Kyuubi pod for testing, using S3 as object storage
   #
   # Arguments:
   # $1: The service account to be used for creating Kyuubi pod
@@ -85,6 +87,61 @@ setup_kyuubi_pod() {
 }
 
 
+setup_kyuubi_pod_with_azure_abfss() {
+  # Setup Kyuubi pod for testing, using Azure blob storage as object storage and ABFSS as protocol
+  #
+  # Arguments:
+  # $1: The service account to be used for creating Kyuubi pod
+  # $1: The namespace to be used for creating Kyuubi pod
+
+  # Create service account using the admin pod
+  create_serviceaccount_using_pod $SERVICE_ACCOUNT $NAMESPACE $ADMIN_POD_NAME
+
+  image=$(kyuubi_image)
+
+  # Create the pod with the newly created service account
+  sed -e "s%<IMAGE>%${image}%g" \
+      -e "s/<SERVICE_ACCOUNT>/${SERVICE_ACCOUNT}/g" \
+      -e "s/<NAMESPACE>/${NAMESPACE}/g" \
+      -e "s/<POD_NAME>/${USER_POD_NAME}/g" \
+      ./tests/integration/resources/kyuubi.yaml | \
+    kubectl -n tests apply -f -
+  
+  wait_for_pod $USER_POD_NAME $NAMESPACE
+
+  # Create Azure storage container
+  create_azure_container $AZURE_CONTAINER
+
+  storage_account_name=$(get_storage_account)
+  storage_account_key=$(get_azure_secret_key)
+  warehouse_path=$(construct_resource_uri $AZURE_CONTAINER warehouse abfss)
+  file_upload_path=$(construct_resource_uri $AZURE_CONTAINER "" abfss)
+
+  # Write Spark configs inside the Kyuubi container
+  kubectl -n $NAMESPACE exec kyuubi-test -- \
+      env IMG="$image" \
+          /bin/bash -c 'echo spark.kubernetes.container.image=$IMG  > /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- \
+      env NN="$NAMESPACE" \
+          /bin/bash -c 'echo spark.kubernetes.namespace=$NN >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- \
+      env UU="$USERNAME" \
+          /bin/bash -c 'echo spark.kubernetes.authenticate.driver.serviceAccountName=$UU >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- \
+      env ACCOUNT_NAME="$storage_account_name" SECRET_KEY="$storage_account_key"\
+          /bin/bash -c 'echo spark.hadoop.fs.azure.account.key.$ACCOUNT_NAME.dfs.core.windows.net=$SECRET_KEY >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- \
+      env WAREHOUSE="$warehouse_path" \
+          /bin/bash -c 'echo spark.sql.warehouse.dir=$WAREHOUSE >> /etc/spark8t/conf/spark-defaults.conf'
+  kubectl -n $NAMESPACE exec kyuubi-test -- \
+      env UPLOAD_PATH="$file_upload_path" \
+          /bin/bash -c 'echo spark.kubernetes.file.upload.path=$UPLOAD_PATH >> /etc/spark8t/conf/spark-defaults.conf'
+
+  # Wait some time for the server to be up and running
+  sleep 10
+}
+
+
 cleanup_user() {
   # Cleanup user resources.
   # 
@@ -103,7 +160,10 @@ cleanup_user() {
                   /bin/bash -c 'spark-client.service-account-registry delete --username $UU --namespace $NN'  
 
   # Delete S3 bucket
-  delete_s3_bucket kyuubi
+  delete_s3_bucket $S3_BUCKET || true
+
+  # Delete Azure container
+  delete_azure_container $AZURE_CONTAINER || true
 
   # Verify deletion of service account
   output=$(kubectl -n $NAMESPACE exec $ADMIN_POD_NAME -- /bin/bash -c 'spark-client.service-account-registry list')
@@ -168,11 +228,17 @@ echo -e "##################################"
 kubectl create namespace $NAMESPACE
 setup_admin_pod $ADMIN_POD_NAME $(kyuubi_image) $NAMESPACE
 
+# echo -e "##################################"
+# echo -e "START KYUUBI POD AND BEGIN TESTING (USING S3)"
+# echo -e "##################################"
+
+# (setup_kyuubi_pod_with_s3 && test_jdbc_connection && cleanup_user_success) || cleanup_user_failure
+
 echo -e "##################################"
-echo -e "START KYUUBI POD AND BEGIN TESTING"
+echo -e "START KYUUBI POD AND BEGIN TESTING (USING Azure Storage)"
 echo -e "##################################"
 
-(setup_kyuubi_pod && test_jdbc_connection && cleanup_user_success) || cleanup_user_failure
+(setup_kyuubi_pod_with_azure_abfss && test_jdbc_connection && cleanup_user_success) || cleanup_user_failure
 
 echo -e "##################################"
 echo -e "TEARDOWN ADMIN POD"
