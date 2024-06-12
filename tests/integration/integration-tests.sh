@@ -239,7 +239,7 @@ test_iceberg_example_in_pod(){
 }
 
 
-test_iceberg_example_in_pod_with_azure(){
+test_iceberg_example_in_pod_with_azure_using_abfss(){
   # Test Iceberg integration in Charmed Spark Rock with Azure Storage
 
   # First create S3 bucket named 'spark'
@@ -258,8 +258,8 @@ test_iceberg_example_in_pod_with_azure(){
   # Number of driver pods that exist in the namespace already.
   PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
 
-  iceberg_script=$(construct_resource_uri spark test-iceberg.py)
-  warehouse_path=$(construct_resource_uri spark warehouse)
+  iceberg_script=$(construct_resource_uri spark test-iceberg.py abfss)
+  warehouse_path=$(construct_resource_uri spark warehouse abfss)
   # Submit the job from inside 'testpod'
   kubectl -n $NAMESPACE exec testpod -- \
       env \
@@ -645,7 +645,7 @@ echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES AZURE STORAGE"
 echo -e "##################################"
 
-(setup_user_context && test_iceberg_example_in_pod_with_azure && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_iceberg_example_in_pod_with_azure_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"

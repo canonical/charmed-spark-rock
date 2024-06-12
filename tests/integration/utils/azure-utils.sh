@@ -74,14 +74,33 @@ copy_file_to_azure_container(){
 
 construct_resource_uri(){
   # Construct the full resource URI for the given absolute path of the resource
+  #
   # Arguments:
   # $1: Name of the container where the resource exists
   # $2: Path of the resource relative to the root of the container
+  # $3: The connection protocol to be used
 
   container=$1
   path=$2
-  connector="abfss"
+  protocol=$3
   account_name=$(get_storage_account)
 
-  echo "$connector://$container@$account_name.dfs.core.windows.net/$path"
+  case "$protocol" in
+    "abfs")
+      echo "abfs://$container@$account_name.dfs.core.windows.net/$path"
+      ;;
+    "abfss")
+      echo "abfss://$container@$account_name.dfs.core.windows.net/$path"
+      ;;
+    "wasb")
+      echo "wasb://$container@$account_name.blob.core.windows.net/$path"
+      ;;
+    "wasbs")
+      echo "wasbs://$container@$account_name.blob.core.windows.net/$path"
+      ;;
+    *)
+      echo "Unknown protocol specified: $protocol. Exiting..."
+      exit 1
+      ;;
+  esac
 }

@@ -57,7 +57,7 @@ jobs:
           sudo make microk8s-import PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
             -o ${{ steps.artifact.outputs.base_artifact_name }}
           
-          sg microk8s -c "make tests"
+          sg microk8s -c "make tests AZURE_STORAGE_ACCOUNT=${{ secrets.AZURE_STORAGE_ACCOUNT }} AZURE_STORAGE_KEY=${{ secrets.AZURE_STORAGE_KEY }}"
 
       - name: Run tests (Jupyter)
         run: |
