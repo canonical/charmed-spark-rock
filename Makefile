@@ -166,7 +166,7 @@ rock: $(ROCK_FILE)
 
 # Recipe that builds Spark image and exports it to a tarfile in the current directory
 $(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
-	skopeo --insecure-policy \
+	rockcraft.skopeo --insecure-policy \
           copy \
           oci-archive:"$(ROCK_FILE)" \
           docker-daemon:"$(STAGED_IMAGE_DOCKER_ALIAS)"

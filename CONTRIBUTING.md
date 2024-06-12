@@ -10,11 +10,10 @@ cd charmed-spark-rock
 
 ### Installing Prerequisites
 ```bash
-sudo snap install rockcraft --edge
+sudo snap install rockcraft --edge --classic
 sudo snap install docker
 sudo snap install lxd
 sudo snap install yq
-sudo snap install skopeo --edge --devmode
 ```
 
 ### Configuring Prerequisites

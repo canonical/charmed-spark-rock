@@ -14,9 +14,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install skopeo
+      - name: Install rockcraft (for skopeo)
         run: |
-          sudo snap install --devmode --channel edge skopeo
+          sudo snap install rockcraft --classic --edge
       - name: Get Artifact Name
         id: artifact
         run: |
@@ -31,7 +31,7 @@ jobs:
         run: |
           # Unpack artifact
           mv charmed-spark/${{ steps.artifact.outputs.base_artifact_name }} .
-          sudo skopeo --insecure-policy copy \
+          sudo rockcraft.skopeo --insecure-policy copy \
             docker-archive:${{ steps.artifact.outputs.base_artifact_name }} \
             docker-daemon:trivy/charmed-spark:test
       - name: Run Trivy vulnerability scanner
