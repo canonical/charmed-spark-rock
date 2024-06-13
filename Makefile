@@ -156,7 +156,7 @@ help:
 # 
 # ROCK_FILE => charmed-spark_3.4.2_amd64.rock 
 #
-$(ROCK_FILE): rockcraft.yaml $(wildcard images/spark/*/*)
+$(ROCK_FILE): images/spark/rockcraft.yaml $(wildcard images/spark/*/*)
 	@echo "=== Building Charmed Image ==="
 	(cd images/spark && rockcraft pack)
 	mv images/spark/$(ROCK_FILE) .
