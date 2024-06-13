@@ -37,16 +37,16 @@ $(shell mkdir -p $(_MAKE_DIR))
 
 
 # eg, charmed-spark
-ROCK_NAME := $(shell yq .name rockcraft.yaml)
+ROCK_NAME := $(shell yq .name images/spark/rockcraft.yaml)
 
 # eg, 3.4.2
-SPARK_VERSION := $(shell yq .version rockcraft.yaml)
+SPARK_VERSION := $(shell yq .version images/spark/rockcraft.yaml)
 
 # eg, 1.9.0
-KYUUBI_VERSION=$(shell yq .flavours.kyuubi.version metadata.yaml)
+KYUUBI_VERSION=$(shell yq .flavours.kyuubi.version images/metadata.yaml)
 
 # eg, 4.0.11
-JUPYTER_VERSION=$(shell yq .flavours.jupyter.version metadata.yaml)
+JUPYTER_VERSION=$(shell yq .flavours.jupyter.version images/metadata.yaml)
 
 # The filename of the Rock file built during the build process.
 # eg, charmed-spark_3.4.2_amd64.rock
@@ -233,6 +233,7 @@ build: $(ARTIFACT)
 clean:
 	@echo "=== Cleaning environment ==="
 	rm -rf $(_MAKE_DIR) *.rock *.tar
+	(cd images/spark && rockcraft clean)
 
 
 # Recipe that imports the image into docker container registry
