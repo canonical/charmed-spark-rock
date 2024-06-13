@@ -156,16 +156,17 @@ help:
 # 
 # ROCK_FILE => charmed-spark_3.4.2_amd64.rock 
 #
-$(ROCK_FILE): rockcraft.yaml $(wildcard files/spark/*/*)
+$(ROCK_FILE): rockcraft.yaml $(wildcard images/spark/*/*)
 	@echo "=== Building Charmed Image ==="
-	rockcraft pack
+	(cd images/spark && rockcraft pack)
+	mv images/spark/$(ROCK_FILE) .
 
 
 rock: $(ROCK_FILE)
 
 
 # Recipe that builds Spark image and exports it to a tarfile in the current directory
-$(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
+$(SPARK_MARKER): $(ROCK_FILE) images/spark/Dockerfile
 	skopeo --insecure-policy \
           copy \
           oci-archive:"$(ROCK_FILE)" \
@@ -173,7 +174,7 @@ $(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
 
 	docker build -t $(SPARK_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE="staged-charmed-spark:$(SPARK_VERSION)" \
-		-f build/Dockerfile .
+		-f images/spark/Dockerfile .
 
 	docker save $(SPARK_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
 
@@ -185,11 +186,11 @@ spark: $(SPARK_MARKER)
 
 
 # Recipe that builds Jupyter image and exports it to a tarfile in the current directory
-$(JUPYTER_MARKER): $(SPARK_MARKER) build/Dockerfile.jupyter $(wildcard files/jupyter/*/*)
+$(JUPYTER_MARKER): $(SPARK_MARKER) images/jupyter/Dockerfile $(wildcard images/jupyter/*/*)
 	docker build -t $(JUPYTER_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
 		--build-arg JUPYTERLAB_VERSION="$(JUPYTER_VERSION)" \
-		-f build/Dockerfile.jupyter .
+		-f images/jupyter/Dockerfile .
 
 	docker save $(JUPYTER_DOCKER_ALIAS) -o $(JUPYTER_ARTIFACT)
 
@@ -201,10 +202,10 @@ jupyter: $(JUPYTER_MARKER)
 
 
 # Recipe that builds Kyuubi image and exports it to a tarfile in the current directory
-$(KYUUBI_MARKER): $(SPARK_MARKER) build/Dockerfile.kyuubi $(wildcard files/kyuubi/*/*)
+$(KYUUBI_MARKER): $(SPARK_MARKER) images/kyuubi/Dockerfile $(wildcard images/kyuubi/*/*)
 	docker build -t $(KYUUBI_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
-		-f build/Dockerfile.kyuubi .
+		-f images/kyuubi/Dockerfile .
 
 	docker save $(KYUUBI_DOCKER_ALIAS) -o $(KYUUBI_ARTIFACT)
 
