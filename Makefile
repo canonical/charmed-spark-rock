@@ -261,7 +261,7 @@ ifeq ($(FLAVOUR), jupyter)
 else ifeq ($(FLAVOUR), kyuubi)
 	@export AZURE_STORAGE_ACCOUNT=$(AZURE_STORAGE_ACCOUNT) \
 			AZURE_STORAGE_KEY=$(AZURE_STORAGE_KEY) \
-	/bin/bash ./tests/integration/integration-tests-kyuubi.sh
+	&& /bin/bash ./tests/integration/integration-tests-kyuubi.sh
 else
 	@export AZURE_STORAGE_ACCOUNT=$(AZURE_STORAGE_ACCOUNT) \
 			AZURE_STORAGE_KEY=$(AZURE_STORAGE_KEY) \
