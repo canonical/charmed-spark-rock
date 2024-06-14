@@ -170,7 +170,7 @@ $(SPARK_MARKER): $(ROCK_FILE) images/charmed-spark/Dockerfile
 
 	docker build -t $(SPARK_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE="$(STAGED_IMAGE_DOCKER_ALIAS)" \
-		-f images/charmed-spark/Dockerfile .
+		images/charmed-spark
 
 	docker save $(SPARK_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
 
@@ -186,7 +186,7 @@ $(JUPYTER_MARKER): $(SPARK_MARKER) images/charmed-spark-jupyter/Dockerfile $(wil
 	docker build -t $(JUPYTER_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
 		--build-arg JUPYTERLAB_VERSION="$(JUPYTER_VERSION)" \
-		-f images/charmed-spark-jupyter/Dockerfile .
+		images/charmed-spark-jupyter
 
 	docker save $(JUPYTER_DOCKER_ALIAS) -o $(JUPYTER_ARTIFACT)
 
@@ -201,7 +201,7 @@ jupyter: $(JUPYTER_MARKER)
 $(KYUUBI_MARKER): $(SPARK_MARKER) images/charmed-spark-kyuubi/Dockerfile $(wildcard images/charmed-spark-kyuubi/*/*)
 	docker build -t $(KYUUBI_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
-		-f images/charmed-spark-kyuubi/Dockerfile .
+		images/charmed-spark-kyuubi
 
 	docker save $(KYUUBI_DOCKER_ALIAS) -o $(KYUUBI_ARTIFACT)
 
