@@ -23,8 +23,8 @@ jobs:
     - name: Extract ROCK metadata
       shell: bash
       run: |
-        VERSION=$(yq '(.version|split("-"))[0]' rockcraft.yaml)
-        BASE=$(yq '(.base|split("@"))[1]' rockcraft.yaml)
+        VERSION=$(yq '(.version|split("-"))[0]' images/charmed-spark/rockcraft.yaml)
+        BASE=$(yq '(.base|split("@"))[1]' images/charmed-spark/rockcraft.yaml)
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "base=${BASE}" >> $GITHUB_OUTPUT
       id: rock_metadata

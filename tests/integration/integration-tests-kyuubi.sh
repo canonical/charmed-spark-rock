@@ -27,8 +27,8 @@ S3_BUCKET=kyuubi
 
 
 get_spark_version(){
-  # Fetch Spark version from rockcraft.yaml
-  yq '(.version)' rockcraft.yaml
+  # Fetch Spark version from images/charmed-spark/rockcraft.yaml
+  yq '(.version)' images/charmed-spark/rockcraft.yaml
 }
 
 
