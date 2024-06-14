@@ -152,17 +152,17 @@ help:
 # 
 # ROCK_FILE => charmed-spark_3.4.2_amd64.rock 
 #
-$(ROCK_FILE): images/spark/rockcraft.yaml $(wildcard images/spark/*/*)
+$(ROCK_FILE): images/charmed-spark/rockcraft.yaml $(wildcard images/charmed-spark/*/*)
 	@echo "=== Building Charmed Image ==="
-	(cd images/spark && rockcraft pack)
-	mv images/spark/$(ROCK_FILE) .
+	(cd images/charmed-spark && rockcraft pack)
+	mv images/charmed-spark/$(ROCK_FILE) .
 
 
 rock: $(ROCK_FILE)
 
 
 # Recipe that builds Spark image and exports it to a tarfile in the current directory
-$(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
+$(SPARK_MARKER): $(ROCK_FILE) images/charmed-spark/Dockerfile
 	rockcraft.skopeo --insecure-policy \
           copy \
           oci-archive:"$(ROCK_FILE)" \
@@ -170,7 +170,7 @@ $(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
 
 	docker build -t $(SPARK_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE="$(STAGED_IMAGE_DOCKER_ALIAS)" \
-		-f images/spark/Dockerfile .
+		-f images/charmed-spark/Dockerfile .
 
 	docker save $(SPARK_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
 
@@ -182,11 +182,11 @@ spark: $(SPARK_MARKER)
 
 
 # Recipe that builds Jupyter image and exports it to a tarfile in the current directory
-$(JUPYTER_MARKER): $(SPARK_MARKER) images/jupyter/Dockerfile $(wildcard images/jupyter/*/*)
+$(JUPYTER_MARKER): $(SPARK_MARKER) images/charmed-spark-jupyter/Dockerfile $(wildcard images/charmed-spark-jupyter/*/*)
 	docker build -t $(JUPYTER_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
 		--build-arg JUPYTERLAB_VERSION="$(JUPYTER_VERSION)" \
-		-f images/jupyter/Dockerfile .
+		-f images/charmed-spark-jupyter/Dockerfile .
 
 	docker save $(JUPYTER_DOCKER_ALIAS) -o $(JUPYTER_ARTIFACT)
 
@@ -198,10 +198,10 @@ jupyter: $(JUPYTER_MARKER)
 
 
 # Recipe that builds Kyuubi image and exports it to a tarfile in the current directory
-$(KYUUBI_MARKER): $(SPARK_MARKER) images/kyuubi/Dockerfile $(wildcard images/kyuubi/*/*)
+$(KYUUBI_MARKER): $(SPARK_MARKER) images/charmed-spark-kyuubi/Dockerfile $(wildcard images/charmed-spark-kyuubi/*/*)
 	docker build -t $(KYUUBI_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
-		-f images/kyuubi/Dockerfile .
+		-f images/charmed-spark-kyuubi/Dockerfile .
 
 	docker save $(KYUUBI_DOCKER_ALIAS) -o $(KYUUBI_ARTIFACT)
 
@@ -233,7 +233,7 @@ build: $(ARTIFACT)
 clean:
 	@echo "=== Cleaning environment ==="
 	rm -rf $(_MAKE_DIR) *.rock *.tar
-	(cd images/spark && rockcraft clean)
+	(cd images/charmed-spark && rockcraft clean)
 
 
 # Recipe that imports the image into docker container registry
