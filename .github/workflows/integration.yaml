@@ -20,6 +20,9 @@ jobs:
         env: [integration]
         k8s_version: ["1.28/stable","1.29/stable", "1.30/beta" ]
       fail-fast: false
+    env:
+      AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+      AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -44,13 +47,10 @@ jobs:
           name: charmed-spark
           path: charmed-spark
 
-      # - name: Setup upterm session
-      #   uses: lhotari/action-upterm@v1
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
 
       - name: Run tests
-        env:
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
         run: |
           # Unpack Artifact
           mv charmed-spark/${{ steps.artifact.outputs.base_artifact_name }} .
