@@ -17,8 +17,8 @@ USER root
 RUN rm /var/lib/pebble/default/layers/*.yaml /opt/pebble/*.sh
 
 RUN python3 -m pip install "jupyterlab==$JUPYTERLAB_VERSION"
-COPY ./files/jupyter/pebble/layers.yaml /var/lib/pebble/default/layers/001-charmed-jupyter.yaml
-COPY ./files/jupyter/bin/jupyterlab-server.sh /opt/pebble/jupyterlab-server.sh
+COPY ./pebble/layers.yaml /var/lib/pebble/default/layers/001-charmed-jupyter.yaml
+COPY ./bin/jupyterlab-server.sh /opt/pebble/jupyterlab-server.sh
 RUN chown _daemon_:_daemon_ /opt/pebble/jupyterlab-server.sh
 
 USER _daemon_

@@ -1,0 +1,14 @@
+flavours:
+  jupyter:
+    version: 4.0.11
+    image_description: |
+      This is an OCI image to deploy JupyterLab server instances on K8s, fully 
+      integrated with Charmed Spark ecosystem and utilities. The image provides 
+      an automated and seamless user-experience to deploy, operate, manage and 
+      monitor SparkJob running on K8s cluster. It is an open source, end-to-end, 
+      production ready data platform on top of cloud native technologies.
+  kyuubi:
+    version: 1.9.0
+    image_description: |
+      This is an OCI image that contains Kyuubi, fully integrated with Charmed
+      Spark ecosystem and utilities.

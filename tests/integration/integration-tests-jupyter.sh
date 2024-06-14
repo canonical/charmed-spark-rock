@@ -21,7 +21,7 @@ NAMESPACE=tests
 ADMIN_POD_NAME=testpod-admin
 
 get_spark_version(){
-  yq '(.version)' rockcraft.yaml
+  yq '(.version)' images/charmed-spark/rockcraft.yaml
 }
 
 

@@ -168,7 +168,7 @@ parts:
   charmed-spark:
     plugin: dump
     after: [ spark8t, spark ]
-    source: files/spark
+    source: .
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
       bin/sparkd.sh: opt/pebble/sparkd.sh

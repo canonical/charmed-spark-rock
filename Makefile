@@ -41,16 +41,16 @@ $(shell mkdir -p $(_MAKE_DIR))
 
 
 # eg, charmed-spark
-ROCK_NAME := $(shell yq .name rockcraft.yaml)
+ROCK_NAME := $(shell yq .name images/charmed-spark/rockcraft.yaml)
 
 # eg, 3.4.2
-SPARK_VERSION := $(shell yq .version rockcraft.yaml)
+SPARK_VERSION := $(shell yq .version images/charmed-spark/rockcraft.yaml)
 
 # eg, 1.9.0
-KYUUBI_VERSION=$(shell yq .flavours.kyuubi.version metadata.yaml)
+KYUUBI_VERSION=$(shell yq .flavours.kyuubi.version images/metadata.yaml)
 
 # eg, 4.0.11
-JUPYTER_VERSION=$(shell yq .flavours.jupyter.version metadata.yaml)
+JUPYTER_VERSION=$(shell yq .flavours.jupyter.version images/metadata.yaml)
 
 # The filename of the Rock file built during the build process.
 # eg, charmed-spark_3.4.2_amd64.rock
@@ -156,16 +156,17 @@ help:
 # 
 # ROCK_FILE => charmed-spark_3.4.2_amd64.rock 
 #
-$(ROCK_FILE): rockcraft.yaml $(wildcard files/spark/*/*)
+$(ROCK_FILE): images/charmed-spark/rockcraft.yaml $(wildcard images/charmed-spark/*/*)
 	@echo "=== Building Charmed Image ==="
-	rockcraft pack
+	(cd images/charmed-spark && rockcraft pack)
+	mv images/charmed-spark/$(ROCK_FILE) .
 
 
 rock: $(ROCK_FILE)
 
 
 # Recipe that builds Spark image and exports it to a tarfile in the current directory
-$(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
+$(SPARK_MARKER): $(ROCK_FILE) images/charmed-spark/Dockerfile
 	rockcraft.skopeo --insecure-policy \
           copy \
           oci-archive:"$(ROCK_FILE)" \
@@ -173,7 +174,7 @@ $(SPARK_MARKER): $(ROCK_FILE) build/Dockerfile
 
 	docker build -t $(SPARK_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE="$(STAGED_IMAGE_DOCKER_ALIAS)" \
-		-f build/Dockerfile .
+		images/charmed-spark
 
 	docker save $(SPARK_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
 
@@ -185,11 +186,11 @@ spark: $(SPARK_MARKER)
 
 
 # Recipe that builds Jupyter image and exports it to a tarfile in the current directory
-$(JUPYTER_MARKER): $(SPARK_MARKER) build/Dockerfile.jupyter $(wildcard files/jupyter/*/*)
+$(JUPYTER_MARKER): $(SPARK_MARKER) images/charmed-spark-jupyter/Dockerfile $(wildcard images/charmed-spark-jupyter/*/*)
 	docker build -t $(JUPYTER_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
 		--build-arg JUPYTERLAB_VERSION="$(JUPYTER_VERSION)" \
-		-f build/Dockerfile.jupyter .
+		images/charmed-spark-jupyter
 
 	docker save $(JUPYTER_DOCKER_ALIAS) -o $(JUPYTER_ARTIFACT)
 
@@ -201,10 +202,10 @@ jupyter: $(JUPYTER_MARKER)
 
 
 # Recipe that builds Kyuubi image and exports it to a tarfile in the current directory
-$(KYUUBI_MARKER): $(SPARK_MARKER) build/Dockerfile.kyuubi $(wildcard files/kyuubi/*/*)
+$(KYUUBI_MARKER): $(SPARK_MARKER) images/charmed-spark-kyuubi/Dockerfile $(wildcard images/charmed-spark-kyuubi/*/*)
 	docker build -t $(KYUUBI_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE=$(SPARK_DOCKER_ALIAS) \
-		-f build/Dockerfile.kyuubi .
+		images/charmed-spark-kyuubi
 
 	docker save $(KYUUBI_DOCKER_ALIAS) -o $(KYUUBI_ARTIFACT)
 
@@ -236,7 +237,7 @@ build: $(ARTIFACT)
 clean:
 	@echo "=== Cleaning environment ==="
 	rm -rf $(_MAKE_DIR) *.rock *.tar
-	rockcraft clean
+	(cd images/charmed-spark && rockcraft clean)
 
 
 # Recipe that imports the image into docker container registry

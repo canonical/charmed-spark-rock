@@ -57,11 +57,11 @@
     COPY --from=downloader /opt/kyuubi /opt/kyuubi
 
     # Copy local files to the container
-    COPY ./files/kyuubi/bin/kyuubi.sh /opt/pebble/kyuubi.sh
+    COPY ./bin/kyuubi.sh /opt/pebble/kyuubi.sh
     RUN chown _daemon_:_daemon_ /opt/pebble/kyuubi.sh
 
     # Copy pebble layers
-    COPY ./files/kyuubi/pebble/layers.yaml /var/lib/pebble/default/layers/002-charmed-kyuubi.yaml
+    COPY ./pebble/layers.yaml /var/lib/pebble/default/layers/002-charmed-kyuubi.yaml
 
     # Copy PostgreSQL dependencies
     RUN cp /opt/kyuubi/jars/postgresql* /opt/spark/jars

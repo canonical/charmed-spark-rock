@@ -15,7 +15,7 @@ jobs:
       - name: YAML Lint
         run:  |
           yamllint -d "{extends: relaxed, rules: {line-length: {max: 250}}}" \
-            --no-warnings rockcraft.yaml
+            --no-warnings images/charmed-spark/rockcraft.yaml
 
   build:
     runs-on: ubuntu-latest

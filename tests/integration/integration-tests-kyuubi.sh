@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# The integration tests are designed to tests that Spark Jobs can be submitted and/or shell processes are
+# The integration tests are designed to tests that SQL queries can be submitted to Kyuubi and/or shell processes are
 # working properly with restricted permission of the service account starting the process. For this reason,
 # in the tests we spawn two pods:
 #
@@ -27,10 +27,9 @@ USER_POD_NAME=kyuubi-test
 S3_BUCKET=kyuubi
 AZURE_CONTAINER=$S3_BUCKET
 
-
 get_spark_version(){
-  # Fetch Spark version from rockcraft.yaml
-  yq '(.version)' rockcraft.yaml
+  # Fetch Spark version from images/charmed-spark/rockcraft.yaml
+  yq '(.version)' images/charmed-spark/rockcraft.yaml
 }
 
 
