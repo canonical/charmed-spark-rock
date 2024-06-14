@@ -67,7 +67,7 @@ jobs:
           # Import artifact into docker with new tag
           sudo make microk8s-import \
             FLAVOUR=jupyter \
-            TAG=$(yq .version rockcraft.yaml) \
+            TAG=$(yq .version images/charmed-spark/rockcraft.yaml) \
             REPOSITORY=ghcr.io/canonical/ \
             PREFIX=test- \
             -o ${{ steps.artifact.outputs.jupyter_artifact_name }}
@@ -83,7 +83,7 @@ jobs:
           # Import artifact into docker with new tag
           sudo make microk8s-import \
             FLAVOUR=kyuubi \
-            TAG=$(yq .version rockcraft.yaml) \
+            TAG=$(yq .version images/charmed-spark/rockcraft.yaml) \
             REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
             -o ${{ steps.artifact.outputs.kyuubi_artifact_name }}
 

@@ -98,7 +98,7 @@ jobs:
 
           # Add relevant labels
           COMMIT_ID=$(git log -1 --format=%H)
-          DESCRIPTION=$(yq .description rockcraft.yaml | xargs)
+          DESCRIPTION=$(yq .description images/charmed-spark/rockcraft.yaml | xargs)
           
           echo "FROM ${IMAGE_NAME}:${TAG}" | docker build --label org.opencontainers.image.description="${DESCRIPTION}" --label org.opencontainers.image.revision="${COMMIT_ID}" --label org.opencontainers.image.source="${{ github.repositoryUrl }}" -t "${IMAGE_NAME}:${TAG}" -
 
@@ -133,7 +133,7 @@ jobs:
       
           IMAGE_NAME=$(make help FLAVOUR=jupyter REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
 
-          DESCRIPTION=$(yq .flavours.jupyter.image_description metadata.yaml | xargs)
+          DESCRIPTION=$(yq .flavours.jupyter.image_description images/metadata.yaml | xargs)
           
           echo "FROM ${IMAGE_NAME}:${TAG}" | docker build --label org.opencontainers.image.description="${DESCRIPTION}" --label org.opencontainers.image.revision="${COMMIT_ID}" --label org.opencontainers.image.source="${{ github.repositoryUrl }}" -t "${IMAGE_NAME}:${TAG}" -
       
@@ -171,7 +171,7 @@ jobs:
       
           IMAGE_NAME=$(make help FLAVOUR=kyuubi REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
 
-          DESCRIPTION=$(yq .flavours.kyuubi.image_description metadata.yaml | xargs)
+          DESCRIPTION=$(yq .flavours.kyuubi.image_description images/metadata.yaml | xargs)
           
           echo "FROM ${IMAGE_NAME}:${TAG}" | docker build --label org.opencontainers.image.description="${DESCRIPTION}" --label org.opencontainers.image.revision="${COMMIT_ID}" --label org.opencontainers.image.source="${{ github.repositoryUrl }}" -t "${IMAGE_NAME}:${TAG}" -
       

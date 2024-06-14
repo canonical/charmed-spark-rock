@@ -37,10 +37,10 @@ $(shell mkdir -p $(_MAKE_DIR))
 
 
 # eg, charmed-spark
-ROCK_NAME := $(shell yq .name images/spark/rockcraft.yaml)
+ROCK_NAME := $(shell yq .name images/charmed-spark/rockcraft.yaml)
 
 # eg, 3.4.2
-SPARK_VERSION := $(shell yq .version images/spark/rockcraft.yaml)
+SPARK_VERSION := $(shell yq .version images/charmed-spark/rockcraft.yaml)
 
 # eg, 1.9.0
 KYUUBI_VERSION=$(shell yq .flavours.kyuubi.version images/metadata.yaml)
