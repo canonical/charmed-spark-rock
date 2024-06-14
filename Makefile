@@ -109,6 +109,7 @@ JUPYTER_MARKER=$(_MAKE_DIR)/jupyter-$(JUPYTER_VERSION).tag
 KYUUBI_MARKER=$(_MAKE_DIR)/kyuubi-$(KYUUBI_VERSION).tag
 K8S_MARKER=$(_MAKE_DIR)/k8s.tag
 AWS_MARKER=$(_MAKE_DIR)/aws.tag
+AZURE_MARKER=$(_MAKE_DIR)/azure.tag
 
 
 # The names of different flavours of the image in the docker container registry
