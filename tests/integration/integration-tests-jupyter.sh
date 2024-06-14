@@ -15,13 +15,15 @@
 NAMESPACE=tests
 
 get_spark_version(){
-  SPARK_VERSION=$(yq '(.version)' rockcraft.yaml)
+  SPARK_VERSION=$(yq '(.version)' images/charmed-spark/rockcraft.yaml)
   echo "$SPARK_VERSION"
 }
+
 
 spark_image(){
   echo "ghcr.io/canonical/test-charmed-spark-jupyterlab:$(get_spark_version)"
 }
+
 
 setup_jupyter() {
   echo "setup_jupyter() ${1} ${2}"
