@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# The integration tests are designed to tests that Spark Jobs can be submitted and/or shell processes are
+# The integration tests are designed to tests that SQL queries can be submitted to Kyuubi and/or shell processes are
 # working properly with restricted permission of the service account starting the process. For this reason,
 # in the tests we spawn two pods:
 #
