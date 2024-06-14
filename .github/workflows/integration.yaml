@@ -47,9 +47,6 @@ jobs:
           name: charmed-spark
           path: charmed-spark
 
-      # - name: Setup upterm session
-      #   uses: lhotari/action-upterm@v1
-
       - name: Run tests
         run: |
           # Unpack Artifact
@@ -59,7 +56,7 @@ jobs:
           sudo make microk8s-import PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
             -o ${{ steps.artifact.outputs.base_artifact_name }}
           
-          sg microk8s -c "make tests AZURE_STORAGE_ACCOUNT=$AZURE_STORAGE_ACCOUNT AZURE_STORAGE_KEY=$AZURE_STORAGE_KEY"
+          sg microk8s -c "make tests"
 
       - name: Run tests (Jupyter)
         run: |

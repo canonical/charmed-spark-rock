@@ -593,53 +593,53 @@ echo -e "##################################"
 kubectl create namespace $NAMESPACE
 setup_admin_pod $ADMIN_POD_NAME $(spark_image) $NAMESPACE
 
-# echo -e "##################################"
-# echo -e "RUN EXAMPLE JOB"
-# echo -e "##################################"
+echo -e "##################################"
+echo -e "RUN EXAMPLE JOB"
+echo -e "##################################"
 
-# (setup_user_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
-# echo -e "##################################"
-# echo -e "RUN SPARK SHELL IN POD"
-# echo -e "##################################"
+echo -e "##################################"
+echo -e "RUN SPARK SHELL IN POD"
+echo -e "##################################"
 
-# (setup_user_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_spark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
-# echo -e "##################################"
-# echo -e "RUN PYSPARK IN POD"
-# echo -e "##################################"
+echo -e "##################################"
+echo -e "RUN PYSPARK IN POD"
+echo -e "##################################"
 
-# (setup_user_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
-# echo -e "##################################"
-# echo -e "RUN SPARK SQL IN POD"
-# echo -e "##################################"
+echo -e "##################################"
+echo -e "RUN SPARK SQL IN POD"
+echo -e "##################################"
 
-# (setup_user_context && test_spark_sql_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_spark_sql_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
-# echo -e "##################################"
-# echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
-# echo -e "##################################"
+echo -e "##################################"
+echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
+echo -e "##################################"
 
-# (setup_user_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
 
-# echo -e "########################################"
-# echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
-# echo -e "########################################"
+echo -e "########################################"
+echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
+echo -e "########################################"
 
-# (setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
 
-# echo -e "########################################"
-# echo -e "RUN EXAMPLE JOB WITH ERRORS"
-# echo -e "########################################"
+echo -e "########################################"
+echo -e "RUN EXAMPLE JOB WITH ERRORS"
+echo -e "########################################"
 
-# (setup_user_context && test_example_job_in_pod_with_errors && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_example_job_in_pod_with_errors && cleanup_user_success) || cleanup_user_failure_in_pod
 
-# echo -e "##################################"
-# echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
-# echo -e "##################################"
+echo -e "##################################"
+echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
+echo -e "##################################"
 
-# (setup_user_context && test_iceberg_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_iceberg_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES AZURE STORAGE"
