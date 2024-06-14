@@ -258,6 +258,8 @@ tests: $(K8S_MARKER) $(AWS_MARKER) $(AZURE_MARKER)
 ifeq ($(FLAVOUR), jupyter)
 	/bin/bash ./tests/integration/integration-tests-jupyter.sh
 else ifeq ($(FLAVOUR), kyuubi)
+	@export AZURE_STORAGE_ACCOUNT=$(AZURE_STORAGE_ACCOUNT) \
+			AZURE_STORAGE_KEY=$(AZURE_STORAGE_KEY) \
 	/bin/bash ./tests/integration/integration-tests-kyuubi.sh
 else
 	@export AZURE_STORAGE_ACCOUNT=$(AZURE_STORAGE_ACCOUNT) \
