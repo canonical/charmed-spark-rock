@@ -248,7 +248,7 @@ test_iceberg_example_in_pod_with_azure_using_abfss(){
   create_azure_container $AZURE_CONTAINER
 
   # Copy 'test-iceberg.py' script to 'spark' bucket
-  copy_file_to_azure_container spark ./tests/integration/resources/test-iceberg.py
+  copy_file_to_azure_container $AZURE_CONTAINER ./tests/integration/resources/test-iceberg.py
 
   STORAGE_ACCOUNT_NAME=$(get_storage_account)
   STORAGE_ACCOUNT_KEY=$(get_azure_secret_key)
