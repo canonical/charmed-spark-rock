@@ -183,6 +183,7 @@ test_iceberg_example_in_pod(){
         ACCESS_KEY="$(get_s3_access_key)" \
         SECRET_KEY="$(get_s3_secret_key)" \
         S3_ENDPOINT="$(get_s3_endpoint)" \
+        BUCKET="$S3_BUCKET" \
       /bin/bash -c '\
         spark-client.spark-submit \
         --username $UU --namespace $NN \
@@ -201,9 +202,9 @@ test_iceberg_example_in_pod(){
         --conf spark.sql.catalog.spark_catalog.type=hive \
         --conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
         --conf spark.sql.catalog.local.type=hadoop \
-        --conf spark.sql.catalog.local.warehouse=s3a://spark/warehouse \
+        --conf spark.sql.catalog.local.warehouse=s3a://$BUCKET/warehouse \
         --conf spark.sql.defaultCatalog=local \
-        s3a://spark/test-iceberg.py -n $NUM_ROWS'
+        s3a://$BUCKET/test-iceberg.py -n $NUM_ROWS'
 
   # Delete 'spark' bucket
   delete_s3_bucket $S3_BUCKET
@@ -525,6 +526,7 @@ run_spark_sql_in_pod() {
       ACCESS_KEY=$(get_s3_access_key) \
       SECRET_KEY=$(get_s3_secret_key) \
       S3_ENDPOINT=$(get_s3_endpoint) \
+      BUCKET="$S3_BUCKET" \
     /bin/bash -c 'echo "$CMDS" | spark-client.spark-sql \
       --username $UU \
       --namespace $NN \
@@ -536,7 +538,7 @@ run_spark_sql_in_pod() {
       --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
       --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
       --conf spark.driver.extraJavaOptions='-Dderby.system.home=/tmp/derby' \
-      --conf spark.sql.warehouse.dir=s3a://test/warehouse')" > spark-sql.out
+      --conf spark.sql.warehouse.dir=s3a://$BUCKET/warehouse')" > spark-sql.out
 
   # derby.system.home=/tmp/derby is needed because 
   # kubectl exec runs commands with `/` as working directory
