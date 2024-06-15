@@ -20,9 +20,11 @@ source ./tests/integration/utils/azure-utils.sh
 
 
 # Global Variables
+RANDOM_HASH=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
 NAMESPACE=tests
 ADMIN_POD_NAME=testpod-admin
-
+S3_BUCKET=spark-$RANDOM_HASH
+AZURE_CONTAINER=$S3_BUCKET
 
 get_spark_version(){
   # Fetch Spark version from rockcraft.yaml
@@ -158,7 +160,7 @@ test_iceberg_example_in_pod(){
   # Test Iceberg integration in Charmed Spark Rock
 
   # First create S3 bucket named 'spark'
-  create_s3_bucket spark
+  create_s3_bucket $S3_BUCKET
 
   # Copy 'test-iceberg.py' script to 'spark' bucket
   copy_file_to_s3_bucket spark ./tests/integration/resources/test-iceberg.py
@@ -205,7 +207,7 @@ test_iceberg_example_in_pod(){
         s3a://spark/test-iceberg.py -n $NUM_ROWS'
 
   # Delete 'spark' bucket
-  delete_s3_bucket spark
+  delete_s3_bucket $S3_BUCKET
 
   # Number of driver pods after the job is completed.
   DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
@@ -243,7 +245,7 @@ test_iceberg_example_in_pod_with_azure_using_abfss(){
   # Test Iceberg integration in Charmed Spark Rock with Azure Storage
 
   # First create S3 bucket named 'spark'
-  create_azure_container spark
+  create_azure_container $AZURE_CONTAINER
 
   # Copy 'test-iceberg.py' script to 'spark' bucket
   copy_file_to_azure_container spark ./tests/integration/resources/test-iceberg.py
@@ -289,7 +291,7 @@ test_iceberg_example_in_pod_with_azure_using_abfss(){
         $SCRIPT -n $NUM_ROWS'
 
   # Delete 'spark' bucket
-  delete_azure_container spark
+  delete_azure_container $AZURE_CONTAINER
 
   # Number of driver pods after the job is completed.
   DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
@@ -513,7 +515,7 @@ run_spark_sql_in_pod() {
   USERNAME=$2
 
   SPARK_SQL_COMMANDS=$(cat ./tests/integration/resources/test-spark-sql.sql)
-  create_s3_bucket test
+  create_s3_bucket $S3_BUCKET
 
   echo -e "$(kubectl -n $NAMESPACE exec testpod -- \
     env \
@@ -545,7 +547,7 @@ run_spark_sql_in_pod() {
   num_rows_inserted=$(cat spark-sql.out  | grep "^Inserted Rows:" | rev | cut -d' ' -f1 | rev )
   echo -e "${num_rows_inserted} rows were inserted."
   rm spark-sql.out
-  delete_s3_bucket test
+  delete_s3_bucket $S3_BUCKET
   if [ "${num_rows_inserted}" != "3" ]; then
       echo "ERROR: Testing spark-sql failed. ${num_rows_inserted} out of 3 rows were inserted. Aborting with exit code 1."
       exit 1

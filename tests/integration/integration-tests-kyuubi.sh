@@ -20,11 +20,12 @@ source ./tests/integration/utils/k8s-utils.sh
 
 
 # Global Variables
+RANDOM_HASH=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
 NAMESPACE=tests
 SERVICE_ACCOUNT=spark
 ADMIN_POD_NAME=testpod-admin
 USER_POD_NAME=kyuubi-test
-S3_BUCKET=kyuubi
+S3_BUCKET=kyuubi-$RANDOM_HASH
 AZURE_CONTAINER=$S3_BUCKET
 
 get_spark_version(){
