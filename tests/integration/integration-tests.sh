@@ -22,7 +22,7 @@ source ./tests/integration/utils/azure-utils.sh
 # Global Variables
 NAMESPACE=tests
 ADMIN_POD_NAME=testpod-admin
-S3_BUCKET=spark-$(uuidgen)
+S3_BUCKET=test-rock-spark-$(uuidgen)
 AZURE_CONTAINER=$S3_BUCKET
 
 get_spark_version(){
