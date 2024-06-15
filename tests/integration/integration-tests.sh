@@ -260,8 +260,8 @@ test_iceberg_example_in_pod_with_azure_using_abfss(){
   # Number of driver pods that exist in the namespace already.
   PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
 
-  iceberg_script=$(construct_resource_uri spark test-iceberg.py abfss)
-  warehouse_path=$(construct_resource_uri spark warehouse abfss)
+  iceberg_script=$(construct_resource_uri $AZURE_CONTAINER test-iceberg.py abfss)
+  warehouse_path=$(construct_resource_uri $AZURE_CONTAINER warehouse abfss)
   # Submit the job from inside 'testpod'
   kubectl -n $NAMESPACE exec testpod -- \
       env \
