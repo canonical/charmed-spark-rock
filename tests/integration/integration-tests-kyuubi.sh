@@ -24,7 +24,7 @@ NAMESPACE=tests
 SERVICE_ACCOUNT=spark
 ADMIN_POD_NAME=testpod-admin
 USER_POD_NAME=kyuubi-test
-S3_BUCKET=test-rock-kyuubi-$(uuidgen)
+S3_BUCKET=kyuubi-$(uuidgen)
 AZURE_CONTAINER=$S3_BUCKET
 
 get_spark_version(){
