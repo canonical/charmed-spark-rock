@@ -162,7 +162,7 @@ test_iceberg_example_in_pod(){
   create_s3_bucket $S3_BUCKET
 
   # Copy 'test-iceberg.py' script to 'spark' bucket
-  copy_file_to_s3_bucket spark ./tests/integration/resources/test-iceberg.py
+  copy_file_to_s3_bucket $S3_BUCKET ./tests/integration/resources/test-iceberg.py
 
   NAMESPACE="tests"
   USERNAME="spark"
