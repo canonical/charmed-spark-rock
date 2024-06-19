@@ -175,6 +175,7 @@ setup_s3_properties_in_pod(){
         --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
         --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
         --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
+        --conf spark.sql.warehouse.dir=s3a://$BUCKET/warehouse \
         --conf spark.sql.catalog.local.warehouse=s3a://$BUCKET/warehouse'
 }
 
@@ -194,6 +195,7 @@ setup_azure_storage_properties_in_pod(){
         spark-client.service-account-registry add-config \
         --username $UU --namespace $NN \
         --conf spark.hadoop.fs.azure.account.key.$ACCOUNT_NAME.dfs.core.windows.net=$SECRET_KEY \
+        --conf spark.sql.warehouse.dir=$WAREHOUSE \
         --conf spark.sql.catalog.local.warehouse=$WAREHOUSE'
 }
 
@@ -203,8 +205,6 @@ test_iceberg_example_in_pod(){
   #
   # Arguments:
   # $1: The path of the script in the cloud
-  echo $0 $1
-
 
   # Number of rows that are to be inserted during the test.
   NUM_ROWS_TO_INSERT="4"
@@ -296,13 +296,13 @@ test_iceberg_example_in_pod_using_s3(){
 test_iceberg_example_in_pod_using_abfss(){
   # Test Iceberg integration in Charmed Spark Rock with Azure Storage
 
-  # First create S3 bucket named 'spark'
+  # First create an Azure Storage container
   create_azure_container $AZURE_CONTAINER
 
-  # Now, setup S3 properties in service account inside the pod
+  # Now, setup Azure Storage properties in service account inside the pod
   setup_azure_storage_properties_in_pod 
 
-  # Copy 'test-iceberg.py' script to 'spark' bucket
+  # Copy 'test-iceberg.py' script to the Azure Storage container
   copy_file_to_azure_container $AZURE_CONTAINER ./tests/integration/resources/test-iceberg.py
   script_path=$(construct_resource_uri $AZURE_CONTAINER test-iceberg.py abfss)
 
@@ -500,18 +500,18 @@ test_spark_shell_in_pod() {
   run_spark_shell_in_pod $NAMESPACE spark
 }
 
-run_spark_sql_in_pod() {
-  echo "run_spark_sql_in_pod ${1} ${2}"
+run_spark_sql_in_pod(){
+  # Test Spark SQL inside a pod that runs charmed spark rock.
+  #
+  # Arguments:
+  # $1: The path to the file that contains the lines to be passed to Spark SQL
 
-  NAMESPACE=$1
-  USERNAME=$2
+  sql_script_file=$1
 
-  SPARK_SQL_COMMANDS=$(cat ./tests/integration/resources/test-spark-sql.sql)
-  create_s3_bucket $S3_BUCKET
-
+  SPARK_SQL_COMMANDS=$(cat $sql_script_file)
   echo -e "$(kubectl -n $NAMESPACE exec testpod -- \
     env \
-      UU="$USERNAME" \
+      UU="$SERVICE_ACCOUNT" \
       NN="$NAMESPACE" \
       CMDS="$SPARK_SQL_COMMANDS" \
       IM=$(spark_image) \
@@ -520,36 +520,53 @@ run_spark_sql_in_pod() {
       S3_ENDPOINT=$(get_s3_endpoint) \
       BUCKET="$S3_BUCKET" \
     /bin/bash -c 'echo "$CMDS" | spark-client.spark-sql \
-      --username $UU \
-      --namespace $NN \
+      --username $UU --namespace $NN \
       --conf spark.kubernetes.container.image=$IM \
-      --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider \
-      --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
-      --conf spark.hadoop.fs.s3a.path.style.access=true \
-      --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
-      --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
-      --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
       --conf spark.driver.extraJavaOptions='-Dderby.system.home=/tmp/derby' \
-      --conf spark.sql.warehouse.dir=s3a://$BUCKET/warehouse')" > spark-sql.out
-
-  # derby.system.home=/tmp/derby is needed because 
-  # kubectl exec runs commands with `/` as working directory
-  # and by default derby.system.home has value `.`, the current working directory
-  # (for which _daemon_ user has no permission on)
+    ')" > spark-sql.out
 
   num_rows_inserted=$(cat spark-sql.out  | grep "^Inserted Rows:" | rev | cut -d' ' -f1 | rev )
   echo -e "${num_rows_inserted} rows were inserted."
   rm spark-sql.out
-  delete_s3_bucket $S3_BUCKET
   if [ "${num_rows_inserted}" != "3" ]; then
       echo "ERROR: Testing spark-sql failed. ${num_rows_inserted} out of 3 rows were inserted. Aborting with exit code 1."
-      exit 1
+      return 1
+  fi
+
+  return 0
+}
+
+test_spark_sql_in_pod_using_s3() {
+  # Test Spark SQL with S3 as object storage
+
+  create_s3_bucket $S3_BUCKET
+  setup_s3_properties_in_pod
+
+  run_spark_sql_in_pod ./tests/integration/resources/test-spark-sql.sql
+  return_value=$?
+
+  delete_s3_bucket $S3_BUCKET
+
+  if [ $return_value -eq 1 ]; then
+    exit 1
   fi
 }
 
-test_spark_sql_in_pod() {
-  run_spark_sql_in_pod tests spark
+test_spark_sql_in_pod_using_abfss() {
+  # Test Spark SQL with Azure Blob as object storage (using abfss protocol)
+  create_azure_container $AZURE_CONTAINER
+  setup_azure_storage_properties_in_pod
+
+  run_spark_sql_in_pod ./tests/integration/resources/test-spark-sql.sql
+  return_value=$?
+
+  delete_azure_container $S3_BUCKET
+
+  if [ $return_value -eq 1 ]; then
+    exit 1
+  fi
 }
+
 
 run_pyspark_in_pod() {
   echo "run_pyspark_in_pod ${1} ${2}"
@@ -607,10 +624,16 @@ echo -e "##################################"
 (setup_user_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
-echo -e "RUN SPARK SQL IN POD"
+echo -e "RUN SPARK SQL IN POD (Using S3 Object Storage)"
 echo -e "##################################"
 
-(setup_user_context && test_spark_sql_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_spark_sql_in_pod_using_s3 && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo -e "##################################"
+echo -e "RUN SPARK SQL IN POD (Using Azure Storage ABFSS)"
+echo -e "##################################"
+
+(setup_user_context && test_spark_sql_in_pod_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
