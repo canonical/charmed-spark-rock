@@ -69,20 +69,30 @@ setup_kyuubi_pod_with_s3() {
   s3_secret_key=$(get_s3_secret_key)
 
   # Write Spark configs inside the Kyuubi container
-  kubectl -n $NAMESPACE exec kyuubi-test -- env IMG="$image"                /bin/bash -c 'echo spark.kubernetes.container.image=$IMG  > /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env NN="$NAMESPACE"             /bin/bash -c 'echo spark.kubernetes.namespace=$NN         >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env UU="$SERVICE_ACCOUNT"       /bin/bash -c 'echo spark.kubernetes.authenticate.driver.serviceAccountName=$UU >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env ENDPOINT="$s3_endpoint"     /bin/bash -c 'echo spark.hadoop.fs.s3a.endpoint=$ENDPOINT >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env ACCESS_KEY="$s3_access_key" /bin/bash -c 'echo spark.hadoop.fs.s3a.access.key=$ACCESS_KEY >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env SECRET_KEY="$s3_secret_key" /bin/bash -c 'echo spark.hadoop.fs.s3a.secret.key=$SECRET_KEY >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test --                                 /bin/bash -c 'echo spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test --                                 /bin/bash -c 'echo spark.hadoop.fs.s3a.connection.ssl.enabled=false >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test --                                 /bin/bash -c 'echo spark.hadoop.fs.s3a.path.style.access=true       >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env BUCKET="$S3_BUCKET"         /bin/bash -c 'echo spark.sql.warehouse.dir=s3a://$BUCKET/warehouse  >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- env BUCKET="$S3_BUCKET"         /bin/bash -c 'echo spark.kubernetes.file.upload.path=s3a://$BUCKET  >> /etc/spark8t/conf/spark-defaults.conf'
+  # Add relevant Spark configurations in the service account and write the config
+  # to spark-defaults.conf file inside the container
+  kubectl -n $NAMESPACE exec kyuubi-test -- \
+      env IMG="$image" \
+          UU="$SERVICE_ACCOUNT" \
+          NN="$NAMESPACE" \
+          ENDPOINT="$s3_endpoint" \
+          ACCESS_KEY="$s3_access_key" \
+          SECRET_KEY="$s3_secret_key" \
+          BUCKET="$S3_BUCKET" \
+      /bin/bash -c '\
+        spark-client.service-account-registry add-config --username $UU --namespace $NN \
+          --conf spark.kubernetes.container.image=$IMG \
+          --conf spark.hadoop.fs.s3a.endpoint=$ENDPOINT \
+          --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
+          --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
+          --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider \
+          --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
+          --conf spark.hadoop.fs.s3a.path.style.access=true \
+          --conf spark.sql.warehouse.dir=s3a://$BUCKET/warehouse \
+          --conf spark.kubernetes.file.upload.path=s3a://$BUCKET \
+        && \
+        spark-client.service-account-registry get-config --username $UU --namespace $NN > /etc/spark8t/conf/spark-defaults.conf'
 
-  # Wait some time for the server to be up and running
-  sleep 10
 }
 
 
@@ -111,33 +121,30 @@ setup_kyuubi_pod_with_azure_abfss() {
   # Create Azure storage container
   create_azure_container $AZURE_CONTAINER
 
-  storage_account_name=$(get_storage_account)
-  storage_account_key=$(get_azure_secret_key)
+  storage_account_name=$(get_azure_storage_account_name)
+  storage_account_key=$(get_azure_storage_secret_key)
   warehouse_path=$(construct_resource_uri $AZURE_CONTAINER warehouse abfss)
   file_upload_path=$(construct_resource_uri $AZURE_CONTAINER "" abfss)
 
-  # Write Spark configs inside the Kyuubi container
+  # Add relevant Spark configurations in the service account and write the config
+  # to spark-defaults.conf file inside the container
   kubectl -n $NAMESPACE exec kyuubi-test -- \
       env IMG="$image" \
-          /bin/bash -c 'echo spark.kubernetes.container.image=$IMG  > /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- \
-      env NN="$NAMESPACE" \
-          /bin/bash -c 'echo spark.kubernetes.namespace=$NN >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- \
-      env UU="$SERVICE_ACCOUNT" \
-          /bin/bash -c 'echo spark.kubernetes.authenticate.driver.serviceAccountName=$UU >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- \
-      env ACCOUNT_NAME="$storage_account_name" SECRET_KEY="$storage_account_key"\
-          /bin/bash -c 'echo spark.hadoop.fs.azure.account.key.$ACCOUNT_NAME.dfs.core.windows.net=$SECRET_KEY >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- \
-      env WAREHOUSE="$warehouse_path" \
-          /bin/bash -c 'echo spark.sql.warehouse.dir=$WAREHOUSE >> /etc/spark8t/conf/spark-defaults.conf'
-  kubectl -n $NAMESPACE exec kyuubi-test -- \
-      env UPLOAD_PATH="$file_upload_path" \
-          /bin/bash -c 'echo spark.kubernetes.file.upload.path=$UPLOAD_PATH >> /etc/spark8t/conf/spark-defaults.conf'
+          UU="$SERVICE_ACCOUNT" \
+          NN="$NAMESPACE" \
+          ACCOUNT_NAME="$storage_account_name" \
+          SECRET_KEY="$storage_account_key" \
+          WAREHOUSE="$warehouse_path" \
+          UPLOAD_PATH="$file_upload_path" \
+        /bin/bash -c '\
+          spark-client.service-account-registry add-config --username $UU --namespace $NN \
+            --conf spark.kubernetes.container.image=$IMG \
+            --conf spark.hadoop.fs.azure.account.key.$ACCOUNT_NAME.dfs.core.windows.net=$SECRET_KEY \
+            --conf spark.sql.warehouse.dir=$WAREHOUSE \
+            --conf spark.kubernetes.file.upload.path=$UPLOAD_PATH \
+          && \
+          spark-client.service-account-registry get-config --username $UU --namespace $NN > /etc/spark8t/conf/spark-defaults.conf'
 
-  # Wait some time for the server to be up and running
-  sleep 10
 }
 
 

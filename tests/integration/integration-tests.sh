@@ -21,6 +21,7 @@ source ./tests/integration/utils/azure-utils.sh
 
 # Global Variables
 NAMESPACE=tests
+SERVICE_ACCOUNT=spark
 ADMIN_POD_NAME=testpod-admin
 S3_BUCKET=spark-$(uuidgen)
 AZURE_CONTAINER=$S3_BUCKET
@@ -154,114 +155,64 @@ run_example_job_in_pod() {
   validate_pi_value $pi
 }
 
+setup_s3_properties_in_pod(){
+  # Setup S3 related Spark properties in the service account inside the pod
 
-test_iceberg_example_in_pod(){
-  # Test Iceberg integration in Charmed Spark Rock
-
-  # First create S3 bucket named 'spark'
-  create_s3_bucket $S3_BUCKET
-
-  # Copy 'test-iceberg.py' script to 'spark' bucket
-  copy_file_to_s3_bucket $S3_BUCKET ./tests/integration/resources/test-iceberg.py
-
-  NAMESPACE="tests"
-  USERNAME="spark"
-
-  # Number of rows that are to be inserted during the test.
-  NUM_ROWS_TO_INSERT="4"
-
-  # Number of driver pods that exist in the namespace already.
-  PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
-
-  # Submit the job from inside 'testpod'
   kubectl -n $NAMESPACE exec testpod -- \
       env \
-        UU="$USERNAME" \
+        UU="$SERVICE_ACCOUNT" \
         NN="$NAMESPACE" \
-        IM="$(spark_image)" \
-        NUM_ROWS="$NUM_ROWS_TO_INSERT" \
         ACCESS_KEY="$(get_s3_access_key)" \
         SECRET_KEY="$(get_s3_secret_key)" \
         S3_ENDPOINT="$(get_s3_endpoint)" \
         BUCKET="$S3_BUCKET" \
       /bin/bash -c '\
-        spark-client.spark-submit \
+        spark-client.service-account-registry add-config \
         --username $UU --namespace $NN \
-        --conf spark.kubernetes.driver.request.cores=100m \
-        --conf spark.kubernetes.executor.request.cores=100m \
-        --conf spark.kubernetes.container.image=$IM \
         --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider \
         --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
         --conf spark.hadoop.fs.s3a.path.style.access=true \
         --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
         --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
         --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
-        --conf spark.jars.ivy=/tmp \
-        --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions \
-        --conf spark.sql.catalog.spark_catalog=org.apache.iceberg.spark.SparkSessionCatalog \
-        --conf spark.sql.catalog.spark_catalog.type=hive \
-        --conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
-        --conf spark.sql.catalog.local.type=hadoop \
-        --conf spark.sql.catalog.local.warehouse=s3a://$BUCKET/warehouse \
-        --conf spark.sql.defaultCatalog=local \
-        s3a://$BUCKET/test-iceberg.py -n $NUM_ROWS'
+        --conf spark.sql.catalog.local.warehouse=s3a://$BUCKET/warehouse'
+}
 
-  # Delete 'spark' bucket
-  delete_s3_bucket $S3_BUCKET
+setup_azure_storage_properties_in_pod(){
+  # Setup Azure Storage related Spark properties in the service account inside the pod
 
-  # Number of driver pods after the job is completed.
-  DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
+  warehouse_path=$(construct_resource_uri $AZURE_CONTAINER warehouse abfss)
 
-  # If the number of driver pods is same as before, job has not been run at all!
-  if [[ "${PREVIOUS_DRIVER_PODS_COUNT}" == "${DRIVER_PODS_COUNT}" ]]
-  then
-    echo "ERROR: Sample job has not run!"
-    exit 1
-  fi
-
-  # Find the ID of the driver pod that ran the job.
-  # tail -n 1       => Filter out the last line
-  # cut -d' ' -f1   => Split by spaces and pick the first part
-  DRIVER_POD_ID=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep test-iceberg-.*-driver | tail -n 1 | cut -d' ' -f1)
-
-  # Filter out the output log line
-  OUTPUT_LOG_LINE=$(kubectl logs ${DRIVER_POD_ID} -n ${NAMESPACE} | grep 'Number of rows inserted:' )
-
-  # Fetch out the number of rows inserted
-  # rev             => Reverse the string
-  # cut -d' ' -f1   => Split by spaces and pick the first part
-  # rev             => Reverse the string back
-  NUM_ROWS_INSERTED=$(echo $OUTPUT_LOG_LINE | rev | cut -d' ' -f1 | rev)
-
-  if [ "${NUM_ROWS_INSERTED}" != "${NUM_ROWS_TO_INSERT}" ]; then
-      echo "ERROR: ${NUM_ROWS_TO_INSERT} were supposed to be inserted. Found ${NUM_ROWS_INSERTED} rows. Aborting with exit code 1."
-      exit 1
-  fi
-
+  kubectl -n $NAMESPACE exec testpod -- \
+      env \
+        UU="$SERVICE_ACCOUNT" \
+        NN="$NAMESPACE" \
+        ACCOUNT_NAME="$(get_azure_storage_account_name)" \
+        SECRET_KEY="$(get_azure_storage_secret_key)" \
+        WAREHOUSE="$warehouse_path" \
+      /bin/bash -c '\
+        spark-client.service-account-registry add-config \
+        --username $UU --namespace $NN \
+        --conf spark.hadoop.fs.azure.account.key.$ACCOUNT_NAME.dfs.core.windows.net=$SECRET_KEY \
+        --conf spark.sql.catalog.local.warehouse=$WAREHOUSE'
 }
 
 
-test_iceberg_example_in_pod_with_azure_using_abfss(){
-  # Test Iceberg integration in Charmed Spark Rock with Azure Storage
+test_iceberg_example_in_pod(){
+  # Test Iceberg integration in Charmed Spark Rock
+  #
+  # Arguments:
+  # $1: The path of the script in the cloud
+  echo $0 $1
 
-  # First create S3 bucket named 'spark'
-  create_azure_container $AZURE_CONTAINER
-
-  # Copy 'test-iceberg.py' script to 'spark' bucket
-  copy_file_to_azure_container $AZURE_CONTAINER ./tests/integration/resources/test-iceberg.py
-
-  STORAGE_ACCOUNT_NAME=$(get_storage_account)
-  STORAGE_ACCOUNT_KEY=$(get_azure_secret_key)
-  USERNAME="spark"
 
   # Number of rows that are to be inserted during the test.
   NUM_ROWS_TO_INSERT="4"
+  script_path=$1
 
   # Number of driver pods that exist in the namespace already.
   PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
 
-  iceberg_script=$(construct_resource_uri $AZURE_CONTAINER test-iceberg.py abfss)
-  warehouse_path=$(construct_resource_uri $AZURE_CONTAINER warehouse abfss)
   # Submit the job from inside 'testpod'
   kubectl -n $NAMESPACE exec testpod -- \
       env \
@@ -269,29 +220,21 @@ test_iceberg_example_in_pod_with_azure_using_abfss(){
         NN="$NAMESPACE" \
         IM="$(spark_image)" \
         NUM_ROWS="$NUM_ROWS_TO_INSERT" \
-        ACCOUNT_NAME="$STORAGE_ACCOUNT_NAME" \
-        SECRET_KEY="$STORAGE_ACCOUNT_KEY" \
-        SCRIPT="$iceberg_script" \
-        WAREHOUSE="$warehouse_path" \
+        SCRIPT="$script_path" \
       /bin/bash -c '\
         spark-client.spark-submit \
         --username $UU --namespace $NN \
         --conf spark.kubernetes.driver.request.cores=100m \
         --conf spark.kubernetes.executor.request.cores=100m \
         --conf spark.kubernetes.container.image=$IM \
-        --conf spark.hadoop.fs.azure.account.key.$ACCOUNT_NAME.dfs.core.windows.net=$SECRET_KEY \
         --conf spark.jars.ivy=/tmp \
         --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions \
         --conf spark.sql.catalog.spark_catalog=org.apache.iceberg.spark.SparkSessionCatalog \
         --conf spark.sql.catalog.spark_catalog.type=hive \
         --conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
         --conf spark.sql.catalog.local.type=hadoop \
-        --conf spark.sql.catalog.local.warehouse=$WAREHOUSE \
         --conf spark.sql.defaultCatalog=local \
         $SCRIPT -n $NUM_ROWS'
-
-  # Delete 'spark' bucket
-  delete_azure_container $AZURE_CONTAINER
 
   # Number of driver pods after the job is completed.
   DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
@@ -300,7 +243,7 @@ test_iceberg_example_in_pod_with_azure_using_abfss(){
   if [[ "${PREVIOUS_DRIVER_PODS_COUNT}" == "${DRIVER_PODS_COUNT}" ]]
   then
     echo "ERROR: Sample job has not run!"
-    exit 1
+    return 1
   fi
 
   # Find the ID of the driver pod that ran the job.
@@ -319,9 +262,58 @@ test_iceberg_example_in_pod_with_azure_using_abfss(){
 
   if [ "${NUM_ROWS_INSERTED}" != "${NUM_ROWS_TO_INSERT}" ]; then
       echo "ERROR: ${NUM_ROWS_TO_INSERT} were supposed to be inserted. Found ${NUM_ROWS_INSERTED} rows. Aborting with exit code 1."
-      exit 1
+      return 1
   fi
 
+  return 0
+}
+
+
+test_iceberg_example_in_pod_using_s3(){
+  # Test Iceberg integration in Charmed Spark Rock using S3
+
+  # First create S3 bucket named 'spark'
+  create_s3_bucket $S3_BUCKET
+
+  # Now, setup S3 properties in service account inside the pod
+  setup_s3_properties_in_pod 
+
+  # Copy 'test-iceberg.py' script to 'spark' bucket
+  copy_file_to_s3_bucket $S3_BUCKET ./tests/integration/resources/test-iceberg.py
+  script_path="s3a://$S3_BUCKET/test-iceberg.py"
+
+  test_iceberg_example_in_pod $script_path 
+  return_value=$?
+
+  delete_s3_bucket $S3_BUCKET
+
+  if [ $return_value -eq 1 ]; then
+    exit 1
+  fi
+}
+
+
+test_iceberg_example_in_pod_using_abfss(){
+  # Test Iceberg integration in Charmed Spark Rock with Azure Storage
+
+  # First create S3 bucket named 'spark'
+  create_azure_container $AZURE_CONTAINER
+
+  # Now, setup S3 properties in service account inside the pod
+  setup_azure_storage_properties_in_pod 
+
+  # Copy 'test-iceberg.py' script to 'spark' bucket
+  copy_file_to_azure_container $AZURE_CONTAINER ./tests/integration/resources/test-iceberg.py
+  script_path=$(construct_resource_uri $AZURE_CONTAINER test-iceberg.py abfss)
+
+  test_iceberg_example_in_pod $script_path
+  return_value=$?
+
+  delete_azure_container $AZURE_CONTAINER
+
+  if [ $return_value -eq 1 ]; then
+    exit 1
+  fi
 }
 
 
@@ -642,13 +634,13 @@ echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
 echo -e "##################################"
 
-(setup_user_context && test_iceberg_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_iceberg_example_in_pod_using_s3 && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES AZURE STORAGE"
 echo -e "##################################"
 
-(setup_user_context && test_iceberg_example_in_pod_with_azure_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_iceberg_example_in_pod_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
