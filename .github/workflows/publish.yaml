@@ -45,6 +45,7 @@ jobs:
 
   tests:
       uses: ./.github/workflows/integration.yaml
+      secrets: inherit
 
   publish:
     needs: [tests, release_checks]
