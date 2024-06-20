@@ -12,11 +12,16 @@
 # of the Spark user (service accounts and secrets) at the beginning of each test, and they are destroyed at the
 # end of the test. 
 
+
+# Import reusable utilities
+source ./tests/integration/utils/k8s-utils.sh
+
+# Global Variables
 NAMESPACE=tests
+ADMIN_POD_NAME=testpod-admin
 
 get_spark_version(){
-  SPARK_VERSION=$(yq '(.version)' images/charmed-spark/rockcraft.yaml)
-  echo "$SPARK_VERSION"
+  yq '(.version)' images/charmed-spark/rockcraft.yaml
 }
 
 
@@ -31,8 +36,8 @@ setup_jupyter() {
   USERNAME=$1
   NAMESPACE=$2
 
-  kubectl -n $NAMESPACE exec testpod-admin -- env UU="$USERNAME" NN="$NAMESPACE" \
-                /bin/bash -c 'spark-client.service-account-registry create --username $UU --namespace $NN'
+  # Create service account using the admin pod
+  create_serviceaccount_using_pod $USERNAME $NAMESPACE $ADMIN_POD_NAME
 
   IMAGE=$(spark_image)
   echo $IMAGE
@@ -84,53 +89,9 @@ cleanup_user_failure() {
   cleanup_user 1 spark $NAMESPACE
 }
 
-wait_for_pod() {
-
-  POD=$1
-  NAMESPACE=$2
-
-  SLEEP_TIME=1
-  for i in {1..5}
-  do
-    pod_status=$(kubectl -n ${NAMESPACE} get pod ${POD} | awk '{ print $3 }' | tail -n 1)
-    echo $pod_status
-    if [[ "${pod_status}" == "Running" ]]
-    then
-        echo "testpod is Running now!"
-        break
-    elif [[ "${i}" -le "5" ]]
-    then
-        echo "Waiting for the pod to come online..."
-        sleep $SLEEP_TIME
-    else
-        echo "testpod did not come up. Test Failed!"
-        exit 3
-    fi
-    SLEEP_TIME=$(expr $SLEEP_TIME \* 2);
-  done
-}
-
-setup_admin_test_pod() {
-  kubectl create ns $NAMESPACE
-
-  echo "Creating admin test-pod"
-
-  # Create a pod with admin service account
-  yq ea '.spec.containers[0].env[0].name = "KUBECONFIG" | .spec.containers[0].env[0].value = "/var/lib/spark/.kube/config" | .metadata.name = "testpod-admin"' \
-    ./tests/integration/resources/testpod.yaml | \
-    kubectl -n tests apply -f -
-
-  wait_for_pod testpod-admin $NAMESPACE
-
-  MY_KUBE_CONFIG=$(cat /home/${USER}/.kube/config)
-
-  kubectl -n $NAMESPACE exec testpod-admin -- /bin/bash -c 'mkdir -p ~/.kube'
-  kubectl -n $NAMESPACE exec testpod-admin -- env KCONFIG="$MY_KUBE_CONFIG" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
-}
 
 teardown_test_pod() {
   kubectl -n $NAMESPACE delete pod testpod-admin
-  kubectl delete namespace $NAMESPACE
 }
 
 get_status_code() {
@@ -173,7 +134,8 @@ echo -e "##################################"
 echo -e "SETUP TEST POD"
 echo -e "##################################"
 
-setup_admin_test_pod
+kubectl create namespace $NAMESPACE
+setup_admin_pod $ADMIN_POD_NAME $(spark_image) $NAMESPACE
 
 echo -e "##################################"
 echo -e "START JUPYTER SERVICE"
@@ -186,6 +148,7 @@ echo -e "TEARDOWN ADMIN POD"
 echo -e "##################################"
 
 teardown_test_pod
+kubectl delete namespace $NAMESPACE
 
 echo -e "##################################"
 echo -e "END OF THE TEST"

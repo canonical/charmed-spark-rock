@@ -94,7 +94,7 @@ jobs:
                     
           # Import artifact into docker with new tag
           sudo make docker-import REPOSITORY=${REPOSITORY} TAG=${TAG}\
-            -o ${{ steps.artifact.outputs.name }} 
+            -o ${{ steps.artifact.outputs.base_artifact_name }} 
 
           # Add relevant labels
           COMMIT_ID=$(git log -1 --format=%H)

@@ -7,7 +7,7 @@
 
 
 # Check if AWS CLI has been installed and the credentials have been configured. If not, exit.
-if ! aws s3 ls; then
+if ! aws s3 ls > /dev/null 2>&1; then
     echo "The AWS CLI and S3 credentials have not been configured properly. Exiting..."
     exit 1
 fi
