@@ -9,6 +9,7 @@ jobs:
 
   start-runner:
     name: Start self-hosted EC2 runner
+    needs: [build-rock]
     runs-on: ubuntu-22.04
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
