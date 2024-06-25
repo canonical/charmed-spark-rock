@@ -52,6 +52,9 @@ KYUUBI_VERSION=$(shell yq .flavours.kyuubi.version images/metadata.yaml)
 # eg, 4.0.11
 JUPYTER_VERSION=$(shell yq .flavours.jupyter.version images/metadata.yaml)
 
+# eg, charmed-spark-gpu
+ROCK_NAME_GPU := $(shell yq .name images/charmed-spark-gpu/rockcraft.yaml)
+
 # The filename of the Rock file built during the build process.
 # eg, charmed-spark_3.4.2_amd64.rock
 ROCK_FILE=$(ROCK_NAME)_$(SPARK_VERSION)_$(PLATFORM).rock
@@ -68,6 +71,14 @@ JUPYTER_ARTIFACT=$(ROCK_NAME)-jupyterlab_$(SPARK_VERSION)_$(PLATFORM).tar
 # eg, charmed-spark-kyuubi_3.4.2_amd64.tar
 KYUUBI_ARTIFACT=$(ROCK_NAME)-kyuubi_$(SPARK_VERSION)_$(PLATFORM).tar
 
+# The filename of the Rock file built during the build process.
+# eg, charmed-spark_gpu_3.4.2_amd64.rock
+ROCK_FILE_GPU=$(ROCK_NAME_GPU)_$(SPARK_VERSION)_$(PLATFORM).rock
+
+# The filename of the final artifact built for Spark image
+# eg, charmed-spark-gpu_3.4.2_amd64.tar
+SPARK_GPU_ARTIFACT=$(ROCK_NAME_GPU)_$(SPARK_VERSION)_$(PLATFORM).tar
+
 
 # Decide on what the  name of artifact, display name and tag for the image will be.
 # 
@@ -81,13 +92,19 @@ KYUUBI_ARTIFACT=$(ROCK_NAME)-kyuubi_$(SPARK_VERSION)_$(PLATFORM).tar
 # ARTIFACT = "charmed-spark-jupyterlab_3.4.2_amd64.tar"	TAG = "3.4.2-4.0.11"	DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-jupyterlab"
 # or,
 # ARTIFACT = "charmed-spark-kyuubi_3.4.2_amd64.tar"		TAG = "3.4.2-1.9.0"		DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-kyuubi"
-#
+# or, 
+# ARTIFACT = "charmed-spark_gpu_3.4.2_amd64.tar" 			TAG = "3.4.2"			DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-gpu"
+
 ifeq ($(FLAVOUR), jupyter)
 	DISPLAY_NAME=$(REPOSITORY)$(PREFIX)$(ROCK_NAME)-jupyterlab
 	TAG=$(SPARK_VERSION)-$(JUPYTER_VERSION)
 	ARTIFACT=$(JUPYTER_ARTIFACT)
 else ifeq ($(FLAVOUR), kyuubi)
 	DISPLAY_NAME=$(REPOSITORY)$(PREFIX)$(ROCK_NAME)-kyuubi
+	TAG=$(SPARK_VERSION)-$(KYUUBI_VERSION)
+	ARTIFACT=$(KYUUBI_ARTIFACT)
+else ifeq ($(FLAVOUR), gpu)
+	DISPLAY_NAME=$(REPOSITORY)$(PREFIX)$(ROCK_NAME)-gpu
 	TAG=$(SPARK_VERSION)-$(KYUUBI_VERSION)
 	ARTIFACT=$(KYUUBI_ARTIFACT)
 else
@@ -105,6 +122,7 @@ endif
 # K8S_MARKER: The MicroK8s cluster has been installed and configured successfully
 # AWS_MARKER: The AWS CLI has been installed and configured with valid S3 credentials from MinIO
 SPARK_MARKER=$(_MAKE_DIR)/spark-$(SPARK_VERSION).tag
+SPARK_GPU_MARKER=$(_MAKE_DIR)/spark-gpu-$(SPARK_VERSION).tag
 JUPYTER_MARKER=$(_MAKE_DIR)/jupyter-$(JUPYTER_VERSION).tag
 KYUUBI_MARKER=$(_MAKE_DIR)/kyuubi-$(KYUUBI_VERSION).tag
 K8S_MARKER=$(_MAKE_DIR)/k8s.tag
@@ -115,6 +133,7 @@ AZURE_MARKER=$(_MAKE_DIR)/azure.tag
 # The names of different flavours of the image in the docker container registry
 STAGED_IMAGE_DOCKER_ALIAS=staged-charmed-spark:latest
 SPARK_DOCKER_ALIAS=charmed-spark:$(SPARK_VERSION)
+SPARK_GPU_DOCKER_ALIAS=charmed-spark:$(SPARK_VERSION)
 JUPYTER_DOCKER_ALIAS=charmed-spark-jupyter:$(SPARK_VERSION)-$(JUPYTER_VERSION)
 KYUUBI_DOCKER_ALIAS=charmed-spark-kyuubi:$(SPARK_VERSION)-$(KYUUBI_VERSION)
 
@@ -173,11 +192,11 @@ $(SPARK_MARKER): $(ROCK_FILE) images/charmed-spark/Dockerfile
           oci-archive:"$(ROCK_FILE)" \
           docker-daemon:"$(STAGED_IMAGE_DOCKER_ALIAS)"
 
-	docker build -t $(SPARK_DOCKER_ALIAS) \
+	docker build -t $(SPARK_GPU_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE="$(STAGED_IMAGE_DOCKER_ALIAS)" \
-		images/charmed-spark
+		images/charmed-spark-gpu
 
-	docker save $(SPARK_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
+	docker save $(SPARK_GPU_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
 
 	touch $(SPARK_MARKER)
 
@@ -216,12 +235,39 @@ $(KYUUBI_MARKER): $(SPARK_MARKER) images/charmed-spark-kyuubi/Dockerfile $(wildc
 # Shorthand recipe for building Kyuubi image
 kyuubi: $(KYUUBI_MARKER)
 
+$(ROCK_FILE_GPU): images/charmed-spark-gpu/rockcraft.yaml $(wildcard images/charmed-spark-gpu/*/*)
+	@echo "=== Building Charmed Image ==="
+	(cd images/charmed-spark-gpu && rockcraft pack)
+	mv images/charmed-spark-gpu/$(ROCK_FILE_GPU) .
+
+rock-gpu: $(ROCK_FILE_GPU)
+
+
+# Recipe that builds Spark image and exports it to a tarfile in the current directory
+$(SPARK_GPU_MARKER): $(ROCK_FILE_GPU) images/charmed-spark-gpu/Dockerfile
+	rockcraft.skopeo --insecure-policy \
+          copy \
+          oci-archive:"$(ROCK_FILE_GPU)" \
+          docker-daemon:"$(STAGED_IMAGE_DOCKER_ALIAS)"
+
+	docker build -t $(SPARK_GPU_DOCKER_ALIAS) \
+		--build-arg BASE_IMAGE="$(STAGED_IMAGE_DOCKER_ALIAS)" \
+		images/charmed-spark-gpu
+
+	docker save $(SPARK_GPU_DOCKER_ALIAS) -o $(SPARK_GPU_ARTIFACT)
+
+	touch $(SPARK_GPU_MARKER)
+
+# Shorthand recipe for building Spark-gpu image
+spark-gpu: $(SPARK_GPU_MARKER)
 
 $(ARTIFACT):
 ifeq ($(FLAVOUR), jupyter)
 	make jupyter
 else ifeq ($(FLAVOUR), kyuubi)
 	make kyuubi
+else ifeq ($(FLAVOUR), spark-gpu)
+	make spark-gpu
 else
 	make spark
 endif
@@ -239,6 +285,7 @@ clean:
 	@echo "=== Cleaning environment ==="
 	rm -rf $(_MAKE_DIR) *.rock *.tar
 	(cd images/charmed-spark && rockcraft clean)
+	(cd images/charmed-spark-gpu && rockcraft clean)
 
 
 # Recipe that imports the image into docker container registry
@@ -258,6 +305,8 @@ tests: $(K8S_MARKER) $(AWS_MARKER) $(AZURE_MARKER)
 	@echo "=== Running Integration Tests ==="
 ifeq ($(FLAVOUR), jupyter)
 	/bin/bash ./tests/integration/integration-tests-jupyter.sh
+else ifeq ($(FLAVOUR), spark-gpu)
+	/bin/bash ./tests/integration/integration-tests-gpu.sh
 else ifeq ($(FLAVOUR), kyuubi)
 	@export AZURE_STORAGE_ACCOUNT=$(AZURE_STORAGE_ACCOUNT) \
 			AZURE_STORAGE_KEY=$(AZURE_STORAGE_KEY) \

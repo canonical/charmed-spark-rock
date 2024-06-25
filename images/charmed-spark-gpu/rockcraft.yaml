@@ -1,0 +1,239 @@
+name: charmed-spark-gpu
+summary: Charmed Apache Spark ROCK
+description: |
+  This is an OCI image that bundles Apache Spark binaries together with other
+  tools of its ecosystem in order to be used in Charmed Operators, providing
+  an automated and seamless experience to deploy, operate, manage and monitor
+  SparkJob on K8s cluster.
+  It is an open source, end-to-end, production ready data platform on top of
+  cloud native technologies.
+
+license: Apache-2.0
+
+version: "3.4.2"
+# version:spark:3.4.2
+# version:jupyter:4.0.11
+
+base: ubuntu@22.04
+
+platforms:
+  amd64:
+
+run_user: _daemon_
+
+environment:
+  SPARK_HOME: /opt/spark
+  SPARK_CONFS: /etc/spark8t/conf
+  JAVA_HOME: /usr/lib/jvm/java-1.8.0-openjdk-amd64
+  PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3.10/site-packages
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/bin:/usr/lib/jvm/java-1.8.0-openjdk-amd64/bin
+  HOME: /var/lib/spark
+  SPARK_USER_DATA: /var/lib/spark
+  SPARK_LOG_DIR: /var/log/spark
+  LD_LIBRARY_PATH: /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+
+services:
+  sparkd:
+    command: "/bin/bash /opt/pebble/sparkd.sh"
+    summary: "This is the service to startup Spark processes using the Spark entrypoint"
+    override: replace
+    startup: enabled
+    on-success: shutdown
+    on-failure: shutdown
+  history-server:
+    command: "/bin/bash /opt/pebble/history-server.sh"
+    summary: "This is the Spark History Server service"
+    override: replace
+    startup: disabled
+    # Not working in charms
+    # working-dir: /opt/spark
+    environment:
+      SPARK_PROPERTIES_FILE: /etc/spark8t/conf/spark-defaults.conf
+
+parts:
+  spark:
+    plugin: dump
+    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.2-ubuntu1/spark-3.4.2-ubuntu1-20231214143421-bin-k8s.tgz
+    source-checksum: sha512/a111897557921c4dd61daa67fb6979e0a231d4c5f56a0007f26663cb69ab42a12beb83e46edd8961baa7e7b62f031801c1b82e2e612afa1c6ebf8fc208e45ffd
+    overlay-script: |
+      sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
+      apt-get update
+      ln -svf /lib /lib64
+      apt-get install -y bash
+      mkdir -p /opt/spark/python
+      touch /opt/spark/RELEASE
+      rm /bin/sh
+      ln -svf /bin/bash /bin/sh
+      echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su
+      rm -rf /var/cache/apt/*
+    organize:
+      conf: etc/spark/conf
+      jars: opt/spark/jars
+      bin: opt/spark/bin
+      sbin: opt/spark/sbin
+      python: opt/spark/python
+      kubernetes/dockerfiles/spark/entrypoint.sh: opt/spark/entrypoint.sh
+      kubernetes/dockerfiles/spark/decom.sh: opt/spark/decom.sh
+      examples: opt/spark/examples
+      kubernetes/tests: opt/spark/tests
+      data: opt/spark/data
+    stage:
+      - etc/spark/conf
+      - opt/spark/jars
+      - opt/spark/bin
+      - opt/spark/sbin
+      - opt/spark/entrypoint.sh
+      - opt/spark/decom.sh
+      - opt/spark/examples
+      - opt/spark/tests
+      - opt/spark/python
+      - opt/spark/data
+
+  dependencies:
+    plugin: nil
+    after: [ spark ]
+    build-packages:
+      - wget
+    overlay-script: |
+      mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
+      cd $CRAFT_PART_INSTALL/opt/spark/jars
+
+      ICEBERG_SPARK_RUNTIME_VERSION='3.4_2.12'
+      ICEBERG_VERSION='1.4.3'
+      SPARK_METRICS_VERSION='3.4-1.0.1'
+      SERVLET_FILTERS_VERSION='0.0.1'
+      NVIDIA_RAPIDS_VERSION='24.04.1'
+      SHA1SUM_ICEBERG_JAR='48d553e4e5496f731b9e0e6adb5bc0fd040cb0df'
+      SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='493cf77133cbf03e96fb848121ce10ac16e6f907f595df637649b98b42118e57d6b6e1bdab71bfee3394eb369637c5b4f6b05dd8fa30a1ff6899e74069c972ce'
+      SHA512SUM_SPARK_SERVLET_FILTER_JAR='ffeb809d58ef0151d513b09d4c2bfd5cc064b0b888ca45899687aed2f42bcb1ce9834be9709290dd70bd9df84049f02cbbff6c2d5ec3c136c278c93f167c8096'
+      SHA1SUM_NVIDIA_RAPIDS='c5338d1043dbd54bb4852cd90a496a8e6246c367'
+
+      # "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-LIB_VERSION/spark-metrics-assembly-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
+
+      JARS=(
+      "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
+      "https://github.com/canonical/central-uploader/releases/download/servlet-filters-LIB_VERSION/servlet-filters-LIB_VERSION.jar $SERVLET_FILTERS_VERSION sha512sum $SHA512SUM_SPARK_SERVLET_FILTER_JAR"
+      "https://repo1.maven.org/maven2/com/nvidia/rapids-4-spark_2.12/LIB_VERSION/rapids-4-spark_2.12-LIB_VERSION.jar $NVIDIA_RAPIDS_VERSION sha1sum $SHA1SUM_NVIDIA_RAPIDS"
+      )
+      for ENTRY in "${JARS[@]}"; do
+        echo "$ENTRY"
+        URL_BASE=$(echo "$ENTRY" | awk '{print $1}')
+        LIB_VERSION=$(echo "$ENTRY" | awk '{print $2}')
+        SHA=$(echo "$ENTRY" | awk '{print $3}')
+        EXPECTED_SHA=$(echo "$ENTRY" | awk '{print $4}')
+        URL=$(echo "$URL_BASE" | sed "s/LIB_VERSION/$LIB_VERSION/g")
+        JAR_FILE=$(echo "${URL##*/}")
+        echo "Download from URL: $URL"
+        wget -q "$URL"
+        ACTUAL_SHA=$("$SHA" "$JAR_FILE" | awk '{print $1}')
+        echo "$ACTUAL_SHA"
+        echo "$EXPECTED_SHA"
+        [ $ACTUAL_SHA != $EXPECTED_SHA ] && echo "ERROR"  && exit 1
+      done
+      echo "All dependecies downloaded!"
+    stage:
+      - opt/spark/jars
+
+  spark8t:
+    plugin: nil
+    after: [ dependencies ]
+    build-packages:
+      - wget
+      - ssl-cert
+      - git
+    overlay-packages:
+      - python3-pip
+    overlay-script: |
+      mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
+      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist  https://github.com/canonical/spark-k8s-toolkit-py/releases/download/v0.0.7/spark8t-0.0.7-py3-none-any.whl
+      rm usr/bin/pip*
+    stage:
+      - opt/spark8t/python/dist
+
+  kubectl:
+    plugin: nil
+    build-packages:
+      - wget
+    overlay-script: |
+      mkdir -p $CRAFT_PART_INSTALL/usr/local/bin
+      cd $CRAFT_PART_INSTALL/usr/local/bin
+      KUBECTL_VERSION=$(wget -qO- https://dl.k8s.io/release/stable.txt)
+      wget -q "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
+      wget -q  "https://dl.k8s.io/$KUBECTL_VERSION/bin/linux/amd64/kubectl.sha256"
+      echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+      if  [[ $? -ne 0 ]]
+        then
+          echo "DOWNLOAD ERROR: kubectl could not be downloaded properly! Exiting...." >&2
+          exit 1
+      fi
+      chmod +x kubectl
+      cp -r $CRAFT_PART_INSTALL/usr/ $CRAFT_PART_BUILD
+    stage:
+      - usr/local/bin
+
+  charmed-spark:
+    plugin: dump
+    after: [ spark8t, spark ]
+    source: files/spark
+    organize:
+      conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
+      bin/sparkd.sh: opt/pebble/sparkd.sh
+      bin/history-server.sh: opt/pebble/history-server.sh
+      bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
+      bin/spark-client.spark-sql: opt/spark-client/python/bin/spark-client.spark-sql
+      bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
+      bin/spark-client.spark-shell: opt/spark-client/python/bin/spark-client.spark-shell
+      bin/spark-client.spark-submit: opt/spark-client/python/bin/spark-client.spark-submit
+      bin/getGpusResources.sh: opt/getGpusResources.sh
+    stage:
+      - etc/spark8t/conf/
+      - opt/pebble/sparkd.sh
+      - opt/pebble/history-server.sh
+      - opt/pebble/kyuubi.sh
+      - opt/spark-client/python/bin/spark-client.pyspark
+      - opt/spark-client/python/bin/spark-client.spark-sql
+      - opt/spark-client/python/bin/spark-client.service-account-registry
+      - opt/spark-client/python/bin/spark-client.spark-shell
+      - opt/spark-client/python/bin/spark-client.spark-submit
+      - opt/getGpusResources.sh
+
+  user-setup:
+    plugin: nil
+    after: [ charmed-spark ]
+    overlay-packages:
+      - tini
+      - libc6
+      - libpam-modules
+      - krb5-user
+      - libnss3
+      - procps
+      - openjdk-8-jre
+      - openjdk-8-jdk
+    override-prime: |
+      # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
+      # for more information about shared user.
+      SPARK_GID=584792
+      SPARK_UID=584792
+
+      craftctl default
+      chmod 755 opt/spark-client/python/bin/*
+
+      chown -R ${SPARK_GID}:${SPARK_UID} etc/spark etc/spark8t
+      chmod -R 750 etc/spark etc/spark8t
+
+      mkdir -p var/log/spark
+      chown -R ${SPARK_GID}:${SPARK_UID} var/log/spark
+      chmod -R 750 var/log/spark
+
+      # This is needed to run the spark job, as it requires RW+ access on the spark folder
+      chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
+      chmod -R 750 opt/spark
+
+      mkdir -p var/lib/spark
+      mkdir -p var/lib/spark/notebook
+      chown -R ${SPARK_GID}:${SPARK_UID} var/lib/spark
+      chmod -R 770 var/lib/spark
+      mv opt/spark/decom.sh opt/decom.sh
+      chmod a+x opt/decom.sh
+      chown -R ${SPARK_GID}:${SPARK_UID} opt/
+      chmod -R 750 opt/

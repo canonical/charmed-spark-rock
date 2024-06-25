@@ -16,6 +16,8 @@ jobs:
         run:  |
           yamllint -d "{extends: relaxed, rules: {line-length: {max: 250}}}" \
             --no-warnings images/charmed-spark/rockcraft.yaml
+          yamllint -d "{extends: relaxed, rules: {line-length: {max: 250}}}" \
+            --no-warnings images/charmed-spark-gpu/rockcraft.yaml
 
   build:
     runs-on: ubuntu-latest
@@ -42,6 +44,9 @@ jobs:
 
       - name: Build image (Kyuubi)
         run: sudo make build FLAVOUR=kyuubi
+      
+      - name: Build image (GPU)
+        run: sudo make build FLAVOUR=gpu
 
       - name: Get Artifact Name
         id: artifact
@@ -52,9 +57,11 @@ jobs:
           echo "jupyter_artifact_name=${JUPYTER_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
           KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
           echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          GPU_ARTIFACT=$(make help FLAVOUR=spark-gpu | grep 'Artifact: ')
+          echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Change artifact permissions
-        run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }}
+        run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }} ${{ steps.artifact.outputs.gpu_artifact_name }}
 
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
@@ -64,4 +71,5 @@ jobs:
             ${{ steps.artifact.outputs.base_artifact_name }}
             ${{ steps.artifact.outputs.jupyter_artifact_name }}
             ${{ steps.artifact.outputs.kyuubi_artifact_name }}
+            ${{ steps.artifact.outputs.gpu_artifact_name }}
 

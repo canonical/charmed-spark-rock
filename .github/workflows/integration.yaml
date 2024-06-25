@@ -36,6 +36,8 @@ jobs:
           echo "jupyter_artifact_name=${JUPYTER_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
           KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
           echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          GPU_ARTIFACT=$(make help FLAVOUR=spark-gpu | grep 'Artifact: ')
+          echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Install and configure microk8s
         run: |
