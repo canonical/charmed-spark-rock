@@ -46,7 +46,7 @@ jobs:
         run: sudo make build FLAVOUR=kyuubi
       
       - name: Build image (GPU)
-        run: sudo make build FLAVOUR=gpu
+        run: sudo make build FLAVOUR=spark-gpu
 
       - name: Get Artifact Name
         id: artifact
