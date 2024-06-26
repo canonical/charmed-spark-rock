@@ -61,15 +61,16 @@ jobs:
           echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Change artifact permissions
-        run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }} ${{ steps.artifact.outputs.gpu_artifact_name }}
-
+        run: sudo chmod a+r  ${{ steps.artifact.outputs.gpu_artifact_name }}
+        # run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }} ${{ steps.artifact.outputs.gpu_artifact_name }}
+          
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
         with:
           name: charmed-spark
-          path: |
-            ${{ steps.artifact.outputs.base_artifact_name }}
-            ${{ steps.artifact.outputs.jupyter_artifact_name }}
-            ${{ steps.artifact.outputs.kyuubi_artifact_name }}
+          # ${{ steps.artifact.outputs.base_artifact_name }}
+          # ${{ steps.artifact.outputs.jupyter_artifact_name }}
+          # ${{ steps.artifact.outputs.kyuubi_artifact_name }}
+          path: |  
             ${{ steps.artifact.outputs.gpu_artifact_name }}
 
