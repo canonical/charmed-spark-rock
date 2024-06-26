@@ -63,14 +63,19 @@ jobs:
       env:
         MICROK8S_ADDONS: "storage dns rbac gpu minio"
 
-    - name: Check microk8s status
+    - name: Configure microk8s
       run: |
         sudo microk8s.status
-        sudo snap install yq
         sudo snap alias microk8s.kubectl kubectl
         mkdir -p /home/ubuntu/.kube
         sudo chown -f -R ubuntu /home/ubuntu/.kube
         sudo microk8s config | tee /home/ubuntu/.kube/config
+    
+    - name: Install required packages/snaps
+      run: |
+        sudo snap install yq
+        sudo apt-get install build-essential
+
 
     - name: Download artifact
       uses: actions/download-artifact@v4
