@@ -41,19 +41,19 @@ $(shell mkdir -p $(_MAKE_DIR))
 
 
 # eg, charmed-spark
-ROCK_NAME := $(shell yq .name images/charmed-spark/rockcraft.yaml)
+ROCK_NAME := $(shell cat images/charmed-spark/rockcraft.yaml | yq .name)
 
 # eg, 3.4.2
-SPARK_VERSION := $(shell yq .version images/charmed-spark/rockcraft.yaml)
+SPARK_VERSION := $(shell cat images/charmed-spark/rockcraft.yaml | yq .version)
 
 # eg, 1.9.0
-KYUUBI_VERSION=$(shell yq .flavours.kyuubi.version images/metadata.yaml)
+KYUUBI_VERSION=$(shell cat images/metadata.yaml | yq .flavours.kyuubi.version)
 
 # eg, 4.0.11
-JUPYTER_VERSION=$(shell yq .flavours.jupyter.version images/metadata.yaml)
+JUPYTER_VERSION=$(shell cat images/metadata.yaml | yq .flavours.jupyter.version)
 
 # eg, charmed-spark-gpu
-ROCK_NAME_GPU := $(shell yq .name images/charmed-spark-gpu/rockcraft.yaml)
+ROCK_NAME_GPU := $(shell cat images/charmed-spark-gpu/rockcraft.yaml | yq .name)
 
 # The filename of the Rock file built during the build process.
 # eg, charmed-spark_3.4.2_amd64.rock
