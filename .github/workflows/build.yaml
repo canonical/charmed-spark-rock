@@ -36,14 +36,14 @@ jobs:
           sudo snap install yq
           sudo snap install rockcraft --classic --edge    
 
-      # - name: Build image
-      #   run: sudo make build
+      - name: Build image
+        run: sudo make build
 
-      # - name: Build image (Jupyter)
-      #   run: sudo make build FLAVOUR=jupyter
+      - name: Build image (Jupyter)
+        run: sudo make build FLAVOUR=jupyter
 
-      # - name: Build image (Kyuubi)
-      #   run: sudo make build FLAVOUR=kyuubi
+      - name: Build image (Kyuubi)
+        run: sudo make build FLAVOUR=kyuubi
       
       - name: Build image (GPU)
         run: sudo make build FLAVOUR=spark-gpu
@@ -61,16 +61,15 @@ jobs:
           echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Change artifact permissions
-        run: sudo chmod a+r  ${{ steps.artifact.outputs.gpu_artifact_name }}
-        # run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }} ${{ steps.artifact.outputs.gpu_artifact_name }}
+        run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }} ${{ steps.artifact.outputs.gpu_artifact_name }}
           
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
         with:
           name: charmed-spark
-          # ${{ steps.artifact.outputs.base_artifact_name }}
-          # ${{ steps.artifact.outputs.jupyter_artifact_name }}
-          # ${{ steps.artifact.outputs.kyuubi_artifact_name }}
-          path: |  
+          path: |
+            ${{ steps.artifact.outputs.base_artifact_name }}
+            ${{ steps.artifact.outputs.jupyter_artifact_name }}
+            ${{ steps.artifact.outputs.kyuubi_artifact_name }}
             ${{ steps.artifact.outputs.gpu_artifact_name }}
 

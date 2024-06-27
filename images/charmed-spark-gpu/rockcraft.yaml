@@ -1,10 +1,11 @@
 name: charmed-spark-gpu
-summary: Charmed Apache Spark ROCK
+summary: Charmed Apache Spark ROCK with Spark Rapids support
 description: |
   This is an OCI image that bundles Apache Spark binaries together with other
   tools of its ecosystem in order to be used in Charmed Operators, providing
   an automated and seamless experience to deploy, operate, manage and monitor
-  SparkJob on K8s cluster.
+  SparkJob on K8s cluster. 
+  This image includes support for Nvidia Spark Rapids.
   It is an open source, end-to-end, production ready data platform on top of
   cloud native technologies.
 
