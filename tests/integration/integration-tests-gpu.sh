@@ -13,16 +13,25 @@
 # end of the test.
 
 
+# Import reusable utilities
+source ./tests/integration/utils/s3-utils.sh
+source ./tests/integration/utils/k8s-utils.sh
+source ./tests/integration/utils/azure-utils.sh
+
+# Global variables
 NAMESPACE=tests
+SERVICE_ACCOUNT=spark
+ADMIN_POD_NAME=testpod-admin
+S3_BUCKET=spark-$(uuidgen)
 
 get_spark_version(){
-  SPARK_VERSION=$(yq '(.version)' rockcraft.yaml)
-  echo "$SPARK_VERSION"
+  # Fetch Spark version from rockcraft.yaml
+  cat images/charmed-spark-gpu/rockcraft.yaml | yq '(.version)' 
 }
 
 
 spark_image(){
-  echo "ghcr.io/canonical/test-charmed-spark:$(get_spark_version)"
+  echo "ghcr.io/canonical/test-charmed-spark-gpu:$(get_spark_version)"
 }
 
 
@@ -144,64 +153,16 @@ teardown_test_pod() {
   kubectl delete namespace $NAMESPACE
 }
 
-get_s3_access_key(){
-  # Prints out S3 Access Key by reading it from K8s secret
-  kubectl get secret -n minio-operator microk8s-user-1 -o jsonpath='{.data.CONSOLE_ACCESS_KEY}' | base64 -d
-}
-
-get_s3_secret_key(){
-  # Prints out S3 Secret Key by reading it from K8s secret
-  kubectl get secret -n minio-operator microk8s-user-1 -o jsonpath='{.data.CONSOLE_SECRET_KEY}' | base64 -d
-}
-
-get_s3_endpoint(){
-  # Prints out the endpoint S3 bucket is exposed on.
-  kubectl get service minio -n minio-operator -o jsonpath='{.spec.clusterIP}'
-}
-
-create_s3_bucket(){
-  # Creates a S3 bucket with the given name.
-  S3_ENDPOINT=$(get_s3_endpoint)
-  BUCKET_NAME=$1
-  aws s3api create-bucket --bucket "$BUCKET_NAME"
-  echo "Created S3 bucket ${BUCKET_NAME}"
-}
-
-delete_s3_bucket(){
-  # Deletes a S3 bucket with the given name.
-  S3_ENDPOINT=$(get_s3_endpoint)
-  BUCKET_NAME=$1
-  aws s3 rb "s3://$BUCKET_NAME" --force
-  echo "Deleted S3 bucket ${BUCKET_NAME}"
-}
-
-copy_file_to_s3_bucket(){
-  # Copies a file from local to S3 bucket.
-  # The bucket name and the path to file that is to be uploaded is to be provided as arguments
-  BUCKET_NAME=$1
-  FILE_PATH=$2
-
-  # If file path is '/foo/bar/file.ext', the basename is 'file.ext'
-  BASE_NAME=$(basename "$FILE_PATH")
-  S3_ENDPOINT=$(get_s3_endpoint)
-
-  # Copy the file to S3 bucket
-  aws s3 cp $FILE_PATH s3://"$BUCKET_NAME"/"$BASE_NAME"
-  echo "Copied file ${FILE_PATH} to S3 bucket ${BUCKET_NAME}"
-}
-
 
 run_test_gpu_example_in_pod(){
   # Test Spark-rapids integration in Charmed Spark Rock
 
   # First create S3 bucket named 'spark'
-  create_s3_bucket spark
+  create_s3_bucket $S3_BUCKET
 
   # Copy 'test-iceberg.py' script to 'spark' bucket
-  copy_file_to_s3_bucket spark ./tests/integration/resources/test-gpu-simple.py
+  copy_file_to_s3_bucket $S3_BUCKET ./tests/integration/resources/test-gpu-simple.py
 
-  NAMESPACE="tests"
-  USERNAME="spark"
 #  IMAGE="test-image"
   # Number of driver pods that exist in the namespace already.
   PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
@@ -209,11 +170,13 @@ run_test_gpu_example_in_pod(){
   # Submit the job from inside 'testpod'
   kubectl -n $NAMESPACE exec testpod -- \
       env \
-        UU="$USERNAME" \
+        UU="$SERVICE_ACCOUNT" \
         NN="$NAMESPACE" \
         ACCESS_KEY="$(get_s3_access_key)" \
         SECRET_KEY="$(get_s3_secret_key)" \
         S3_ENDPOINT="$(get_s3_endpoint)" \
+        BUCKET="$S3_BUCKET" \
+        IM="$(spark_image)" \
       /bin/bash -c '\
         spark-client.spark-submit \
         --username $UU \
@@ -239,14 +202,14 @@ run_test_gpu_example_in_pod(){
         --conf spark.plugins=com.nvidia.spark.SQLPlugin \
         --conf spark.executor.resource.gpu.discoveryScript=/opt/getGpusResources.sh \
         --conf spark.executor.resource.gpu.vendor=nvidia.com \
-        --conf spark.kubernetes.container.image=ghcr.io/welpaolo/charmed-spark@sha256:d8273bd904bb5f74234bc0756d520115b5668e2ac4f2b65a677bfb1c27e882da \
+        --conf spark.kubernetes.container.image=$IM \
         --driver-memory 2G \
         --conf spark.kubernetes.executor.podTemplateFile=/etc/spark/conf/gpu_executor_template.yaml \
         --conf spark.kubernetes.executor.deleteOnTermination=false \
-          s3a://spark/test-gpu-simple.py'
+          s3a://$BUCKET/test-gpu-simple.py'
 
   # Delete 'spark' bucket
-  delete_s3_bucket spark
+  delete_s3_bucket $S3_BUCKET
 
   # Number of driver pods after the job is completed.
   DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
