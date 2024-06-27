@@ -90,7 +90,7 @@ jobs:
         mv charmed-spark/${{ steps.artifact.outputs.gpu_artifact_name }} .
         touch .make_cache/k8s.tag
         # Import artifact into microk8s to be used in integration tests
-        sudo make microk8s-import PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
+        sudo make microk8s-import FLAVOUR=spark-gpu PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
           -o ${{ steps.artifact.outputs.gpu_artifact_name }}
 
     - name: Run integration tests on GPU
