@@ -67,6 +67,7 @@ jobs:
     - name: Get Artifact Name
       id: artifact
       run: |
+        ls
         sudo chmod -R 777 .
         BASE_ARTIFACT=$(make help | grep 'Artifact: ')
         echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
