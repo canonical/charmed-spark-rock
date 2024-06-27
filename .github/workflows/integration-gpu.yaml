@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-rock:
-    uses: ./.github/workflows/build.yaml
+    uses: ./.github/workflows/build_gpu.yaml
 
   start-runner:
     name: Start self-hosted EC2 runner
@@ -67,21 +67,13 @@ jobs:
     - name: Get Artifact Name
       id: artifact
       run: |
-        ls
-        # sudo chmod -R 777 .
-        BASE_ARTIFACT=$(make help | grep 'Artifact: ')
-        echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
-        JUPYTER_ARTIFACT=$(make help FLAVOUR=jupyter | grep 'Artifact: ')
-        echo "jupyter_artifact_name=${JUPYTER_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
-        KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
-        echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
         GPU_ARTIFACT=$(make help FLAVOUR=spark-gpu | grep 'Artifact: ')
         echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
     - name: Download artifact
       uses: actions/download-artifact@v4
       with:
-        name: charmed-spark
+        name: charmed-spark-gpu
         path: charmed-spark
 
     - name: Load image
