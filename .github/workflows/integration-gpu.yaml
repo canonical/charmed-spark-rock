@@ -113,6 +113,6 @@ jobs:
         uses: machulav/ec2-github-runner@v2.3.6
         with:
           mode: stop
-          github-token: ${{ secrets.GH_TOKEN }}
+          github-token: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
           label: ${{ needs.start-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
