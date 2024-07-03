@@ -41,8 +41,7 @@ setup_user() {
   USERNAME=$1
   NAMESPACE=$2
 
-  kubectl -n $NAMESPACE exec testpod-admin -- env UU="$USERNAME" NN="$NAMESPACE" \
-                /bin/bash -c 'spark-client.service-account-registry create --username $UU --namespace $NN'
+  create_serviceaccount_using_pod $USERNAME $NAMESPACE $ADMIN_POD_NAME
 
   # Create the pod with the Spark service account
   cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.serviceAccountName = '\"${USERNAME}\"' | .spec.containers[0].image="ghcr.io/welpaolo/charmed-spark@sha256:d8273bd904bb5f74234bc0756d520115b5668e2ac4f2b65a677bfb1c27e882da"' | \
@@ -93,53 +92,6 @@ cleanup_user_success() {
 cleanup_user_failure() {
   echo "cleanup_user_failure()......"
   cleanup_user 1 spark $NAMESPACE
-}
-
-wait_for_pod() {
-
-  POD=$1
-  NAMESPACE=$2
-
-  SLEEP_TIME=1
-  for i in {1..5}
-  do
-    pod_status=$(kubectl -n ${NAMESPACE} get pod ${POD} | awk '{ print $3 }' | tail -n 1)
-    echo $pod_status
-    if [[ "${pod_status}" == "Running" ]]
-    then
-        echo "testpod is Running now!"
-        break
-    elif [[ "${i}" -le "5" ]]
-    then
-        echo "Waiting for the pod to come online..."
-        kubectl get pods -A 
-        sleep $SLEEP_TIME
-    else
-        echo "testpod did not come up. Test Failed!"
-        exit 3
-    fi
-    SLEEP_TIME=$(expr $SLEEP_TIME \* 2);
-  done
-  kubectl get pods -A
-}
-
-setup_admin_test_pod() {
-  kubectl create ns $NAMESPACE
-
-  echo "Creating admin test-pod"
-
-  cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.containers[0].env[0].name = "KUBECONFIG" | .spec.containers[0].env[0].value = "/var/lib/spark/.kube/config" | .metadata.name = "testpod-admin" | .spec.containers[0].image="ghcr.io/welpaolo/charmed-spark@sha256:d8273bd904bb5f74234bc0756d520115b5668e2ac4f2b65a677bfb1c27e882da"' 
-  cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.containers[0].env[0].name = "KUBECONFIG" | .spec.containers[0].env[0].value = "/var/lib/spark/.kube/config" | .metadata.name = "testpod-admin" | .spec.containers[0].image="ghcr.io/welpaolo/charmed-spark@sha256:d8273bd904bb5f74234bc0756d520115b5668e2ac4f2b65a677bfb1c27e882da"' | \
-    kubectl -n tests apply -f -
-
-  wait_for_pod testpod-admin $NAMESPACE
-  sleep 60
-  MY_KUBE_CONFIG=$(cat /home/${USER}/.kube/config)
-  echo "MY_KUBE_CONFIG"
-  echo "$MY_KUBE_CONFIG"
-  echo "END"
-  kubectl -n $NAMESPACE exec testpod-admin -- /bin/bash -c 'mkdir -p ~/.kube'
-  kubectl -n $NAMESPACE exec testpod-admin -- env KCONFIG="$MY_KUBE_CONFIG" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
 }
 
 teardown_test_pod() {

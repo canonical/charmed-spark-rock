@@ -12,8 +12,6 @@ description: |
 license: Apache-2.0
 
 version: "3.4.2"
-# version:spark:3.4.2
-# version:jupyter:4.0.11
 
 base: ubuntu@22.04
 
@@ -176,18 +174,18 @@ parts:
     plugin: dump
     after: [ spark8t, spark ]
     source: .
+    source-type: local
     organize:
+      bin-spark/sparkd.sh: opt/pebble/sparkd.sh
+      bin-spark/history-server.sh: opt/pebble/history-server.sh
+      bin-spark/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
+      bin-spark/spark-client.spark-sql: opt/spark-client/python/bin/spark-client.spark-sql
+      bin-spark/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
+      bin-spark/spark-client.spark-shell: opt/spark-client/python/bin/spark-client.spark-shell
+      bin-spark/spark-client.spark-submit: opt/spark-client/python/bin/spark-client.spark-submit
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
-      bin/sparkd.sh: opt/pebble/sparkd.sh
-      bin/history-server.sh: opt/pebble/history-server.sh
-      bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
-      bin/spark-client.spark-sql: opt/spark-client/python/bin/spark-client.spark-sql
-      bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
-      bin/spark-client.spark-shell: opt/spark-client/python/bin/spark-client.spark-shell
-      bin/spark-client.spark-submit: opt/spark-client/python/bin/spark-client.spark-submit
       bin/getGpusResources.sh: opt/getGpusResources.sh
     stage:
-      - etc/spark8t/conf/
       - opt/pebble/sparkd.sh
       - opt/pebble/history-server.sh
       - opt/spark-client/python/bin/spark-client.pyspark
@@ -195,6 +193,7 @@ parts:
       - opt/spark-client/python/bin/spark-client.service-account-registry
       - opt/spark-client/python/bin/spark-client.spark-shell
       - opt/spark-client/python/bin/spark-client.spark-submit
+      - etc/spark8t/conf/
       - opt/getGpusResources.sh
 
   user-setup:

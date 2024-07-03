@@ -75,7 +75,7 @@ KYUUBI_ARTIFACT=$(ROCK_NAME)-kyuubi_$(SPARK_VERSION)_$(PLATFORM).tar
 # eg, charmed-spark_gpu_3.4.2_amd64.rock
 ROCK_FILE_GPU=$(ROCK_NAME_GPU)_$(SPARK_VERSION)_$(PLATFORM).rock
 
-# The filename of the final artifact built for Spark image
+# The filename of the final artifact built for Spark GPU image
 # eg, charmed-spark-gpu_3.4.2_amd64.tar
 SPARK_GPU_ARTIFACT=$(ROCK_NAME_GPU)_$(SPARK_VERSION)_$(PLATFORM).tar
 
@@ -243,7 +243,7 @@ $(ROCK_FILE_GPU): images/charmed-spark-gpu/rockcraft.yaml $(wildcard images/char
 rock-gpu: $(ROCK_FILE_GPU)
 
 
-# Recipe that builds Spark image and exports it to a tarfile in the current directory
+# Recipe that builds Spark GPU image and exports it to a tarfile in the current directory
 $(SPARK_GPU_MARKER): $(ROCK_FILE_GPU) images/charmed-spark-gpu/Dockerfile
 	rockcraft.skopeo --insecure-policy \
           copy \

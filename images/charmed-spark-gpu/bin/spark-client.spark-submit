@@ -1,3 +1,0 @@
-#!/bin/bash
-
-python3 -m spark8t.cli.spark_submit $*
