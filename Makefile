@@ -237,7 +237,7 @@ kyuubi: $(KYUUBI_MARKER)
 
 $(ROCK_FILE_GPU): images/charmed-spark-gpu/rockcraft.yaml $(wildcard images/charmed-spark-gpu/*/*)
 	@echo "=== Building Charmed Image ==="
-	(cd images/charmed-spark-gpu && cp images/charmed-spark/bin/. bin/ && rockcraft pack)
+	(cd images/charmed-spark-gpu && cp ../charmed-spark/bin/. bin/ && rockcraft pack)
 	mv images/charmed-spark-gpu/$(ROCK_FILE_GPU) .
 
 rock-gpu: $(ROCK_FILE_GPU)
