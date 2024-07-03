@@ -204,7 +204,8 @@ echo -e "##################################"
 echo -e "SETUP TEST POD"
 echo -e "##################################"
 
-setup_admin_test_pod
+kubectl create namespace $NAMESPACE
+setup_admin_pod $ADMIN_POD_NAME $(spark_image) $NAMESPACE
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES GPU"
