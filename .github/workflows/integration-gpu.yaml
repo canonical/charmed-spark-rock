@@ -62,7 +62,7 @@ jobs:
     - name: Install required packages/snaps
       run: |
         sudo snap install yq
-        sudo apt-get install build-essential
+        sudo apt-get install build-essential -yqq
 
     - name: Get Artifact Name
       id: artifact
