@@ -74,6 +74,8 @@ jobs:
           echo "jupyter_artifact_name=${JUPYTER_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
           KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
           echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          GPU_ARTIFACT=$(make help FLAVOUR=spark-gpu | grep 'Artifact: ')
+          echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -181,6 +183,42 @@ jobs:
       
           if [[ "$RISK" == "edge" ]]; then
             VERSION_LONG=$(make help FLAVOUR=kyuubi | grep "Tag\:" | cut -d ":" -f2  | xargs)
+            VERSION_TAG="${VERSION_LONG}-${{ needs.release_checks.outputs.base }}_edge"
+      
+            docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${VERSION_TAG}
+      
+            echo "Publishing ${IMAGE_NAME}:${VERSION_TAG}"
+            docker push ${IMAGE_NAME}:${VERSION_TAG}
+          fi
+      - name: Publish Charmed Spark GPU Image to Channel
+        run: |
+          # Unpack artifact
+          mv charmed-spark/${{ steps.artifact.outputs.gpu_artifact_name }} .
+          rmdir charmed-spark
+
+          REPOSITORY="ghcr.io/canonical/"
+          RISK=${{ needs.release_checks.outputs.risk }}
+          TRACK=${{ needs.release_checks.outputs.track }}
+          if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
+      
+          # Import artifact into docker with new tag
+          sudo make docker-import \
+            FLAVOUR=spark-gpu \
+            REPOSITORY=${REPOSITORY} \
+            TAG=${TAG} \
+            -o ${{ steps.artifact.outputs.gpu_artifact_name }}
+
+          # Add relevant labels
+          COMMIT_ID=$(git log -1 --format=%H)
+          DESCRIPTION=$(yq .description images/charmed-spark-gpu/rockcraft.yaml | xargs)
+          
+          echo "FROM ${IMAGE_NAME}:${TAG}" | docker build --label org.opencontainers.image.description="${DESCRIPTION}" --label org.opencontainers.image.revision="${COMMIT_ID}" --label org.opencontainers.image.source="${{ github.repositoryUrl }}" -t "${IMAGE_NAME}:${TAG}" -
+
+          echo "Publishing ${IMAGE_NAME}:${TAG}"
+          docker push ${IMAGE_NAME}:${TAG}
+      
+          if [[ "$RISK" == "edge" ]]; then
+            VERSION_LONG=$(make help FLAVOUR=spark-gpu | grep "Tag\:" | cut -d ":" -f2  | xargs)
             VERSION_TAG="${VERSION_LONG}-${{ needs.release_checks.outputs.base }}_edge"
       
             docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${VERSION_TAG}

@@ -16,6 +16,8 @@ jobs:
         run:  |
           yamllint -d "{extends: relaxed, rules: {line-length: {max: 250}}}" \
             --no-warnings images/charmed-spark/rockcraft.yaml
+          yamllint -d "{extends: relaxed, rules: {line-length: {max: 250}}}" \
+            --no-warnings images/charmed-spark-gpu/rockcraft.yaml
 
   build:
     runs-on: ubuntu-latest
@@ -55,7 +57,7 @@ jobs:
 
       - name: Change artifact permissions
         run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }}
-
+          
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
         with:
@@ -64,4 +66,5 @@ jobs:
             ${{ steps.artifact.outputs.base_artifact_name }}
             ${{ steps.artifact.outputs.jupyter_artifact_name }}
             ${{ steps.artifact.outputs.kyuubi_artifact_name }}
+
 
