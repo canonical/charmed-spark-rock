@@ -293,7 +293,7 @@ run_test_sql_gpu_example_in_pod(){
   DRIVER_POD_ID=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
 
   # Filter out the output log line
-  OUTPUT_LOG_LINE=$(kubectl logs ${DRIVER_POD_ID} -n ${NAMESPACE})
+  OUTPUT_LOG_LINE=$(kubectl logs ${DRIVER_POD_ID} -n ${NAMESPACE} | grep "average")
   echo "output log line: $OUTPUT_LOG_LINE"
   # Fetch out the number of rows with the desired keyword
   NUM_ROWS=$(echo $OUTPUT_LOG_LINE | wc -l)
