@@ -225,6 +225,7 @@ run_test_sql_gpu_example_in_pod(){
   aws s3 cp ./tests/integration/resources/tpcds/item/item.parquet s3://data/tpcds/item/item.parquet
   aws s3 cp ./tests/integration/resources/tpcds/store_sales/store_sales.parquet s3://data/tpcds/store_sales/store_sales.parquet
   aws s3 cp ./tests/integration/resources/tpcds/web_sales/web_sales.parquet s3://data/tpcds/web_sales/web_sales.parquet
+  aws s3 cp ./tests/integration/resources/tpcds/customer/customer.parquet s3://data/tpcds/customer/customer.parquet
 
   # Number of driver pods that exist in the namespace already.
   PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
