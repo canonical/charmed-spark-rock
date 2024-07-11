@@ -25,7 +25,7 @@ environment:
   SPARK_CONFS: /etc/spark8t/conf
   JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
   PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3.10/site-packages
-  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin://usr/lib/jvm/java-17-openjdk-amd64/bin
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin
   HOME: /var/lib/spark
   SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
