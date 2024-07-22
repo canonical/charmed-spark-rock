@@ -110,7 +110,7 @@ To start a JupyterLab server using the `charmed-spark-jupyter` image, use
 docker run \
   -v /path/to/kube/config:/var/lib/spark/.kube/config \
   -p <port>:8888
-  ghcr.io/canonical/charmed-spark-jupyter:3.4-22.04_edge \
+  ghcr.io/canonical/charmed-spark-jupyterlab:3.4.2-4.0.11-22.04_edge \
   --username <spark-service-account> --namespace <spark-namespace>
 ```
 
