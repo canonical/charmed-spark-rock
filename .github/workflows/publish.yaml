@@ -190,11 +190,19 @@ jobs:
             echo "Publishing ${IMAGE_NAME}:${VERSION_TAG}"
             docker push ${IMAGE_NAME}:${VERSION_TAG}
           fi
+      
+      
+      - name: Download gpu artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: charmed-spark-gpu
+          path: charmed-spark-gpu 
+      
       - name: Publish Charmed Spark GPU Image to Channel
         run: |
           # Unpack artifact
-          mv charmed-spark/${{ steps.artifact.outputs.gpu_artifact_name }} .
-          rmdir charmed-spark
+          mv charmed-spark-gpu/${{ steps.artifact.outputs.gpu_artifact_name }} .
+          rmdir charmed-spark-gpu
 
           REPOSITORY="ghcr.io/canonical/"
           RISK=${{ needs.release_checks.outputs.risk }}
