@@ -47,8 +47,12 @@ jobs:
       uses: ./.github/workflows/integration.yaml
       secrets: inherit
 
+  tests-gpu:
+      uses: ./.github/workflows/integration-gpu.yaml
+      secrets: inherit
+
   publish:
-    needs: [tests, release_checks]
+    needs: [tests, release_checks, tests-gpu]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
