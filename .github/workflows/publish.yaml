@@ -212,6 +212,8 @@ jobs:
           RISK=${{ needs.release_checks.outputs.risk }}
           TRACK=${{ needs.release_checks.outputs.track }}
           if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
+
+          IMAGE_NAME=$(make help REPOSITORY=${REPOSITORY} TAG=${TAG} FLAVOUR=spark-gpu help | grep "Image\:" | cut -d ":" -f2  | xargs)
       
           # Import artifact into docker with new tag
           sudo make docker-import \

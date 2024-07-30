@@ -2,6 +2,7 @@ on:
   push:
     branches:
       - '3.4-22.04/*'
+      - 'dpe-4993'
 
 jobs:
   publish:
