@@ -1,11 +1,11 @@
-## Introduction to Charmed Spark ROCK  (OCI Image)
+## Introduction to Charmed Spark rock  (OCI Image)
 
 [![Container Registry](https://img.shields.io/badge/Container%20Registry-published-blue)](https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark)
 [![Release](https://github.com/canonical/charmed-spark-rock/actions/workflows/publish.yaml/badge.svg)](https://github.com/canonical/charmed-spark-rock/actions/workflows/publish.yaml)
 
-Charmed Spark is a set of Canonical supported artifacts (including charms, ROCK OCI images and SNAPs) that makes operating Spark workloads on Kubernetes seamless, secure and production-ready. 
+Charmed Spark is a set of Canonical supported artifacts (including charms, rock OCI images and SNAPs) that makes operating Spark workloads on Kubernetes seamless, secure and production-ready. 
 
-The solution helps to simplify user interaction with Spark applications and the underlying Kubernetes cluster whilst retaining the traditional semantics and command line tooling that users already know. Operators benefit from straightforward, automated deployment of Spark components (e.g. Spark History Server) to the Kubernetes cluster, using [Juju](https://juju.is/). 
+The solution helps to simplify user interaction with Spark applications and the underlying Kubernetes cluster whilst retaining the traditional semantics and command line tooling that users already know. Operators benefit from straightforward, automated deployment of Spark components (e.g. Spark History Server) to the Kubernetes cluster, using [Juju](https://juju.is/).
 
 Deploying Spark applications to Kubernetes has several benefits over other cluster resource managers such as Apache YARN, as it greatly simplifies deployment, operation, authentication while allowing for flexibility and scaling. However, it requires knowledge on Kubernetes, networking and coordination between the different components of the Spark ecosystem in order to provide a scalable, secure and production-ready environment. As a consequence, this can significantly increase complexity for the end user and administrators, as a number of parameters need to be configured and prerequisites must be met for the application to deploy correctly or for using the Spark CLI interface (e.g. pyspark and spark-shell). 
 
@@ -13,7 +13,7 @@ Charmed Spark helps to address these usability concerns and provides a consisten
 
 ### Features 
 
-The Charmed Spark Rock comes with some built-in tooling embedded:
+The Charmed Spark rock images come with some built-in tooling embedded:
 
 * Canonical-supported Spark binaries 
 * [`spark8t`](https://github.com/canonical/spark-k8s-toolkit-py) CLI for managing Spark service accounts
@@ -22,19 +22,43 @@ The Charmed Spark Rock comes with some built-in tooling embedded:
 
 ## Version
 
-ROCKs will be named as `<version>-<series>_<risk>`.
+Rocks will be named as `<version>-<series>_<risk>`.
 
-`<version>` is the software version; `<series>` is the Ubuntu LTS series that ROCKs supports; and the <risk> is the type of release, if it is edge, candidate or stable. Example versioning will be 3.4-22.04_stable which means Charmed Spark is a version 3.4.x of the software, supporting the 22.04 Ubuntu release and currently a 'stable' version of the software. See  versioning details [here](https://snapcraft.io/docs/channels).
+`<version>` is the software version; `<series>` is the Ubuntu LTS series that rocks supports; and the <risk> is the type of release, if it is edge, candidate or stable. Example versioning will be 3.4-22.04_stable which means Charmed Spark is a version 3.4.x of the software, supporting the 22.04 Ubuntu release and currently a 'stable' version of the software. See  versioning details [here](https://snapcraft.io/docs/channels).
 
 Channel can also be represented by combining `<version>_<risk>`
 
-## Release
+## Releases
 
-Charmed Spark ROCK are available at
+The Charmed spark solution offers multiple OCI images for different use cases.
 
-https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark
+### Charmed Spark image
 
-## ROCKS Usage
+This image contains the supported Spark binaries by Canonical with the aforementioned tools. 
+
+Charmed Spark rock is available at https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark
+
+### Charmed Spark Jupyter image
+
+This image contains a full integration of Canonical supported Spark binaries with Jupyter Lab server, where notebooks are injected with SparkSession and/or SparkContext properly configured to work with Kubernetes. 
+
+Charmed Spark rock with Jupyter Lab support is available at https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark-jupyterlab
+
+### Charmed Spark Kyuubi image
+
+This image contains a full integration of Charmed Spark rock with [Apache Kyuubi](https://kyuubi.apache.org/), a distributed and multi-tenant gateway to provide serverless SQL on lakehouses.
+
+Charmed Spark rock integrated with Kyuubi is available at https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark-kyuubi
+
+### Charmed Spark image with Spark Rapids support
+
+This image is integrated with [Spark Rapids](https://nvidia.github.io/spark-rapids/), that leverages the GPU to accelerate Spark jobs.
+
+Charmed Spark rock with Spark Rapids support is available at https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark-gpu
+
+
+
+## Rocks Usage
 
 ### Using Charmed Spark OCI Image in K8s Job Execution
 
@@ -66,7 +90,7 @@ For more information about spark-client API and `spark8t` tooling, please refer 
 
 ### Starting Pebble services
 
-Charmed Spark Rock Image is delivered with Pebble already included in order to manage services. If you want to start a service, use the `\; start <service-name>` prefix.
+Charmed Spark rock Image is delivered with Pebble already included in order to manage services. If you want to start a service, use the `\; start <service-name>` prefix.
 
 #### Starting History Server
 
@@ -86,7 +110,7 @@ To start a JupyterLab server using the `charmed-spark-jupyter` image, use
 docker run \
   -v /path/to/kube/config:/var/lib/spark/.kube/config \
   -p <port>:8888
-  ghcr.io/canonical/charmed-spark-jupyter:3.4-22.04_edge \
+  ghcr.io/canonical/charmed-spark-jupyterlab:3.4.2-4.0.11-22.04_edge \
   --username <spark-service-account> --namespace <spark-namespace>
 ```
 
@@ -103,11 +127,11 @@ Please see the [CONTRIBUTING.md](https://github.com/canonical/charmed-spark-rock
 
 ## Bugs and feature request
 
-If you find a bug in this ROCK or want to request a specific feature, here are the useful links:
+If you find a bug in this rock or want to request a specific feature, here are the useful links:
 
 -   Raise the issue or feature request in the [Canonical Github](https://github.com/canonical/charmed-spark-rock/issues)
 
--   Meet the community and chat with us if there are issues and feature requests in our [Mattermost Channel](https://chat.charmhub.io/charmhub/channels/data-platform).
+-   Meet the community and chat with us if there are issues and feature requests in our [Matrix Channel](https://matrix.to/#/%23charmhub-data-platform%3Aubuntu.com).
 
 ## Licence statement
 
