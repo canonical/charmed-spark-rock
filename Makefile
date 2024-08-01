@@ -133,7 +133,7 @@ AZURE_MARKER=$(_MAKE_DIR)/azure.tag
 # The names of different flavours of the image in the docker container registry
 STAGED_IMAGE_DOCKER_ALIAS=staged-charmed-spark:latest
 SPARK_DOCKER_ALIAS=charmed-spark:$(SPARK_VERSION)
-SPARK_GPU_DOCKER_ALIAS=charmed-spark:$(SPARK_VERSION)
+SPARK_GPU_DOCKER_ALIAS=charmed-spark-gpu:$(SPARK_VERSION)
 JUPYTER_DOCKER_ALIAS=charmed-spark-jupyter:$(SPARK_VERSION)-$(JUPYTER_VERSION)
 KYUUBI_DOCKER_ALIAS=charmed-spark-kyuubi:$(SPARK_VERSION)-$(KYUUBI_VERSION)
 
@@ -192,11 +192,11 @@ $(SPARK_MARKER): $(ROCK_FILE) images/charmed-spark/Dockerfile
           oci-archive:"$(ROCK_FILE)" \
           docker-daemon:"$(STAGED_IMAGE_DOCKER_ALIAS)"
 
-	docker build -t $(SPARK_GPU_DOCKER_ALIAS) \
+	docker build -t $(SPARK_DOCKER_ALIAS) \
 		--build-arg BASE_IMAGE="$(STAGED_IMAGE_DOCKER_ALIAS)" \
 		images/charmed-spark-gpu
 
-	docker save $(SPARK_GPU_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
+	docker save $(SPARK_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
 
 	touch $(SPARK_MARKER)
 
