@@ -43,7 +43,7 @@ $(shell mkdir -p $(_MAKE_DIR))
 # eg, charmed-spark
 ROCK_NAME := $(shell cat images/charmed-spark/rockcraft.yaml | yq .name)
 
-# eg, 3.4.2
+# eg, 3.5.1
 SPARK_VERSION := $(shell cat images/charmed-spark/rockcraft.yaml | yq .version)
 
 # eg, 1.9.0
@@ -56,27 +56,27 @@ JUPYTER_VERSION=$(shell cat images/metadata.yaml | yq .flavours.jupyter.version)
 ROCK_NAME_GPU := $(shell cat images/charmed-spark-gpu/rockcraft.yaml | yq .name)
 
 # The filename of the Rock file built during the build process.
-# eg, charmed-spark_3.4.2_amd64.rock
+# eg, charmed-spark_3.5.1_amd64.rock
 ROCK_FILE=$(ROCK_NAME)_$(SPARK_VERSION)_$(PLATFORM).rock
 
 # The filename of the final artifact built for Spark image
-# eg, charmed-spark_3.4.2_amd64.tar
+# eg, charmed-spark_3.5.1_amd64.tar
 SPARK_ARTIFACT=$(ROCK_NAME)_$(SPARK_VERSION)_$(PLATFORM).tar
 
 # The filename of the final artifact built for Jupyter image
-# eg, charmed-spark-jupyterlab_3.4.2_amd64.tar
+# eg, charmed-spark-jupyterlab_3.5.1_amd64.tar
 JUPYTER_ARTIFACT=$(ROCK_NAME)-jupyterlab_$(SPARK_VERSION)_$(PLATFORM).tar
 
 # The filename of the final artifact built for Kyuubi image
-# eg, charmed-spark-kyuubi_3.4.2_amd64.tar
+# eg, charmed-spark-kyuubi_3.5.1_amd64.tar
 KYUUBI_ARTIFACT=$(ROCK_NAME)-kyuubi_$(SPARK_VERSION)_$(PLATFORM).tar
 
 # The filename of the Rock file built during the build process.
-# eg, charmed-spark_gpu_3.4.2_amd64.rock
+# eg, charmed-spark_gpu_3.5.1_amd64.rock
 ROCK_FILE_GPU=$(ROCK_NAME_GPU)_$(SPARK_VERSION)_$(PLATFORM).rock
 
 # The filename of the final artifact built for Spark GPU image
-# eg, charmed-spark-gpu_3.4.2_amd64.tar
+# eg, charmed-spark-gpu_3.5.1_amd64.tar
 SPARK_GPU_ARTIFACT=$(ROCK_NAME_GPU)_$(SPARK_VERSION)_$(PLATFORM).tar
 
 
@@ -87,13 +87,13 @@ SPARK_GPU_ARTIFACT=$(ROCK_NAME_GPU)_$(SPARK_VERSION)_$(PLATFORM).tar
 # TAG: The tag for the image
 #
 # For eg,
-# ARTIFACT = "charmed-spark_3.4.2_amd64.tar" 			TAG = "3.4.2"			DISPLAY_NAME = "ghcr.io/canonical/charmed-spark"
+# ARTIFACT = "charmed-spark_3.5.1_amd64.tar" 			TAG = "3.5.1"			DISPLAY_NAME = "ghcr.io/canonical/charmed-spark"
 # or,
-# ARTIFACT = "charmed-spark-jupyterlab_3.4.2_amd64.tar"	TAG = "3.4.2-4.0.11"	DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-jupyterlab"
+# ARTIFACT = "charmed-spark-jupyterlab_3.5.1_amd64.tar"	TAG = "3.5.1-4.0.11"	DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-jupyterlab"
 # or,
-# ARTIFACT = "charmed-spark-kyuubi_3.4.2_amd64.tar"		TAG = "3.4.2-1.9.0"		DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-kyuubi"
+# ARTIFACT = "charmed-spark-kyuubi_3.5.1_amd64.tar"		TAG = "3.5.1-1.9.0"		DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-kyuubi"
 # or, 
-# ARTIFACT = "charmed-spark_gpu_3.4.2_amd64.tar" 			TAG = "3.4.2"			DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-gpu"
+# ARTIFACT = "charmed-spark_gpu_3.5.1_amd64.tar" 			TAG = "3.5.1"			DISPLAY_NAME = "ghcr.io/canonical/charmed-spark-gpu"
 
 ifeq ($(FLAVOUR), jupyter)
 	DISPLAY_NAME=$(REPOSITORY)$(PREFIX)$(ROCK_NAME)-jupyterlab
@@ -174,7 +174,7 @@ help:
 
 # Recipe for creating a rock image from the current repository.
 # 
-# ROCK_FILE => charmed-spark_3.4.2_amd64.rock 
+# ROCK_FILE => charmed-spark_3.5.1_amd64.rock 
 #
 $(ROCK_FILE): images/charmed-spark/rockcraft.yaml $(wildcard images/charmed-spark/*/*)
 	@echo "=== Building Charmed Image ==="
@@ -275,7 +275,7 @@ endif
 
 # Shorthand recipe to build the image. The flavour is picked from FLAVOUR variable to `make`.
 #
-# eg, ARTIFACT => charmed-spark_3.4.2_amd64.tar
+# eg, ARTIFACT => charmed-spark_3.5.1_amd64.tar
 build: $(ARTIFACT)
 
 
