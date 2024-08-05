@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 3.4-22.04/edge
+      - 3.5-22.04/edge
   pull_request:
 jobs:
   build:
