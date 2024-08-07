@@ -78,7 +78,7 @@ jobs:
           echo "jupyter_artifact_name=${JUPYTER_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
           KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
           echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
-          GPU_ARTIFACT=$(make help FLAVOUR=spark-gpu | grep 'Artifact: ')
+          GPU_ARTIFACT=$(make help FLAVOUR=gpu | grep 'Artifact: ')
           echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Download artifact
@@ -213,11 +213,11 @@ jobs:
           TRACK=${{ needs.release_checks.outputs.track }}
           if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
       
-          IMAGE_NAME=$(make help REPOSITORY=${REPOSITORY} TAG=${TAG} FLAVOUR=spark-gpu help | grep "Image\:" | cut -d ":" -f2  | xargs)
+          IMAGE_NAME=$(make help REPOSITORY=${REPOSITORY} TAG=${TAG} FLAVOUR=gpu help | grep "Image\:" | cut -d ":" -f2  | xargs)
 
           # Import artifact into docker with new tag
           sudo make docker-import \
-            FLAVOUR=spark-gpu \
+            FLAVOUR=gpu \
             REPOSITORY=${REPOSITORY} \
             TAG=${TAG} \
             -o ${{ steps.artifact.outputs.gpu_artifact_name }}
@@ -232,7 +232,7 @@ jobs:
           docker push ${IMAGE_NAME}:${TAG}
       
           if [[ "$RISK" == "edge" ]]; then
-            VERSION_LONG=$(make help FLAVOUR=spark-gpu | grep "Tag\:" | cut -d ":" -f2  | xargs)
+            VERSION_LONG=$(make help FLAVOUR=gpu | grep "Tag\:" | cut -d ":" -f2  | xargs)
             VERSION_TAG="${VERSION_LONG}-${{ needs.release_checks.outputs.base }}_edge"
       
             docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${VERSION_TAG}
