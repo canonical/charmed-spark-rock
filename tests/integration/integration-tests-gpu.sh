@@ -25,7 +25,11 @@ S3_BUCKET=spark-$(uuidgen)
 
 get_spark_version(){
   # Fetch Spark version from rockcraft.yaml
-  cat images/charmed-spark-gpu/rockcraft.yaml | yq '(.version)' 
+  SPARK_VERSION=$(cat images/charmed-spark/rockcraft.yaml | yq '(.version)')
+
+  GPU_VERSION=$(cat images/metadata.yaml | yq .flavours.gpu.version)
+
+  echo "${SPARK_VERSION}-${GPU_VERSION}"
 }
 
 
@@ -43,8 +47,10 @@ setup_user() {
 
   create_serviceaccount_using_pod $USERNAME $NAMESPACE $ADMIN_POD_NAME
 
+  IMAGE=$(spark_image)
+
   # Create the pod with the Spark service account
-  cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.serviceAccountName = '\"${USERNAME}\"' | .spec.containers[0].image="ghcr.io/welpaolo/charmed-spark@sha256:d8273bd904bb5f74234bc0756d520115b5668e2ac4f2b65a677bfb1c27e882da"' | \
+  cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.serviceAccountName = '\"${USERNAME}\"' | .spec.containers[0].image='\"${IMAGE}\" | \
     kubectl -n tests apply -f -
 
   wait_for_pod testpod $NAMESPACE
