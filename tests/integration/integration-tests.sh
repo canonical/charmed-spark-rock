@@ -489,7 +489,8 @@ run_spark_shell_in_pod() {
   # "Pi is roughly 3.13956232343"
 
   echo -e "$(kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$SPARK_SHELL_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | spark-client.spark-shell --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > spark-shell.out
-
+  cat spark-shell.out
+  echo "-------------------------------------------------"
   pi=$(cat spark-shell.out  | grep "^Pi is roughly" | rev | cut -d' ' -f1 | rev | cut -c 1-3)
   echo -e "Spark-shell Pi Job Output: \n ${pi}"
   rm spark-shell.out
