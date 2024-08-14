@@ -116,12 +116,12 @@ cleanup_user_failure() {
 teardown_test_pod() {
   kubectl logs testpod-admin -n $NAMESPACE 
   kubectl logs testpod -n $NAMESPACE 
-  kubectl logs -l spark-version=3.5.1 -n $NAMESPACE
+  kubectl logs -l spark-version=4.0.0-preview1 -n $NAMESPACE
   kubectl -n $NAMESPACE delete pod $ADMIN_POD_NAME
 }
 
 run_example_job_in_pod() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
@@ -318,7 +318,7 @@ test_iceberg_example_in_pod_using_abfss(){
 
 
 run_example_job_in_pod_with_pod_templates() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
 
@@ -364,7 +364,7 @@ run_example_job_in_pod_with_pod_templates() {
 
 
 run_example_job_in_pod_with_metrics() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
   LOG_FILE="/tmp/server.log"
   SERVER_PORT=9091
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
@@ -413,7 +413,7 @@ run_example_job_in_pod_with_metrics() {
 
 
 run_example_job_with_error_in_pod() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
