@@ -10,7 +10,7 @@ description: |
 
 license: Apache-2.0
 
-version: "3.5.1"
+version: "4.0.0-preview1"
 
 base: ubuntu@22.04
 
@@ -51,8 +51,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/canonical/central-uploader/releases/download/spark-3.5.1-ubuntu1/spark-3.5.1-ubuntu1-20240801193221-bin-k8s.tgz
-    source-checksum: sha512/4c9ec4dc3f67602ec9f83fa08486985647b8ab7eaf3748c3042a382ed367fc776b7623a067ceef408337cf5c2171a010da0ff063dcbf76c4b84674b661d2330b
+    source: https://github.com/canonical/central-uploader/releases/download/spark-4.0.0-preview1-ubuntu0/spark-4.0.0-preview1-ubuntu0-20240813100410-bin-k8s.tgz
+    source-checksum: sha512/9d506d28d356c33608bebaf53dd6b60705826f60764bb6ed60d1b5cf3f496d99bf45b6aaee5df6f7cce0e37dad04ab003f45e8219e15dc918a2cef78d8425c09
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
@@ -96,16 +96,12 @@ parts:
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
-      ICEBERG_SPARK_RUNTIME_VERSION='3.4_2.12'
-      ICEBERG_VERSION='1.4.3'
       SPARK_METRICS_VERSION='3.4-1.0.1'
       SERVLET_FILTERS_VERSION='0.0.1'
-      SHA1SUM_ICEBERG_JAR='48d553e4e5496f731b9e0e6adb5bc0fd040cb0df'
       SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='493cf77133cbf03e96fb848121ce10ac16e6f907f595df637649b98b42118e57d6b6e1bdab71bfee3394eb369637c5b4f6b05dd8fa30a1ff6899e74069c972ce'
       SHA512SUM_SPARK_SERVLET_FILTER_JAR='ffeb809d58ef0151d513b09d4c2bfd5cc064b0b888ca45899687aed2f42bcb1ce9834be9709290dd70bd9df84049f02cbbff6c2d5ec3c136c278c93f167c8096'
 
       JARS=(
-      "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
       "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-LIB_VERSION/spark-metrics-assembly-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
       "https://github.com/canonical/central-uploader/releases/download/servlet-filters-LIB_VERSION/servlet-filters-LIB_VERSION.jar $SERVLET_FILTERS_VERSION sha512sum $SHA512SUM_SPARK_SERVLET_FILTER_JAR"
       )
@@ -139,7 +135,7 @@ parts:
       - python3-pip
     overlay-script: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
-      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist  https://github.com/canonical/spark-k8s-toolkit-py/releases/download/v0.0.7/spark8t-0.0.7-py3-none-any.whl
+      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist  https://github.com/canonical/spark-k8s-toolkit-py/releases/download/v0.0.10/spark8t-0.0.10-py3-none-any.whl
       rm usr/bin/pip*
     stage:
       - opt/spark8t/python/dist

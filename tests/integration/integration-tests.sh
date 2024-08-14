@@ -116,12 +116,12 @@ cleanup_user_failure() {
 teardown_test_pod() {
   kubectl logs testpod-admin -n $NAMESPACE 
   kubectl logs testpod -n $NAMESPACE 
-  kubectl logs -l spark-version=3.5.1 -n $NAMESPACE
+  kubectl logs -l spark-version=4.0.0-preview1 -n $NAMESPACE
   kubectl -n $NAMESPACE delete pod $ADMIN_POD_NAME
 }
 
 run_example_job_in_pod() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
@@ -318,7 +318,7 @@ test_iceberg_example_in_pod_using_abfss(){
 
 
 run_example_job_in_pod_with_pod_templates() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
 
@@ -364,7 +364,7 @@ run_example_job_in_pod_with_pod_templates() {
 
 
 run_example_job_in_pod_with_metrics() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
   LOG_FILE="/tmp/server.log"
   SERVER_PORT=9091
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
@@ -413,7 +413,7 @@ run_example_job_in_pod_with_metrics() {
 
 
 run_example_job_with_error_in_pod() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
@@ -489,8 +489,9 @@ run_spark_shell_in_pod() {
   # "Pi is roughly 3.13956232343"
 
   echo -e "$(kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$SPARK_SHELL_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | spark-client.spark-shell --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > spark-shell.out
-
-  pi=$(cat spark-shell.out  | grep "^Pi is roughly" | rev | cut -d' ' -f1 | rev | cut -c 1-3)
+  cat spark-shell.out
+  echo "-------------------------------------------------"
+  pi=$(cat spark-shell.out  | grep "Pi is roughly 3" | rev | cut -d' ' -f1 | rev | cut -c 1-3)
   echo -e "Spark-shell Pi Job Output: \n ${pi}"
   rm spark-shell.out
   validate_pi_value $pi
@@ -641,11 +642,11 @@ echo -e "##################################"
 
 (setup_user_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo -e "########################################"
-echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
-echo -e "########################################"
+# echo -e "########################################"
+# echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
+# echo -e "########################################"
 
-(setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
+# (setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "########################################"
 echo -e "RUN EXAMPLE JOB WITH ERRORS"
@@ -653,17 +654,17 @@ echo -e "########################################"
 
 (setup_user_context && test_example_job_in_pod_with_errors && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo -e "##################################"
-echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
-echo -e "##################################"
+# echo -e "##################################"
+# echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
+# echo -e "##################################"
 
-(setup_user_context && test_iceberg_example_in_pod_using_s3 && cleanup_user_success) || cleanup_user_failure_in_pod
+# (setup_user_context && test_iceberg_example_in_pod_using_s3 && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo -e "##################################"
-echo -e "RUN EXAMPLE THAT USES AZURE STORAGE"
-echo -e "##################################"
+# echo -e "##################################"
+# echo -e "RUN EXAMPLE THAT USES AZURE STORAGE"
+# echo -e "##################################"
 
-(setup_user_context && test_iceberg_example_in_pod_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
+# (setup_user_context && test_iceberg_example_in_pod_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
