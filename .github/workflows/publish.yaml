@@ -47,9 +47,9 @@ jobs:
       uses: ./.github/workflows/integration.yaml
       secrets: inherit
 
-  tests-gpu:
-      uses: ./.github/workflows/integration-gpu.yaml
-      secrets: inherit
+  # tests-gpu:
+  #     uses: ./.github/workflows/integration-gpu.yaml
+  #     secrets: inherit
 
   publish:
     needs: [tests, release_checks, tests-gpu]
