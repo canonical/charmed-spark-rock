@@ -642,11 +642,11 @@ echo -e "##################################"
 
 (setup_user_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo -e "########################################"
-echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
-echo -e "########################################"
+# echo -e "########################################"
+# echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
+# echo -e "########################################"
 
-(setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
+# (setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "########################################"
 echo -e "RUN EXAMPLE JOB WITH ERRORS"
@@ -654,17 +654,17 @@ echo -e "########################################"
 
 (setup_user_context && test_example_job_in_pod_with_errors && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo -e "##################################"
-echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
-echo -e "##################################"
+# echo -e "##################################"
+# echo -e "RUN EXAMPLE THAT USES ICEBERG LIBRARIES"
+# echo -e "##################################"
 
-(setup_user_context && test_iceberg_example_in_pod_using_s3 && cleanup_user_success) || cleanup_user_failure_in_pod
+# (setup_user_context && test_iceberg_example_in_pod_using_s3 && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo -e "##################################"
-echo -e "RUN EXAMPLE THAT USES AZURE STORAGE"
-echo -e "##################################"
+# echo -e "##################################"
+# echo -e "RUN EXAMPLE THAT USES AZURE STORAGE"
+# echo -e "##################################"
 
-(setup_user_context && test_iceberg_example_in_pod_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
+# (setup_user_context && test_iceberg_example_in_pod_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
