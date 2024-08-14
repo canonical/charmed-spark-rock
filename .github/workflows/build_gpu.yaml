@@ -37,12 +37,12 @@ jobs:
           sudo snap install rockcraft --classic --edge    
       
       - name: Build image (GPU)
-        run: sudo make build FLAVOUR=spark-gpu
+        run: sudo make build FLAVOUR=gpu
 
       - name: Get Artifact Name
         id: artifact
         run: |
-          GPU_ARTIFACT=$(make help FLAVOUR=spark-gpu | grep 'Artifact: ')
+          GPU_ARTIFACT=$(make help FLAVOUR=gpu | grep 'Artifact: ')
           echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Change artifact permissions
