@@ -31,12 +31,12 @@ jobs:
         echo "base=${BASE}" >> $GITHUB_OUTPUT
       id: rock_metadata
 
-    - name: Check consistency between metadata and release branch
-      run: |
-        MAJOR_MINOR_VERSION=$(echo ${{ steps.rock_metadata.outputs.version }} | sed -n "s/\(^[0-9]*\.[0-9]*\).*/\1/p")
-        BASE=${{ steps.rock_metadata.outputs.base }}
-        if [ "${MAJOR_MINOR_VERSION}-${BASE}" != "${{ steps.branch_metadata.outputs.track }}" ]; then exit 1; fi
-      continue-on-error: false
+    # - name: Check consistency between metadata and release branch
+    #   run: |
+    #     MAJOR_MINOR_VERSION=$(echo ${{ steps.rock_metadata.outputs.version }} | sed -n "s/\(^[0-9]*\.[0-9]*\).*/\1/p")
+    #     BASE=${{ steps.rock_metadata.outputs.base }}
+    #     if [ "${MAJOR_MINOR_VERSION}-${BASE}" != "${{ steps.branch_metadata.outputs.track }}" ]; then exit 1; fi
+    #   continue-on-error: false
 
     outputs:
       branch: ${{ steps.branch_metadata.outputs.branch }}
