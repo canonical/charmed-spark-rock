@@ -93,18 +93,28 @@ jobs:
         run: |
           # Unpack artifact
           mv charmed-spark/${{ steps.artifact.outputs.base_artifact_name }} .
-          
+          ls
+
           REPOSITORY="ghcr.io/welpaolo/"
           RISK=${{ needs.release_checks.outputs.risk }}
           TRACK=${{ needs.release_checks.outputs.track }}
+          # Remove
+          echo "REPOSITORY: $REPOSITORY"
+          echo "RISK $RISK"
+          echo "TRACK: $TRACK"
+
           if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
 
           IMAGE_NAME=$(make help REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
-                    
+
+          echo "IMAGE_NAME $IMAGE_NAME"
+
           # Import artifact into docker with new tag
           sudo make docker-import REPOSITORY=${REPOSITORY} TAG=${TAG}\
             -o ${{ steps.artifact.outputs.base_artifact_name }} 
 
+          echo "After import"
+          
           # Add relevant labels
           COMMIT_ID=$(git log -1 --format=%H)
           DESCRIPTION=$(yq .description images/charmed-spark/rockcraft.yaml | xargs)
