@@ -96,8 +96,8 @@ jobs:
           ls
 
           REPOSITORY="ghcr.io/welpaolo/"
-          RISK=${{ needs.release_checks.outputs.risk }}
-          TRACK=${{ needs.release_checks.outputs.track }}
+          RISK="edge"
+          TRACK="4.0.0-preview1"
           # Remove
           echo "REPOSITORY: $REPOSITORY"
           echo "RISK $RISK"
@@ -114,7 +114,7 @@ jobs:
             -o ${{ steps.artifact.outputs.base_artifact_name }} 
 
           echo "After import"
-          
+
           # Add relevant labels
           COMMIT_ID=$(git log -1 --format=%H)
           DESCRIPTION=$(yq .description images/charmed-spark/rockcraft.yaml | xargs)
