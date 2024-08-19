@@ -150,7 +150,7 @@ run_example_job_in_pod() {
   echo "logs: $logs"
 
   lines=$(echo $logs | grep 'task 0.0' | wc -l)
-  
+  echo "Number of lines $lines"
   if [ "$lines" -eq 0 ]; then
     echo "Zero lines in the logs... something wrong"
     exit 1
