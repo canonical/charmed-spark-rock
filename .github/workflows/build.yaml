@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo snap install yq
-          sudo snap install rockcraft --classic --edge    
+          sudo snap install rockcraft --classic --channel=latest/stable    
 
       - name: Build image
         run: sudo make build
