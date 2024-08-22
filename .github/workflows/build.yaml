@@ -31,7 +31,7 @@ jobs:
       - name: Setup LXD
         uses: canonical/setup-lxd@main
         with:
-          channel: 5.21/candidate
+          channel: 5.0/stable
 
       - name: Install dependencies
         run: |
@@ -44,6 +44,7 @@ jobs:
       - name: Print logs
         if: always()
         run: |
+          sudo snap list
           log=$(sudo ls -1 /root/.local/state/rockcraft/log/)
           echo $log
           sudo cat /root/.local/state/rockcraft/log/$log
