@@ -41,6 +41,11 @@ jobs:
       - name: Build image
         run: sudo make build
 
+      - name: Print logs
+        if: always()
+        run: |
+          cat /root/.local/state/rockcraft/log/rockcraft-*log
+
       - name: Build image (Jupyter)
         run: sudo make build FLAVOUR=jupyter
 
