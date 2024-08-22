@@ -46,7 +46,6 @@ jobs:
         run: |
           log=$(sudo ls -1 /root/.local/state/rockcraft/log/)
           echo $log
-          sudo ls /root/.local/state/rockcraft/log/rockcraft-*.log
           sudo cat /root/.local/state/rockcraft/log/$log
 
       - name: Build image (Jupyter)
