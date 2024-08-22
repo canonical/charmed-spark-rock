@@ -124,14 +124,14 @@ jobs:
           echo "Publishing ${IMAGE_NAME}:${TAG}"          
           docker push ${IMAGE_NAME}:${TAG}
           
-          if [[ "$RISK" == "edge" ]]; then           
-            VERSION_TAG="${{ needs.release_checks.outputs.version }}-${{ needs.release_checks.outputs.base }}_edge"
+          # if [[ "$RISK" == "edge" ]]; then           
+          #   VERSION_TAG="${{ needs.release_checks.outputs.version }}-${{ needs.release_checks.outputs.base }}_edge"
             
-            docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${VERSION_TAG} 
+          #   docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${VERSION_TAG} 
  
-            echo "Publishing ${IMAGE_NAME}:${VERSION_TAG}"          
-            docker push ${IMAGE_NAME}:${VERSION_TAG}
-          fi
+          #   echo "Publishing ${IMAGE_NAME}:${VERSION_TAG}"          
+          #   docker push ${IMAGE_NAME}:${VERSION_TAG}
+          # fi
 
       - name: Publish JupyterLab Image to Channel
         run: |
