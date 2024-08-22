@@ -31,7 +31,7 @@ jobs:
       - name: Setup LXD
         uses: canonical/setup-lxd@main
         with:
-          channel: 5.21/stable
+          channel: 5.21/candidate
 
       - name: Install dependencies
         run: |
