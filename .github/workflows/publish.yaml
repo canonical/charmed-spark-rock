@@ -133,41 +133,41 @@ jobs:
           #   docker push ${IMAGE_NAME}:${VERSION_TAG}
           # fi
 
-      - name: Publish JupyterLab Image to Channel
-        run: |
-          # Unpack artifact
-          mv charmed-spark/${{ steps.artifact.outputs.jupyter_artifact_name }} .
+      # - name: Publish JupyterLab Image to Channel
+      #   run: |
+      #     # Unpack artifact
+      #     mv charmed-spark/${{ steps.artifact.outputs.jupyter_artifact_name }} .
 
-          REPOSITORY="ghcr.io/welpaolo/"
-          RISK=${{ needs.release_checks.outputs.risk }}
-          TRACK=${{ needs.release_checks.outputs.track }}
-          if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
+      #     REPOSITORY="ghcr.io/welpaolo/"
+      #     RISK=${{ needs.release_checks.outputs.risk }}
+      #     TRACK=${{ needs.release_checks.outputs.track }}
+      #     if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
       
-          # Import artifact into docker with new tag
-          sudo make docker-import \
-            FLAVOUR=jupyter \
-            REPOSITORY=${REPOSITORY} \
-            TAG=${TAG} \
-            -o ${{ steps.artifact.outputs.jupyter_artifact_name }}
+      #     # Import artifact into docker with new tag
+      #     sudo make docker-import \
+      #       FLAVOUR=jupyter \
+      #       REPOSITORY=${REPOSITORY} \
+      #       TAG=${TAG} \
+      #       -o ${{ steps.artifact.outputs.jupyter_artifact_name }}
       
-          IMAGE_NAME=$(make help FLAVOUR=jupyter REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
+      #     IMAGE_NAME=$(make help FLAVOUR=jupyter REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
 
-          DESCRIPTION=$(yq .flavours.jupyter.image_description images/metadata.yaml | xargs)
+      #     DESCRIPTION=$(yq .flavours.jupyter.image_description images/metadata.yaml | xargs)
           
-          echo "FROM ${IMAGE_NAME}:${TAG}" | docker build --label org.opencontainers.image.description="${DESCRIPTION}" --label org.opencontainers.image.revision="${COMMIT_ID}" --label org.opencontainers.image.source="${{ github.repositoryUrl }}" -t "${IMAGE_NAME}:${TAG}" -
+      #     echo "FROM ${IMAGE_NAME}:${TAG}" | docker build --label org.opencontainers.image.description="${DESCRIPTION}" --label org.opencontainers.image.revision="${COMMIT_ID}" --label org.opencontainers.image.source="${{ github.repositoryUrl }}" -t "${IMAGE_NAME}:${TAG}" -
       
-          echo "Publishing ${IMAGE_NAME}:${TAG}"
-          docker push ${IMAGE_NAME}:${TAG}
+      #     echo "Publishing ${IMAGE_NAME}:${TAG}"
+      #     docker push ${IMAGE_NAME}:${TAG}
       
-          if [[ "$RISK" == "edge" ]]; then
-            VERSION_LONG=$(make help FLAVOUR=jupyter | grep "Tag\:" | cut -d ":" -f2  | xargs)
-            VERSION_TAG="${VERSION_LONG}-${{ needs.release_checks.outputs.base }}_edge"
+      #     if [[ "$RISK" == "edge" ]]; then
+      #       VERSION_LONG=$(make help FLAVOUR=jupyter | grep "Tag\:" | cut -d ":" -f2  | xargs)
+      #       VERSION_TAG="${VERSION_LONG}-${{ needs.release_checks.outputs.base }}_edge"
       
-            docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${VERSION_TAG}
+      #       docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${VERSION_TAG}
       
-            echo "Publishing ${IMAGE_NAME}:${VERSION_TAG}"
-            docker push ${IMAGE_NAME}:${VERSION_TAG}
-          fi
+      #       echo "Publishing ${IMAGE_NAME}:${VERSION_TAG}"
+      #       docker push ${IMAGE_NAME}:${VERSION_TAG}
+      #     fi
 
 
       # - name: Publish Kyuubi Image to Channel
