@@ -31,21 +31,29 @@ jobs:
       - name: Setup LXD
         uses: canonical/setup-lxd@main
         with:
-          channel: 5.21/stable
+          channel: 5.0/stable
 
       - name: Install dependencies
         run: |
           sudo snap install yq
-          sudo snap install rockcraft --classic --edge    
+          sudo snap install rockcraft --classic --channel=latest/stable    
 
       - name: Build image
         run: sudo make build
 
+      - name: Print logs
+        if: always()
+        run: |
+          sudo snap list
+          log=$(sudo ls -1 /root/.local/state/rockcraft/log/)
+          echo $log
+          sudo cat /root/.local/state/rockcraft/log/$log
+
       - name: Build image (Jupyter)
         run: sudo make build FLAVOUR=jupyter
 
-      - name: Build image (Kyuubi)
-        run: sudo make build FLAVOUR=kyuubi
+      # - name: Build image (Kyuubi)
+      #   run: sudo make build FLAVOUR=kyuubi
 
       - name: Get Artifact Name
         id: artifact
@@ -54,8 +62,8 @@ jobs:
           echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
           JUPYTER_ARTIFACT=$(make help FLAVOUR=jupyter | grep 'Artifact: ')
           echo "jupyter_artifact_name=${JUPYTER_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
-          KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
-          echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          # KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
+          # echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Change artifact permissions
         run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }}

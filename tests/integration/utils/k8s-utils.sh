@@ -24,7 +24,8 @@ wait_for_pod() {
     namespace=$2
 
     echo "Waiting for pod '$pod_name' to become ready..."
-    kubectl wait --for condition=Ready pod/$pod_name -n $namespace --timeout 60s
+    kubectl wait --for condition=Ready pod/$pod_name -n $namespace --timeout 300s
+    kubectl -n $namespace get pods
 }
 
 
@@ -90,4 +91,5 @@ setup_admin_pod(){
     kubectl -n $namespace exec $pod_name -- env KCONFIG="$user_kubeconfig" /bin/bash -c 'echo "$KCONFIG" > ~/.kube/config'
 
     echo "Admin pod with name '$pod_name' created and configured successfully."
+    kubectl -n $namespace get pods 
 }
