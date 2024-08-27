@@ -642,11 +642,11 @@ echo -e "##################################"
 
 (setup_user_context && test_example_job_in_pod_with_templates && cleanup_user_success) || cleanup_user_failure_in_pod
 
-# echo -e "########################################"
-# echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
-# echo -e "########################################"
+echo -e "########################################"
+echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
+echo -e "########################################"
 
-# (setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "########################################"
 echo -e "RUN EXAMPLE JOB WITH ERRORS"
