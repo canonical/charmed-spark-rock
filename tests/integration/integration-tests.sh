@@ -146,6 +146,16 @@ run_example_job_in_pod() {
     exit 1
   fi
 
+  logs=$(kubectl logs $(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE})
+  echo "logs: $logs"
+
+  lines=$(echo $logs | grep 'task 0.0' | wc -l)
+  echo "Number of lines $lines"
+  if [ "$lines" -eq 0 ]; then
+    echo "Zero lines in the logs... something wrong"
+    exit 1
+  fi
+
   # Check job output
   # Sample output
   # "Pi is roughly 3.13956232343"
