@@ -331,7 +331,7 @@ azure-cli-setup: $(AZURE_MARKER)
 $(K8S_MARKER):
 	@echo "=== Setting up and configuring local Microk8s cluster ==="
 	/bin/bash ./tests/integration/setup-microk8s.sh $(MICROK8S_CHANNEL)
-	sg microk8s ./tests/integration/config-microk8s.sh
+	sg snap_microk8s ./tests/integration/config-microk8s.sh
 	touch $(K8S_MARKER)
 
 
