@@ -17,6 +17,6 @@ systemctl restart snapd.service
 
 # Microk8s setup
 echo "Installing microk8s: $MICROK8S_CHANNEL"
-snap install microk8s --channel=$MICROK8S_CHANNEL --classic
-usermod -a -G microk8s ubuntu
+snap install microk8s --channel=$MICROK8S_CHANNEL
+usermod -a -G snap_microk8s ubuntu
 newgrp microk8s

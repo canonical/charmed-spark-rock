@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         env: [integration]
-        k8s_version: ["1.28-strict/stable","1.29-strict/stable", "1.30-strict/beta" ]
+        k8s_version: ["1.28-strict/stable","1.29-strict/stable", "1.30-strict/stable" ]
       fail-fast: false
     env:
       AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
