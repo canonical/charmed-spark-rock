@@ -52,11 +52,13 @@ jobs:
       - name: Run Trivy in GitHub SBOM mode and submit results to Dependency Graph
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          scan-type: 'fs'
+          scan-type: 'image'
           format: 'github'
           output: 'dependency-results.sbom.json'
           image-ref: 'trivy/charmed-spark:test'
           github-pat: ${{ secrets.GITHUB_TOKEN }}
+          severity: "MEDIUM,HIGH,CRITICAL"
+          scanners: "vuln"
       
       - name: Upload trivy report as a Github artifact
         uses: actions/upload-artifact@v4
