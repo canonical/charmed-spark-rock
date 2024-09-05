@@ -25,7 +25,7 @@ PLATFORM := amd64
 FLAVOUR := "spark"
 
 # The channel of `microk8s` snap to be used for testing
-MICROK8S_CHANNEL := "1.28/stable"
+MICROK8S_CHANNEL := "1.28-strict/stable"
 
 # The Azure credentials supplied as environment variables
 AZURE_STORAGE_ACCOUNT := ${AZURE_STORAGE_ACCOUNT}
