@@ -45,14 +45,16 @@ jobs:
       run: |
         sudo -E bash ./tests/integration/setup-environment.sh
       env:
-        MICROK8S_CHANNEL: 1.28/stable
+        MICROK8S_CHANNEL: 1.29/stable
 
     - name: Setup microk8s
+      timeout-minutes: 30
       run: sudo -E /bin/bash ./tests/integration/config-microk8s-gpu.sh
       env:
-        MICROK8S_ADDONS: "storage dns rbac gpu minio"
+        MICROK8S_ADDONS: "hostpath-storage dns rbac gpu minio"
 
     - name: Configure microk8s
+      timeout-minutes: 5
       run: |
         sudo microk8s.status
         sudo snap alias microk8s.kubectl kubectl
@@ -88,6 +90,7 @@ jobs:
           -o ${{ steps.artifact.outputs.gpu_artifact_name }}
 
     - name: Run integration tests on GPU
+      timeout-minutes: 45
       run: |
         echo "Start test..."
         /bin/bash ./tests/integration/setup-aws-cli.sh
