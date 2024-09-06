@@ -14,6 +14,7 @@ do
     sudo microk8s.kubectl get pods -A
     sudo microk8s.kubectl logs -n kube-system -l k8s-app=hostpath-provisioner
     sudo microk8s.kubectl describe pod -n gpu-operator-resources nvidia-operator-validator
+    sudo microk8s.status
     sleep 60
 
     echo "--------------------------------------------------------------------------------------------------------------------"
