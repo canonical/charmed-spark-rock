@@ -53,7 +53,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.20.0
         with:
           scan-type: 'image'
-          format: 'spdx'
+          format: 'spdx-json'
           output: 'dependency-results.sbom.json'
           image-ref: 'trivy/charmed-spark:test'
           github-pat: ${{ secrets.GITHUB_TOKEN }}
