@@ -5,7 +5,7 @@ sudo snap install aws-cli --classic
 
 
 
-source ./utils/s3-utils.sh
+source ./tests/integration/utils/s3-utils.sh
 
 wait_and_retry(){
     # Retry a command for a number of times by waiting a few seconds.
