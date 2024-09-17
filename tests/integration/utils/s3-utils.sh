@@ -20,14 +20,30 @@ get_s3_endpoint(){
 
 
 get_s3_access_key(){
-  # Print the S3 Access Key by reading it from K8s secret
-  kubectl get secret -n minio-operator microk8s-user-1 -o jsonpath='{.data.CONSOLE_ACCESS_KEY}' | base64 -d
+  # Print the S3 Access Key by reading it from K8s secret or by outputting the default value
+    kubectl get secret -n minio-operator microk8s-user-1 &> /dev/null
+    if [ $? -eq 0 ]; then
+        # echo "Use access-key from secret"
+        access_key=$(kubectl get secret -n minio-operator microk8s-user-1 -o jsonpath='{.data.CONSOLE_ACCESS_KEY}' | base64 -d)
+    else
+        # echo "use default access-key"
+        access_key="minio"
+    fi
+    echo "$access_key"
 }
 
 
 get_s3_secret_key(){
-  # Print the S3 Secret Key by reading it from K8s secret
-  kubectl get secret -n minio-operator microk8s-user-1 -o jsonpath='{.data.CONSOLE_SECRET_KEY}' | base64 -d
+  # Print the S3 Secret Key by reading it from K8s secret or by outputting the default value
+    kubectl get secret -n minio-operator microk8s-user-1 &> /dev/null
+    if [ $? -eq 0 ]; then
+      # echo "Use access-key from secret"
+      secret_key=$(kubectl get secret -n minio-operator microk8s-user-1 -o jsonpath='{.data.CONSOLE_SECRET_KEY}' | base64 -d)
+    else
+      # echo "use default access-key"
+      secret_key="minio123"
+    fi
+    echo "$secret_key"
 }
 
 
