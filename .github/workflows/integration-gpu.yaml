@@ -45,7 +45,7 @@ jobs:
       run: |
         sudo -E bash ./tests/integration/setup-environment.sh
       env:
-        MICROK8S_CHANNEL: 1.29/stable
+        MICROK8S_CHANNEL: 1.28/stable
 
     - name: Setup microk8s
       timeout-minutes: 30
