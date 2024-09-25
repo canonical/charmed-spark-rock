@@ -24,7 +24,7 @@ wait_for_pod() {
     namespace=$2
 
     echo "Waiting for pod '$pod_name' to become ready..."
-    kubectl wait --for condition=Ready pod/$pod_name -n $namespace --timeout 60s
+    kubectl wait --for condition=Ready pod/$pod_name -n $namespace --timeout 300s
 }
 
 

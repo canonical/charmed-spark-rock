@@ -10,7 +10,7 @@ description: |
 
 license: Apache-2.0
 
-version: "3.4.2"
+version: "4.0.0-preview1"
 
 base: ubuntu@22.04
 
@@ -51,8 +51,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.2-ubuntu6/spark-3.4.2-ubuntu6-20240904084915-bin-k8s.tgz
-    source-checksum: sha512/57976cc02187d0b43130ec47ae9f5adb354d199a1e638cbade622ce438324ff689674b1ac959a8e25a705f73fe23bb875e5910b9342b68deb39d612338d35500
+    source: https://github.com/canonical/central-uploader/releases/download/spark-4.0.0-preview1-ubuntu0/spark-4.0.0-preview1-ubuntu0-20240813100410-bin-k8s.tgz
+    source-checksum: sha512/9d506d28d356c33608bebaf53dd6b60705826f60764bb6ed60d1b5cf3f496d99bf45b6aaee5df6f7cce0e37dad04ab003f45e8219e15dc918a2cef78d8425c09
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
@@ -96,16 +96,13 @@ parts:
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
-      ICEBERG_SPARK_RUNTIME_VERSION='3.4_2.12'
-      ICEBERG_VERSION='1.4.3'
-      SPARK_METRICS_VERSION='3.4-1.0.2'
-      SERVLET_FILTERS_VERSION='0.0.1'
-      SHA1SUM_ICEBERG_JAR='48d553e4e5496f731b9e0e6adb5bc0fd040cb0df'
-      SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='9be728c3bda6a8e9db77452f416bc23245271a5db2da64557429352917c0772801ead19f3b1a33f955ec2eced3cb952c6c3a7c617cdeb4389cd17284f3c711f7'
-      SHA512SUM_SPARK_SERVLET_FILTER_JAR='ffeb809d58ef0151d513b09d4c2bfd5cc064b0b888ca45899687aed2f42bcb1ce9834be9709290dd70bd9df84049f02cbbff6c2d5ec3c136c278c93f167c8096'
+
+      SPARK_METRICS_VERSION='4.0-1.0.1'
+      SERVLET_FILTERS_VERSION='4.0.1'
+      SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='0c5af6d7e2a22f3f12a8c3bcb8baccad07934d4c882234b4705b481766e176bf0931cecdaffebfba58361958d30aa62b02f08314d07fd66ea7d4ea026afac989'
+      SHA512SUM_SPARK_SERVLET_FILTER_JAR='a18e8ffe0d80d6cd42e1e817765e62c9e24ee3998b82bd4d848494a5f96c40f548d7148471d3b8ca35d4e5aa71c1ceefffad6f69d21e94794818291bdbe6931f'
 
       JARS=(
-      "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
       "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-LIB_VERSION/spark-metrics-assembly-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
       "https://github.com/canonical/central-uploader/releases/download/servlet-filters-LIB_VERSION/servlet-filters-LIB_VERSION.jar $SERVLET_FILTERS_VERSION sha512sum $SHA512SUM_SPARK_SERVLET_FILTER_JAR"
       )

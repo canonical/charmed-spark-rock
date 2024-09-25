@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - '3.4-22.04/*'
+      - '4.0-preview1-22.04/*'
 
 jobs:
   publish:
