@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - 3.4-22.04/edge
-      - dpe-5350-3.4 # tmp to test new action.
   pull_request:
 jobs:
   build:
