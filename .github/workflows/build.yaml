@@ -44,9 +44,6 @@ jobs:
       - name: Build image (Jupyter)
         run: sudo make build FLAVOUR=jupyter
 
-      - name: Build image (Kyuubi)
-        run: sudo make build FLAVOUR=kyuubi
-
       - name: Get Artifact Name
         id: artifact
         run: |
@@ -54,11 +51,9 @@ jobs:
           echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
           JUPYTER_ARTIFACT=$(make help FLAVOUR=jupyter | grep 'Artifact: ')
           echo "jupyter_artifact_name=${JUPYTER_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
-          KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
-          echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Change artifact permissions
-        run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }}
+        run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }}
           
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
@@ -67,6 +62,5 @@ jobs:
           path: |
             ${{ steps.artifact.outputs.base_artifact_name }}
             ${{ steps.artifact.outputs.jupyter_artifact_name }}
-            ${{ steps.artifact.outputs.kyuubi_artifact_name }}
 
 

@@ -74,21 +74,3 @@ jobs:
             -o ${{ steps.artifact.outputs.jupyter_artifact_name }}
 
           sg snap_microk8s -c "make tests FLAVOUR=jupyter"
-
-      - name: Run tests (Kyuubi)
-        env:
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
-        run: |
-          # Unpack Artifact
-          mv charmed-spark/${{ steps.artifact.outputs.kyuubi_artifact_name }} .
-          rmdir charmed-spark
-
-          # Import artifact into docker with new tag
-          sudo make microk8s-import \
-            FLAVOUR=kyuubi \
-            TAG=$(yq .version images/charmed-spark/rockcraft.yaml) \
-            REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
-            -o ${{ steps.artifact.outputs.kyuubi_artifact_name }}
-
-          sg snap_microk8s -c "make tests FLAVOUR=kyuubi"
