@@ -100,14 +100,17 @@ parts:
       ICEBERG_VERSION='1.4.3'
       SPARK_METRICS_VERSION='3.4-1.0.2'
       SERVLET_FILTERS_VERSION='0.0.1'
+      PROMETHEUS_JMX_EXPORTER_VERSION='0.20.0'
       SHA1SUM_ICEBERG_JAR='48d553e4e5496f731b9e0e6adb5bc0fd040cb0df'
       SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='9be728c3bda6a8e9db77452f416bc23245271a5db2da64557429352917c0772801ead19f3b1a33f955ec2eced3cb952c6c3a7c617cdeb4389cd17284f3c711f7'
       SHA512SUM_SPARK_SERVLET_FILTER_JAR='ffeb809d58ef0151d513b09d4c2bfd5cc064b0b888ca45899687aed2f42bcb1ce9834be9709290dd70bd9df84049f02cbbff6c2d5ec3c136c278c93f167c8096'
+      SHA1SUM_PROMETHEUS_JMX_EXPORTER='7b8a98e3482cee8889698ef391b85c47a3c4ce5b'
 
       JARS=(
       "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
       "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-LIB_VERSION/spark-metrics-assembly-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
       "https://github.com/canonical/central-uploader/releases/download/servlet-filters-LIB_VERSION/servlet-filters-LIB_VERSION.jar $SERVLET_FILTERS_VERSION sha512sum $SHA512SUM_SPARK_SERVLET_FILTER_JAR"
+      "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/LIB_VERSION/jmx_prometheus_javaagent-LIB_VERSION.jar $PROMETHEUS_JMX_EXPORTER_VERSION sha1sum $SHA1SUM_PROMETHEUS_JMX_EXPORTER"
       )
       for ENTRY in "${JARS[@]}"; do
         echo "$ENTRY"
@@ -171,6 +174,7 @@ parts:
     source: .
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
+      conf/jmx_prometheus.yaml: etc/spark/conf/jmx_prometheus.yaml
       bin/sparkd.sh: opt/pebble/sparkd.sh
       bin/history-server.sh: opt/pebble/history-server.sh
       bin/spark-client.pyspark: opt/spark-client/python/bin/spark-client.pyspark
@@ -180,6 +184,7 @@ parts:
       bin/spark-client.spark-submit: opt/spark-client/python/bin/spark-client.spark-submit
     stage:
       - etc/spark8t/conf/
+      - etc/spark/conf/
       - opt/pebble/sparkd.sh
       - opt/pebble/history-server.sh
       - opt/spark-client/python/bin/spark-client.pyspark
