@@ -1,5 +1,15 @@
 #!/bin/bash
 
+function get_log_layer {
+  LOG_LAYER_FILE="/opt/pebble/log-layer.yaml"
+  ESCAPED_LOKI_URL="$(<<< "$LOKI_URL" sed -e 's`[][\\/.*^$]`\\&`g')"
+  sed -e "s/\$LOKI_URL/$ESCAPED_LOKI_URL/g" \
+      -e "s/\$SPARK_APPLICATION_ID/$SPARK_APPLICATION_ID/g" \
+      -e "s/\$SPARK_USER/$SPARK_USER/g" \
+      -e "s/\$SPARK_EXECUTOR_POD_NAME/$SPARK_EXECUTOR_POD_NAME/g" \
+      $LOG_LAYER_FILE
+}
+
 function finish {
   if [ $? -ne 0 ]
   then
@@ -9,6 +19,15 @@ function finish {
 }
 trap finish EXIT
 
+if [ ! -z "${LOKI_URL}" ]
+then
+    echo "Configuring log-forwarding to Loki."
+    RENDERED_LOG_LAYER=$(get_log_layer)
+    echo "$RENDERED_LOG_LAYER" | tee /tmp/rendered_log_layer.yaml
+    pebble add logging /tmp/rendered_log_layer.yaml
+else
+    echo "Log-forwarding to Loki is disabled."
+fi
 
 FLAVOUR=$1
 
