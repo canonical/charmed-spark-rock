@@ -6,7 +6,8 @@ log-targets:
     services: [all]
     labels:
       product: charmed-spark
+      flavour: $FLAVOUR
       app: spark
       app_id: $SPARK_APPLICATION_ID
       user: $SPARK_USER
-      pod: $SPARK_EXECUTOR_POD_NAME
+      hostname: $HOSTNAME

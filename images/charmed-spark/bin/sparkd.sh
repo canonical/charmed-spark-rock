@@ -1,13 +1,27 @@
 #!/bin/bash
 
 function get_log_layer {
-  LOG_LAYER_FILE="/opt/pebble/log-layer.yaml"
-  ESCAPED_LOKI_URL="$(<<< "$LOKI_URL" sed -e 's`[][\\/.*^$]`\\&`g')"
-  sed -e "s/\$LOKI_URL/$ESCAPED_LOKI_URL/g" \
+  local loki_url=$1
+  local log_layer_file=${2-"/opt/pebble/log-layer.yaml"}
+  sed -e "s/\$LOKI_URL/$loki_url/g" \
+      -e "s/\$FLAVOUR/$FLAVOUR/g" \
       -e "s/\$SPARK_APPLICATION_ID/$SPARK_APPLICATION_ID/g" \
       -e "s/\$SPARK_USER/$SPARK_USER/g" \
-      -e "s/\$SPARK_EXECUTOR_POD_NAME/$SPARK_EXECUTOR_POD_NAME/g" \
-      $LOG_LAYER_FILE
+      -e "s/\$HOSTNAME/$HOSTNAME/g" \
+      $log_layer_file
+}
+
+function log_forwarding {
+  # We need to escape special characters from URL to be able to use with template.
+  local loki_url="$(<<< "$LOKI_URL" sed -e 's`[][\\/.*^$]`\\&`g')"
+  if [ ! -z "$loki_url" ]; then
+      echo "Log-forwarding to Loki is enabled."
+      local rendered_log_layer=$(get_log_layer $loki_url)
+      echo "$rendered_log_layer" | tee /tmp/rendered_log_layer.yaml
+      pebble add logging /tmp/rendered_log_layer.yaml
+  else
+      echo "Log-forwarding to Loki is disabled."
+  fi
 }
 
 function finish {
@@ -19,22 +33,13 @@ function finish {
 }
 trap finish EXIT
 
-if [ ! -z "${LOKI_URL}" ]
-then
-    echo "Configuring log-forwarding to Loki."
-    RENDERED_LOG_LAYER=$(get_log_layer)
-    echo "$RENDERED_LOG_LAYER" | tee /tmp/rendered_log_layer.yaml
-    pebble add logging /tmp/rendered_log_layer.yaml
-else
-    echo "Log-forwarding to Loki is disabled."
-fi
-
 FLAVOUR=$1
 
 echo "Running script with ${FLAVOUR} flavour"
 
 case "${FLAVOUR}" in
   driver|executor)
+    log_forwarding
     pushd /opt/spark
     ./entrypoint.sh "$@"
     ;;
