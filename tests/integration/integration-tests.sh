@@ -451,7 +451,7 @@ run_example_job_in_pod_with_log_forwarding() {
   echo "IP: $IP_ADDRESS"
 
   kubectl -n $NAMESPACE exec testpod -- env PORT="$SERVER_PORT" IP="$IP_ADDRESS" UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
-                  /bin/bash -c 'spark-client.spark-submit \
+                  /bin/bash -c 'spark-client.spark-submit -v \
                   --username $UU --namespace $NN \
                   --conf spark.kubernetes.driver.request.cores=100m \
                   --conf spark.kubernetes.executor.request.cores=100m \
