@@ -453,7 +453,7 @@ run_example_job_in_pod_with_log_forwarding() {
                   --conf spark.kubernetes.driver.request.cores=100m \
                   --conf spark.kubernetes.executor.request.cores=100m \
                   --conf spark.kubernetes.container.image=$IM \
-                  --conf spark.executorEnv.LOKI_URL="$IP:$PORT" \
+                  --conf spark.executorEnv.LOKI_URL="http://$IP:$PORT" \
                   --class org.apache.spark.examples.SparkPi \
                   local:///opt/spark/examples/jars/$JJ 1000'
 
