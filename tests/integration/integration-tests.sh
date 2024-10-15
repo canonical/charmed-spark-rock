@@ -55,6 +55,9 @@ validate_metrics() {
 
 validate_logs() {
   log=$1
+  echo "LOGS:"
+  echo $log
+  echo "End of LOGS"
   if [ $(grep -Ri "Configuring log-forwarding to Loki." $log | wc -l) -lt 2 ]; then
     exit 1
   fi
@@ -439,7 +442,7 @@ run_example_job_in_pod_with_log_forwarding() {
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   # start simple http server
-  LOG_FILE="/tmp/server.log"
+  LOG_FILE="/tmp/server-forward.log"
   SERVER_PORT=9091
   python3 tests/integration/resources/test_web_server.py $SERVER_PORT > $LOG_FILE &
   HTTP_SERVER_PID=$!
@@ -454,6 +457,7 @@ run_example_job_in_pod_with_log_forwarding() {
                   --conf spark.kubernetes.executor.request.cores=100m \
                   --conf spark.kubernetes.container.image=$IM \
                   --conf spark.executorEnv.LOKI_URL="http://$IP:$PORT" \
+                  --conf spark.driverEnv.LOKI_URL="http://$IP:$PORT" \
                   --class org.apache.spark.examples.SparkPi \
                   local:///opt/spark/examples/jars/$JJ 1000'
 
