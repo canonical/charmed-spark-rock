@@ -182,6 +182,7 @@ parts:
       bin/spark-client.service-account-registry: opt/spark-client/python/bin/spark-client.service-account-registry
       bin/spark-client.spark-shell: opt/spark-client/python/bin/spark-client.spark-shell
       bin/spark-client.spark-submit: opt/spark-client/python/bin/spark-client.spark-submit
+      pebble/log-layer.yaml: opt/pebble/log-layer.yaml
     stage:
       - etc/spark8t/conf/
       - etc/spark/conf/
@@ -192,6 +193,7 @@ parts:
       - opt/spark-client/python/bin/spark-client.service-account-registry
       - opt/spark-client/python/bin/spark-client.spark-shell
       - opt/spark-client/python/bin/spark-client.spark-submit
+      - opt/pebble/log-layer.yaml
 
   user-setup:
     plugin: nil
