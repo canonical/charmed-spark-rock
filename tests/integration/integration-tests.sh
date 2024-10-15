@@ -56,7 +56,7 @@ validate_metrics() {
 validate_logs() {
   log=$1
   echo "LOGS:"
-  echo $log
+  cat $log
   echo "End of LOGS"
   if [ $(grep -Ri "Configuring log-forwarding to Loki." $log | wc -l) -lt 2 ]; then
     exit 1
