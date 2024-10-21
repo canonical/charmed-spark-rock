@@ -51,7 +51,7 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.2-ubuntu7-20241018165054-bin-k8s.tgz
+    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.2-ubuntu7/spark-3.4.2-ubuntu7-20241018165054-bin-k8s.tgz
     source-checksum: sha512/1edf011d8de4b8c0cf1d18ee0a620a245233438b0162c08fd9728afc9f2bb79db03db8d540bca5dbee1b1bbe33a2a3645ab940a77f1d928e0f632905b2032c67
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
