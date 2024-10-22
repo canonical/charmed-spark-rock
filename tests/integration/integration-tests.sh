@@ -53,6 +53,20 @@ validate_metrics() {
   fi
 }
 
+validate_logs() {
+  log=$1
+  if [ $(grep -Ri "Log-forwarding to Loki is enabled." $log | wc -l) -lt 3 ]; then
+    echo "ERROR: Could not validate logs."
+    echo "DEBUG: Log file:\n$(cat $log)"
+    exit 1
+  fi
+  if [ $(grep -Ri 'Layer \\\\"logging\\\\" added successfully from \\\\"/tmp/rendered_log_layer.yaml\\\\"' $log | wc -l) -lt 3 ]; then
+    echo "ERROR: Could not validate logs."
+    echo "DEBUG: Log file:\n$(cat $log)"
+    exit 1
+  fi
+}
+
 setup_user() {
   echo "setup_user() ${1} ${2}"
 
@@ -422,6 +436,56 @@ run_example_job_in_pod_with_metrics() {
 }
 
 
+run_example_job_in_pod_with_log_forwarding() {
+  NAMESPACE=${1-$NAMESPACE}
+  USERNAME=${2-spark}
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+
+  PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
+  # start simple http server
+  LOG_FILE="/tmp/server-loki.log"
+  SERVER_PORT=9091
+  python3 tests/integration/resources/test_web_server.py $SERVER_PORT > $LOG_FILE &
+  HTTP_SERVER_PID=$!
+  # get ip address
+  IP_ADDRESS=$(hostname -I | cut -d ' ' -f 1)
+  echo "IP: $IP_ADDRESS"
+
+  kubectl -n $NAMESPACE exec testpod -- env PORT="$SERVER_PORT" IP="$IP_ADDRESS" UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+                  /bin/bash -c 'spark-client.spark-submit \
+                  --username $UU --namespace $NN \
+                  --conf spark.kubernetes.driver.request.cores=100m \
+                  --conf spark.kubernetes.executor.request.cores=100m \
+                  --conf spark.kubernetes.container.image=$IM \
+                  --conf spark.executorEnv.LOKI_URL="http://$IP:$PORT" \
+                  --conf spark.kubernetes.driverEnv.LOKI_URL="http://$IP:$PORT" \
+                  --class org.apache.spark.examples.SparkPi \
+                  local:///opt/spark/examples/jars/$JJ 1000'
+
+  # kubectl --kubeconfig=${KUBE_CONFIG} get pods
+  DRIVER_PODS=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver )
+  DRIVER_JOB=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)
+
+  if [[ "${DRIVER_JOB}" == "${PREVIOUS_JOB}" ]]
+  then
+    echo "ERROR: Sample job has not run!"
+    exit 1
+  fi
+
+  # Check job output
+  # Sample output
+  # "Pi is roughly 3.13956232343"
+  pi=$(kubectl logs $(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | tail -n 1 | cut -d' ' -f1)  -n ${NAMESPACE} | grep 'Pi is roughly' | rev | cut -d' ' -f1 | rev | cut -c 1-3)
+  echo -e "Spark Pi Job Output: \n ${pi}"
+
+  validate_pi_value $pi
+  validate_logs $LOG_FILE
+
+  # kill http server
+  kill $HTTP_SERVER_PID
+}
+
+
 run_example_job_with_error_in_pod() {
   SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
 
@@ -656,6 +720,12 @@ echo -e "RUN EXAMPLE JOB WITH PROMETHEUS METRICS"
 echo -e "########################################"
 
 (setup_user_context && test_example_job_in_pod_with_metrics && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo -e "########################################"
+echo -e "RUN EXAMPLE JOB WITH LOG FORWARDING"
+echo -e "########################################"
+
+(setup_user_context && run_example_job_in_pod_with_log_forwarding && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "########################################"
 echo -e "RUN EXAMPLE JOB WITH ERRORS"
