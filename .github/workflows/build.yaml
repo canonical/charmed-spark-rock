@@ -2,6 +2,10 @@ name: Build ROCK
 
 on:
   workflow_call:
+    inputs:
+      branch:
+        type: string
+        default: ''
 
 jobs:
   lint:
@@ -27,6 +31,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Setup LXD
         uses: canonical/setup-lxd@main

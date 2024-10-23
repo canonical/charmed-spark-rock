@@ -3,10 +3,20 @@ on:
   push:
     branches:
       - 3.4-22.04/edge
+      - 3.5-22.04/edge
+      - 3.4-22.04/stable
+      - 3.5-22.04/stable
   pull_request:
+  workflow_call:
+    inputs:
+      branch:
+        type: string
+        default: ''
 jobs:
   build:
     uses: ./.github/workflows/build.yaml
+    with:
+      branch: ${{ inputs.branch }}
   scan:
     name: Trivy scan and sbom generation
     needs: build
@@ -14,6 +24,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
       - name: Install rockcraft (for skopeo)
         run: |
           sudo snap install rockcraft --classic --edge
@@ -47,6 +60,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
+          ref: ${{ inputs.branch }}
 
       - name: Run Trivy in GitHub SBOM mode and submit results to Dependency Graph
         uses: aquasecurity/trivy-action@0.20.0
