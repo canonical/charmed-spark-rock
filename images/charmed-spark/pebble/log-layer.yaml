@@ -10,4 +10,4 @@ log-targets:
       app: spark
       spark_job_id: $SPARK_APPLICATION_ID
       user: $SPARK_USER
-      hostname: $HOSTNAME
+      pod: $HOSTNAME
