@@ -1,0 +1,13 @@
+log-targets:
+  grafana-agent-k8s:
+    override: replace
+    type: loki
+    location: $LOKI_URL
+    services: [all]
+    labels:
+      product: charmed-spark
+      role: $FLAVOUR
+      app: spark
+      spark_job_id: $SPARK_APPLICATION_ID
+      user: $SPARK_USER
+      pod: $HOSTNAME
