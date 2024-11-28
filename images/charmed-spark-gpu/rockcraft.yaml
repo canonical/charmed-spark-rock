@@ -53,7 +53,7 @@ parts:
   spark:
     plugin: dump
     source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.2-ubuntu8/spark-3.4.2-ubuntu8-20241128203809-bin-k8s.tgz
-    source-checksum: 6a5d2a10d00b2ba4af6a460323aba3a2f143d3bc23bc56dc6f9c414fe41c02bb8913a03c88e32546036cb87614cf213badfa00625df5b49f9c8881efdc643343
+    source-checksum: sha512/6a5d2a10d00b2ba4af6a460323aba3a2f143d3bc23bc56dc6f9c414fe41c02bb8913a03c88e32546036cb87614cf213badfa00625df5b49f9c8881efdc643343
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
