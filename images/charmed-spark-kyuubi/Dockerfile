@@ -9,8 +9,8 @@
 # cloud native technologies.
 # ---------------------------------------------------------------------------
 
-    ARG KYUUBI_ARTIFACT="https://dlcdn.apache.org/kyuubi/kyuubi-1.9.0/apache-kyuubi-1.9.0-bin.tgz"
-    ARG CHECKSUM="54721812f35743aec60104466c3527e6d68f2a75afb3bdbd68d06c9bd7e09a5f35f71d9edb9f24cc2189d403ef5aa65ee54fe594ca1c78e9ab621177bab32054"
+    ARG KYUUBI_ARTIFACT="https://dlcdn.apache.org/kyuubi/kyuubi-1.9.3/apache-kyuubi-1.9.3-bin.tgz"
+    ARG CHECKSUM="4799abe24dbf624d8c6bbf84602e4c9d45ec5b8544f1d02b05b25489d2b57955b2759041bd88d7cce2697403fc4b2fbb5e27912811c0c3c5559bb0860f18e96e"
     ARG TARFILE="kyuubi.tar.tz"
     ARG BASE_IMAGE
 
