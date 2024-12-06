@@ -34,7 +34,7 @@ case "${FLAVOUR}" in
     pushd /opt/spark
     ./entrypoint.sh "$@"
     ;;
-  "")
+  ""|"sleep")
     # Infinite sleep to allow pebble to be running indefinitely
     sleep inf
     ;;
