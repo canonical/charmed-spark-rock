@@ -24,6 +24,15 @@ function log_forwarding {
   fi
 }
 
+function finish {
+  if [ $? -ne 0 ]
+  then
+    kill -1 1
+    sleep 1
+  fi
+}
+trap finish EXIT
+
 FLAVOUR=$1
 
 echo "Running script with ${FLAVOUR} flavour"
