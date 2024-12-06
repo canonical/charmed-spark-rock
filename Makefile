@@ -245,7 +245,7 @@ $(SPARK_GPU_MARKER): $(ROCK_FILE_GPU)
           oci-archive:"$(ROCK_FILE_GPU)" \
           docker-daemon:"$(SPARK_GPU_DOCKER_ALIAS)"
 
-	docker save $(SPARK_GPU_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
+	docker save $(SPARK_GPU_DOCKER_ALIAS) -o $(SPARK_GPU_ARTIFACT)
 
 	touch $(SPARK_GPU_MARKER)
 
