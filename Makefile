@@ -191,6 +191,8 @@ $(SPARK_MARKER): $(ROCK_FILE)
           oci-archive:"$(ROCK_FILE)" \
           docker-daemon:"$(SPARK_DOCKER_ALIAS)"
 
+	docker save $(SPARK_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
+
 	touch $(SPARK_MARKER)
 
 
@@ -242,6 +244,8 @@ $(SPARK_GPU_MARKER): $(ROCK_FILE_GPU)
           copy \
           oci-archive:"$(ROCK_FILE_GPU)" \
           docker-daemon:"$(SPARK_GPU_DOCKER_ALIAS)"
+
+	docker save $(SPARK_GPU_DOCKER_ALIAS) -o $(SPARK_ARTIFACT)
 
 	touch $(SPARK_GPU_MARKER)
 
