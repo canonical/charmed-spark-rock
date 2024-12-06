@@ -34,7 +34,7 @@ environment:
 
 services:
   sparkd:
-    command: "/bin/bash /opt/pebble/sparkd.sh"
+    command: "/bin/bash /opt/pebble/sparkd.sh [ sleep ]"
     summary: "This is the service to startup Spark processes using the Spark entrypoint"
     override: replace
     startup: enabled
