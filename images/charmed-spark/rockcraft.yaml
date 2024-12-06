@@ -18,6 +18,7 @@ platforms:
   amd64:
 
 run_user: _daemon_
+entrypoint-service: sparkd
 
 environment:
   SPARK_HOME: /opt/spark
