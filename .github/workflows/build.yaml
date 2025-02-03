@@ -9,7 +9,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
       - name: Checkout repository
@@ -24,7 +24,7 @@ jobs:
             --no-warnings images/charmed-spark-gpu/rockcraft.yaml
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     needs:
       - lint
