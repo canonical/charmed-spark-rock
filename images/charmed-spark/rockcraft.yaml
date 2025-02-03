@@ -10,7 +10,7 @@ description: |
 
 license: Apache-2.0
 
-version: "3.5.1"
+version: "3.5.4"
 
 base: ubuntu@22.04
 
