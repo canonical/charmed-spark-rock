@@ -63,9 +63,6 @@
     # Copy pebble layers
     COPY ./pebble/layers.yaml /var/lib/pebble/default/layers/002-charmed-kyuubi.yaml
 
-    # Copy PostgreSQL dependencies
-    RUN cp /opt/kyuubi/jars/postgresql* /opt/spark/jars
-
     # Set appropriate permissions
     RUN chown -R _daemon_:_daemon_ /opt/kyuubi/ && \
         chmod -R 750 /opt/kyuubi
