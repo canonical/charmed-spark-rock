@@ -63,8 +63,7 @@
     COPY --from=downloader /opt/kyuubi /opt/kyuubi
 
     # Copy the extracted Hive files from the temporary stage
-    COPY --from=downloader /opt/hive/scripts /opt/hive/scripts
-    COPY --from=downloader /opt/hive/conf /opt/hive/conf
+    COPY --from=downloader /opt/hive/scripts/metastore/upgrade/postgres /opt/hive/scripts/metastore/upgrade/postgres
 
     # Copy local files to the container
     COPY ./bin/kyuubi.sh /opt/pebble/kyuubi.sh
