@@ -24,8 +24,11 @@
     FROM alpine:latest AS downloader
 
     ARG KYUUBI_ARTIFACT
+    ARG HIVE_ARTIFACT
     ARG KYUUBI_512_CHECKSUM
+    ARG HIVE_256_CHECKSUM
     ARG KYUUBI_TARFILE
+    ARG HIVE_TARFILE
 
     # Install wget and tar in the temporary image
     RUN apk add --no-cache wget tar
@@ -34,9 +37,17 @@
     RUN wget -O $KYUUBI_TARFILE $KYUUBI_ARTIFACT
     RUN echo "$KYUUBI_512_CHECKSUM  $KYUUBI_TARFILE" | sha512sum -c -
 
-    # Create the target directory and extract the tarball for kyuubi
+    # Download and verify Hive
+    RUN wget -O $HIVE_TARFILE $HIVE_ARTIFACT
+    RUN echo "$HIVE_256_CHECKSUM  $HIVE_TARFILE" | sha256sum -c -
+
+    # Create the target directory and extract the tarball for Kyuubi
     RUN mkdir -p /opt/kyuubi && \
         tar -xzvf $KYUUBI_TARFILE -C /opt/kyuubi --strip-components=1
+
+    # Create the target directory and extract the tarball for Hive
+    RUN mkdir -p /opt/hive && \
+        tar -xzvf $HIVE_TARFILE -C /opt/hive --strip-components=1
 
 # --------------------------------------------------------------------------
 # Final stage 
@@ -51,9 +62,15 @@
     # Copy the extracted Kyuubi files from the temporary stage
     COPY --from=downloader /opt/kyuubi /opt/kyuubi
 
+    # Copy the extracted Hive files from the temporary stage
+    COPY --from=downloader /opt/hive/scripts/metastore/upgrade/postgres /opt/hive/scripts/metastore/upgrade/postgres
+
     # Copy local files to the container
     COPY ./bin/kyuubi.sh /opt/pebble/kyuubi.sh
     RUN chown _daemon_:_daemon_ /opt/pebble/kyuubi.sh
+
+    # Copy hive schematool to the image
+    COPY ./bin/schematool.sh /opt/hive/bin/schematool.sh
 
     # Copy pebble layers
     COPY ./pebble/layers.yaml /var/lib/pebble/default/layers/002-charmed-kyuubi.yaml
