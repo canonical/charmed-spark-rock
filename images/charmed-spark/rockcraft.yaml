@@ -97,20 +97,24 @@ parts:
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
       ICEBERG_SPARK_RUNTIME_VERSION='3.5_2.12'
-      ICEBERG_VERSION='1.7.1'
-      SPARK_METRICS_VERSION='3.4-1.0.1'
+      ICEBERG_VERSION='1.9.0'
+      SPARK_METRICS_VERSION='3.4-1.0.4'
       SERVLET_FILTERS_VERSION='0.0.1'
       PROMETHEUS_JMX_EXPORTER_VERSION='0.15.0'
-      SHA1SUM_ICEBERG_JAR='03c97e0cf547c21ef1fe5c735a2bc306340ec785'
-      SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='493cf77133cbf03e96fb848121ce10ac16e6f907f595df637649b98b42118e57d6b6e1bdab71bfee3394eb369637c5b4f6b05dd8fa30a1ff6899e74069c972ce'
+      POSTGRESQL_VERSION='42.7.2'
+      SHA1SUM_ICEBERG_JAR='811c4f3f6ac9ee1b00cdefca8d844ed19da8ffef'
+      SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='e3cc83f38f2924f99203fe2f39ab54c5d483ed627b78e9cd8d2a8813ce862047acbbb75bad3a73f56c16c685822b66488cc18d29ed27261b3a961bd9e411ca83'
       SHA512SUM_SPARK_SERVLET_FILTER_JAR='ffeb809d58ef0151d513b09d4c2bfd5cc064b0b888ca45899687aed2f42bcb1ce9834be9709290dd70bd9df84049f02cbbff6c2d5ec3c136c278c93f167c8096'
       SHA1SUM_PROMETHEUS_JMX_EXPORTER='a1061f29088ac2709da076a97736de575a872538'
+      SHA1SUM_POSTGRESQL='86ed42574cd68662b05d3b00432a34e9a34cb12c'
 
       JARS=(
       "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
       "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-LIB_VERSION/spark-metrics-assembly-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
       "https://github.com/canonical/central-uploader/releases/download/servlet-filters-LIB_VERSION/servlet-filters-LIB_VERSION.jar $SERVLET_FILTERS_VERSION sha512sum $SHA512SUM_SPARK_SERVLET_FILTER_JAR"
       "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/LIB_VERSION/jmx_prometheus_javaagent-LIB_VERSION.jar $PROMETHEUS_JMX_EXPORTER_VERSION sha1sum $SHA1SUM_PROMETHEUS_JMX_EXPORTER"
+      "https://repo1.maven.org/maven2/org/postgresql/postgresql/LIB_VERSION/postgresql-LIB_VERSION.jar $POSTGRESQL_VERSION sha1sum $SHA1SUM_POSTGRESQL"
+
       )
       for ENTRY in "${JARS[@]}"; do
         echo "$ENTRY"
