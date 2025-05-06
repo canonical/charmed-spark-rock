@@ -22,26 +22,18 @@
 
     ARG KYUUBI_ARTIFACT
     ARG KYUUBI_512_CHECKSUM
-    ARG TARFILE
+    ARG KYUUBI_TARFILE
 
     # Install wget and tar in the temporary image
     RUN apk add --no-cache wget tar
-    RUN echo hello
-    RUN echo $TARFILE
-    RUN echo bye
 
     # Download and verify Kyuubi
-    RUN wget -O $TARFILE $KYUUBI_ARTIFACT && \
-        echo "$KYUUBI_512_CHECKSUM  $TARFILE" | sha512sum -c -
+    RUN wget -O $KYUUBI_TARFILE $KYUUBI_ARTIFACT
+    RUN echo "$KYUUBI_512_CHECKSUM  $KYUUBI_TARFILE" | sha512sum -c -
 
-    # Debugging steps to check the downloaded file and checksums
-    RUN ls -lh $TARFILE
-    RUN sha512sum $TARFILE
-    RUN echo "$KYUUBI_512_CHECKSUM  $TARFILE" | sha512sum -c -
-
-    # Create the target directory and extract the tarball
+    # Create the target directory and extract the tarball for kyuubi
     RUN mkdir -p /opt/kyuubi && \
-        tar -xzvf $TARFILE -C /opt/kyuubi --strip-components=1
+        tar -xzvf $KYUUBI_TARFILE -C /opt/kyuubi --strip-components=1
 
 # --------------------------------------------------------------------------
 # Final stage 
