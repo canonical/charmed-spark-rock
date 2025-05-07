@@ -9,9 +9,9 @@
 # cloud native technologies.
 # ---------------------------------------------------------------------------
 
-    ARG KYUUBI_ARTIFACT="https://dlcdn.apache.org/kyuubi/kyuubi-1.9.0/apache-kyuubi-1.9.0-bin.tgz"
-    ARG CHECKSUM="54721812f35743aec60104466c3527e6d68f2a75afb3bdbd68d06c9bd7e09a5f35f71d9edb9f24cc2189d403ef5aa65ee54fe594ca1c78e9ab621177bab32054"
-    ARG TARFILE="kyuubi.tar.tz"
+    ARG KYUUBI_ARTIFACT="https://dlcdn.apache.org/kyuubi/kyuubi-1.10.1/apache-kyuubi-1.10.1-bin.tgz"
+    ARG KYUUBI_512_CHECKSUM="9b565bb7c628a50ecd394741eedb9a5154590709603e26f81de88ffd3b5256603215e71160de61360b8f2e2842116026c2f9ed3a60a8f0356388e3dd2c00b84c"
+    ARG KYUUBI_TARFILE="kyuubi.tar.tgz"
     ARG BASE_IMAGE
 
 # --------------------------------------------------------------------------
@@ -21,27 +21,19 @@
     FROM alpine:latest AS downloader
 
     ARG KYUUBI_ARTIFACT
-    ARG CHECKSUM
-    ARG TARFILE
+    ARG KYUUBI_512_CHECKSUM
+    ARG KYUUBI_TARFILE
 
     # Install wget and tar in the temporary image
     RUN apk add --no-cache wget tar
-    RUN echo hello
-    RUN echo $TARFILE
-    RUN echo bye
 
     # Download and verify Kyuubi
-    RUN wget -O $TARFILE $KYUUBI_ARTIFACT && \
-        echo "$CHECKSUM  $TARFILE" | sha512sum -c -
+    RUN wget -O $KYUUBI_TARFILE $KYUUBI_ARTIFACT
+    RUN echo "$KYUUBI_512_CHECKSUM  $KYUUBI_TARFILE" | sha512sum -c -
 
-    # Debugging steps to check the downloaded file and checksums
-    RUN ls -lh $TARFILE
-    RUN sha512sum $TARFILE
-    RUN echo "$CHECKSUM  $TARFILE" | sha512sum -c -
-
-    # Create the target directory and extract the tarball
+    # Create the target directory and extract the tarball for kyuubi
     RUN mkdir -p /opt/kyuubi && \
-        tar -xzvf $TARFILE -C /opt/kyuubi --strip-components=1
+        tar -xzvf $KYUUBI_TARFILE -C /opt/kyuubi --strip-components=1
 
 # --------------------------------------------------------------------------
 # Final stage 
