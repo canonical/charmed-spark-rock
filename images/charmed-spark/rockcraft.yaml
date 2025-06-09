@@ -30,6 +30,7 @@ environment:
   HOME: /var/lib/spark
   SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
+  PEBBLE_VERBOSE: 1
 
 services:
   sparkd:
