@@ -31,6 +31,7 @@ environment:
   SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
   LD_LIBRARY_PATH: /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+  PEBBLE_VERBOSE: 1
 
 services:
   sparkd:
