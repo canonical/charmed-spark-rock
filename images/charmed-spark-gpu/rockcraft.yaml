@@ -19,6 +19,7 @@ platforms:
   amd64:
 
 run_user: _daemon_
+entrypoint-service: sparkd
 
 environment:
   SPARK_HOME: /opt/spark
@@ -30,10 +31,11 @@ environment:
   SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
   LD_LIBRARY_PATH: /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+  PEBBLE_VERBOSE: 1
 
 services:
   sparkd:
-    command: "/bin/bash /opt/pebble/sparkd.sh"
+    command: "/bin/bash /opt/pebble/sparkd.sh [ sleep ]"
     summary: "This is the service to startup Spark processes using the Spark entrypoint"
     override: replace
     startup: enabled
