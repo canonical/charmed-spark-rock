@@ -9,8 +9,8 @@
 # cloud native technologies.
 # ---------------------------------------------------------------------------
 
-    ARG KYUUBI_ARTIFACT="https://dlcdn.apache.org/kyuubi/kyuubi-1.10.1/apache-kyuubi-1.10.1-bin.tgz"
-    ARG KYUUBI_512_CHECKSUM="9b565bb7c628a50ecd394741eedb9a5154590709603e26f81de88ffd3b5256603215e71160de61360b8f2e2842116026c2f9ed3a60a8f0356388e3dd2c00b84c"
+    ARG KYUUBI_ARTIFACT="https://github.com/canonical/central-uploader/releases/download/kyuubi-1.10.2-ubuntu0/kyuubi-1.10.2-ubuntu0-20250610141741.tgz"
+    ARG KYUUBI_512_CHECKSUM="59299a27f540d8abc30ec29910a872ab89fe9c5a6af186101c4344358ddce3714180544a896cbf415a0c262c32a23f62dc3e9d14f0593e081975de9922998d9f"
     ARG KYUUBI_TARFILE="kyuubi.tar.tgz"
     ARG BASE_IMAGE
 

@@ -18,6 +18,7 @@ platforms:
   amd64:
 
 run_user: _daemon_
+entrypoint-service: sparkd
 
 environment:
   SPARK_HOME: /opt/spark
@@ -29,10 +30,11 @@ environment:
   HOME: /var/lib/spark
   SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
+  PEBBLE_VERBOSE: 1
 
 services:
   sparkd:
-    command: "/bin/bash /opt/pebble/sparkd.sh"
+    command: "/bin/bash /opt/pebble/sparkd.sh [ sleep ]"
     summary: "This is the service to startup Spark processes using the Spark entrypoint"
     override: replace
     startup: enabled
@@ -97,15 +99,15 @@ parts:
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
       ICEBERG_SPARK_RUNTIME_VERSION='3.5_2.12'
-      ICEBERG_VERSION='1.9.0'
-      SPARK_METRICS_VERSION='3.4-1.0.4'
+      ICEBERG_VERSION='1.9.1'
+      SPARK_METRICS_VERSION='3.4-1.0.5'
       SERVLET_FILTERS_VERSION='0.0.1'
-      PROMETHEUS_JMX_EXPORTER_VERSION='0.15.0'
+      PROMETHEUS_JMX_EXPORTER_VERSION='0.20.0'
       POSTGRESQL_VERSION='42.7.2'
-      SHA1SUM_ICEBERG_JAR='811c4f3f6ac9ee1b00cdefca8d844ed19da8ffef'
-      SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='e3cc83f38f2924f99203fe2f39ab54c5d483ed627b78e9cd8d2a8813ce862047acbbb75bad3a73f56c16c685822b66488cc18d29ed27261b3a961bd9e411ca83'
+      SHA1SUM_ICEBERG_JAR='577f2d40043ab6af4387eef5e856bdde06a931e6'
+      SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='5603f59fe6362bfc0e66c7da17b749b1d859fe29425aa067c6efe4393f9af59ac11d22c759ce5265938ebaabe97d5c42af21e2a8fed8aaeb52eaaf5b222a83c9'
       SHA512SUM_SPARK_SERVLET_FILTER_JAR='ffeb809d58ef0151d513b09d4c2bfd5cc064b0b888ca45899687aed2f42bcb1ce9834be9709290dd70bd9df84049f02cbbff6c2d5ec3c136c278c93f167c8096'
-      SHA1SUM_PROMETHEUS_JMX_EXPORTER='a1061f29088ac2709da076a97736de575a872538'
+      SHA1SUM_PROMETHEUS_JMX_EXPORTER='7b8a98e3482cee8889698ef391b85c47a3c4ce5b'
       SHA1SUM_POSTGRESQL='86ed42574cd68662b05d3b00432a34e9a34cb12c'
 
       JARS=(
