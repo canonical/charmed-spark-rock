@@ -11,7 +11,7 @@ on:
     inputs:
       branch:
         type: string
-        default: ''
+        default: ""
 jobs:
   build:
     uses: ./.github/workflows/build.yaml
@@ -21,6 +21,11 @@ jobs:
     name: Trivy scan and sbom generation
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flavour:
+          - charmed-spark
+          - charmed-spark-kyuubi
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,7 +38,8 @@ jobs:
       - name: Get Artifact Name
         id: artifact
         run: |
-          BASE_ARTIFACT=$(make help | grep 'Artifact: ')
+          FLAVOUR=${{ matrix.flavour }}
+          BASE_ARTIFACT=$(make help | grep 'Artifact: ' | sed "s/charmed-spark/$FLAVOUR/g")
           echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -46,36 +52,37 @@ jobs:
           mv charmed-spark/${{ steps.artifact.outputs.base_artifact_name }} .
           sudo rockcraft.skopeo --insecure-policy copy \
             docker-archive:${{ steps.artifact.outputs.base_artifact_name }} \
-            docker-daemon:trivy/charmed-spark:test
+            docker-daemon:trivy/${{ matrix.flavour }}:test
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.31.0
         with:
-          image-ref: 'trivy/charmed-spark:test'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'MEDIUM,HIGH,CRITICAL'
+          image-ref: "trivy/${{ matrix.flavour }}:test"
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "MEDIUM,HIGH,CRITICAL"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
           ref: ${{ inputs.branch }}
+          category: ${{ matrix.flavour }}
 
       - name: Run Trivy in GitHub SBOM mode and submit results to Dependency Graph
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.31.0
         with:
-          scan-type: 'image'
-          format: 'spdx-json'
-          output: 'dependency-results.sbom.json'
-          image-ref: 'trivy/charmed-spark:test'
+          scan-type: "image"
+          format: "spdx-json"
+          output: "dependency-results.sbom.json"
+          image-ref: "trivy/${{ matrix.flavour }}:test"
           github-pat: ${{ secrets.GITHUB_TOKEN }}
           severity: "MEDIUM,HIGH,CRITICAL"
           scanners: "vuln"
-      
+
       - name: Upload trivy report as a Github artifact
         uses: actions/upload-artifact@v4
         with:
           name: trivy-sbom-report
-          path: '${{ github.workspace }}/dependency-results.sbom.json'
+          path: "${{ github.workspace }}/dependency-results-${{ matrix.flavour }}.sbom.json"
           retention-days: 90
