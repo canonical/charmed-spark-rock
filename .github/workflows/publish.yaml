@@ -33,7 +33,7 @@ jobs:
       run: |
         MAJOR_MINOR_VERSION=$(echo ${{ steps.rock_metadata.outputs.version }} | sed -n "s/\(^[0-9]*\.[0-9]*\).*/\1/p")
         BASE=${{ steps.rock_metadata.outputs.base }}
-        if [ "${MAJOR_MINOR_VERSION}-${BASE}" != "${{ steps.branch_metadata.outputs.track }}" ]; then exit 1; fi
+        if [ "${MAJOR_MINOR_VERSION}" != "${{ steps.branch_metadata.outputs.track }}" ]; then exit 1; fi
       continue-on-error: false
 
     outputs:
@@ -94,7 +94,7 @@ jobs:
           
           REPOSITORY="ghcr.io/canonical/"
           RISK=${{ needs.release_checks.outputs.risk }}
-          TRACK=${{ needs.release_checks.outputs.track }}
+          TRACK=${{ needs.release_checks.outputs.track }}-${{ needs.release_checks.outputs.base }}
           if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
 
           IMAGE_NAME=$(make help REPOSITORY=${REPOSITORY} TAG=${TAG} help | grep "Image\:" | cut -d ":" -f2  | xargs)
@@ -128,7 +128,7 @@ jobs:
 
           REPOSITORY="ghcr.io/canonical/"
           RISK=${{ needs.release_checks.outputs.risk }}
-          TRACK=${{ needs.release_checks.outputs.track }}
+          TRACK=${{ needs.release_checks.outputs.track }}-${{ needs.release_checks.outputs.base }}
           if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
       
           # Import artifact into docker with new tag
@@ -166,7 +166,7 @@ jobs:
 
           REPOSITORY="ghcr.io/canonical/"
           RISK=${{ needs.release_checks.outputs.risk }}
-          TRACK=${{ needs.release_checks.outputs.track }}
+          TRACK=${{ needs.release_checks.outputs.track }}-${{ needs.release_checks.outputs.base }}
           if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
       
           # Import artifact into docker with new tag
@@ -210,7 +210,7 @@ jobs:
 
           REPOSITORY="ghcr.io/canonical/"
           RISK=${{ needs.release_checks.outputs.risk }}
-          TRACK=${{ needs.release_checks.outputs.track }}
+          TRACK=${{ needs.release_checks.outputs.track }}-${{ needs.release_checks.outputs.base }}
           if [ ! -z "$RISK" ] && [ "${RISK}" != "no-risk" ]; then TAG=${TRACK}_${RISK}; else TAG=${TRACK}; fi
       
           IMAGE_NAME=$(make help REPOSITORY=${REPOSITORY} TAG=${TAG} FLAVOUR=spark-gpu help | grep "Image\:" | cut -d ":" -f2  | xargs)
