@@ -11,7 +11,7 @@ description: |
 
 license: Apache-2.0
 
-version: "3.5.4"
+version: "3.5.5"
 
 base: ubuntu@22.04
 
@@ -54,8 +54,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/canonical/central-uploader/releases/download/spark-3.5.4-ubuntu1/spark-3.5.4-ubuntu1-20250131085904-bin-k8s.tgz
-    source-checksum: sha512/44e349a93c286404ee84f098066580fedf657dab3fefb5b4f539b90a76759b57c8fd4c7e5cbd38b6519089a0ce78f2166979814ef741a9ba22a24666c8b0bd37
+    source: https://github.com/canonical/central-uploader/releases/download/spark-3.5.5-ubuntu1/spark-3.5.5-ubuntu1-20250407072329-bin-k8s.tgz
+    source-checksum: sha512/0d2197b35827577682f2a4b71682127896e85a4dac52a99606d5c31e2c5e5146c0b7e99a4d8c1b25b0ebd277271e8e13561dfc0649414e552f6901cc88db1410
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update

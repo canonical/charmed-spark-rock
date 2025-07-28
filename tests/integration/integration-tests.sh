@@ -130,7 +130,7 @@ cleanup_user_failure() {
 teardown_test_pod() {
   kubectl logs testpod-admin -n $NAMESPACE 
   kubectl logs testpod -n $NAMESPACE 
-  kubectl logs -l spark-version=3.5.4 -n $NAMESPACE
+  kubectl logs -l spark-version=3.5.5 -n $NAMESPACE
   kubectl -n $NAMESPACE delete pod $ADMIN_POD_NAME
 }
 
