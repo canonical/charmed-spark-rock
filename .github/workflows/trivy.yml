@@ -2,10 +2,8 @@ name: trivy
 on:
   push:
     branches:
-      - 3.4-22.04/edge
-      - 3.5-22.04/edge
-      - 3.4-22.04/stable
-      - 3.5-22.04/stable
+      - 3.5/edge
+      - 3.4/edge
   pull_request:
   workflow_call:
     inputs:
