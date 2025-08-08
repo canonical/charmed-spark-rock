@@ -36,75 +36,74 @@ jobs:
   integration-tests:
     name: Run integration tests
     needs: [start-runner]
-    runs-on: ${{ needs.start-runner.outputs.label }} 
+    runs-on: ${{ needs.start-runner.outputs.label }}
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup environment
-      run: |
-        sudo -E bash ./tests/integration/setup-environment.sh
-      env:
-        MICROK8S_CHANNEL: 1.28/stable
+      - name: Setup environment
+        run: |
+          sudo -E bash ./tests/integration/setup-environment.sh
+        env:
+          MICROK8S_CHANNEL: 1.28/stable
 
-    - name: Setup microk8s
-      timeout-minutes: 30
-      run: sudo -E /bin/bash ./tests/integration/config-microk8s-gpu.sh
-      env:
-        MICROK8S_ADDONS: "hostpath-storage dns rbac gpu minio"
+      - name: Setup microk8s
+        timeout-minutes: 30
+        run: sudo -E /bin/bash ./tests/integration/config-microk8s-gpu.sh
+        env:
+          MICROK8S_ADDONS: "hostpath-storage dns rbac gpu minio"
 
-    - name: Configure microk8s
-      timeout-minutes: 5
-      run: |
-        sudo microk8s.status
-        sudo snap alias microk8s.kubectl kubectl
-        mkdir -p /home/ubuntu/.kube
-        sudo chown -f -R ubuntu /home/ubuntu/.kube
-        sudo microk8s config | tee /home/ubuntu/.kube/config
-    
-    - name: Install required packages/snaps
-      run: |
-        sudo apt clean
-        # sudo apt-get update
-        sudo apt-get install build-essential -yqq
-        sudo snap install yq
+      - name: Configure microk8s
+        timeout-minutes: 5
+        run: |
+          sudo microk8s.status
+          sudo snap alias microk8s.kubectl kubectl
+          mkdir -p /home/ubuntu/.kube
+          sudo chown -f -R ubuntu /home/ubuntu/.kube
+          sudo microk8s config | tee /home/ubuntu/.kube/config
 
-    - name: Get Artifact Name
-      id: artifact
-      run: |
-        GPU_ARTIFACT=$(make help FLAVOUR=spark-gpu | grep 'Artifact: ')
-        echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+      - name: Install required packages/snaps
+        run: |
+          sudo systemctl stop unattended-upgrades
+          sudo apt-get install build-essential -yqq
+          sudo snap install yq
 
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: charmed-spark-gpu
-        path: charmed-spark
+      - name: Get Artifact Name
+        id: artifact
+        run: |
+          GPU_ARTIFACT=$(make help FLAVOUR=spark-gpu | grep 'Artifact: ')
+          echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
-    - name: Load image
-      run: |
-        # Unpack Artifact
-        mv charmed-spark/${{ steps.artifact.outputs.gpu_artifact_name }} .
-        touch .make_cache/k8s.tag
-        # Import artifact into microk8s to be used in integration tests
-        sudo make microk8s-import FLAVOUR=spark-gpu PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
-          -o ${{ steps.artifact.outputs.gpu_artifact_name }}
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: charmed-spark-gpu
+          path: charmed-spark
 
-    - name: Run integration tests on GPU
-      timeout-minutes: 45
-      run: |
-        echo "Start test..."
-        /bin/bash ./tests/integration/setup-aws-cli.sh
-        /bin/bash ./tests/integration/integration-tests-gpu.sh
-        echo "End of the test :)"
-      env:
-        KUBECONFIG: "/home/ubuntu/.kube/config"
-        USER: "ubuntu"
+      - name: Load image
+        run: |
+          # Unpack Artifact
+          mv charmed-spark/${{ steps.artifact.outputs.gpu_artifact_name }} .
+          touch .make_cache/k8s.tag
+          # Import artifact into microk8s to be used in integration tests
+          sudo make microk8s-import FLAVOUR=spark-gpu PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
+            -o ${{ steps.artifact.outputs.gpu_artifact_name }}
+
+      - name: Run integration tests on GPU
+        timeout-minutes: 45
+        run: |
+          echo "Start test..."
+          /bin/bash ./tests/integration/setup-aws-cli.sh
+          /bin/bash ./tests/integration/integration-tests-gpu.sh
+          echo "End of the test :)"
+        env:
+          KUBECONFIG: "/home/ubuntu/.kube/config"
+          USER: "ubuntu"
 
   stop-runner:
     name: Stop self-hosted EC2 runner
     needs:
-      - start-runner 
+      - start-runner
       - integration-tests
     runs-on: ubuntu-22.04
     if: ${{ always() }}
