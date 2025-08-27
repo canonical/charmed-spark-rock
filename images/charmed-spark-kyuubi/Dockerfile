@@ -9,11 +9,11 @@
 # cloud native technologies.
 # ---------------------------------------------------------------------------
 
-    ARG KYUUBI_ARTIFACT="https://github.com/canonical/central-uploader/releases/download/kyuubi-1.10.2-ubuntu1/kyuubi-1.10.2-ubuntu1-20250623144616.tgz"
+    ARG KYUUBI_ARTIFACT="https://github.com/canonical/central-uploader/releases/download/kyuubi-1.10.2-ubuntu2/kyuubi-1.10.2-ubuntu2-20250806154859.tgz"
     ARG HIVE_ARTIFACT="https://archive.apache.org/dist/hive/hive-2.3.10/apache-hive-2.3.10-bin.tar.gz"
     ARG HIVE_256_CHECKSUM="f61349296582415090738ac812de026f3b54253a256c3ed2b2bb3ffe7377fd98"
     ARG HIVE_TARFILE="hive.tar.gz"
-    ARG KYUUBI_512_CHECKSUM="aeb820133e678b30b26d7a63fad5ec6147dc6d34a3764a116c80f7547b243deb7c3754a9a407e619f4d28ccdbef1a1095211050c82c9637ed05bd80e2e74a74d"
+    ARG KYUUBI_512_CHECKSUM="97c4a9959b9ac532ff2009a333303f99e10a5c04daff2ea2ec65e4338f91b2644f063560019e13ea65383a8755dfdb1fc016316a2dee5ff48fc4602c97ddae98"
     ARG KYUUBI_TARFILE="kyuubi.tar.tgz"
     ARG BASE_IMAGE
 
