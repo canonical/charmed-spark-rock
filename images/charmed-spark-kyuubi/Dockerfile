@@ -10,7 +10,7 @@
 # ---------------------------------------------------------------------------
 
     ARG KYUUBI_ARTIFACT="https://github.com/canonical/central-uploader/releases/download/kyuubi-1.10.2-ubuntu2/kyuubi-1.10.2-ubuntu2-20250806154859.tgz"
-    ARG HIVE_ARTIFACT="https://archive.apache.org/dist/hive/hive-2.3.10/apache-hive-2.3.10-bin.tar.gz"
+    ARG HIVE_ARTIFACT="https://github.com/Batalex/mirror/releases/download/hive-2.3.10/apache-hive-2.3.10-bin.tar.gz"
     ARG HIVE_256_CHECKSUM="f61349296582415090738ac812de026f3b54253a256c3ed2b2bb3ffe7377fd98"
     ARG HIVE_TARFILE="hive.tar.gz"
     ARG KYUUBI_512_CHECKSUM="97c4a9959b9ac532ff2009a333303f99e10a5c04daff2ea2ec65e4338f91b2644f063560019e13ea65383a8755dfdb1fc016316a2dee5ff48fc4602c97ddae98"
