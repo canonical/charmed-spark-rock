@@ -68,6 +68,8 @@
     # Copy local files to the container
     COPY ./bin/kyuubi.sh /opt/pebble/kyuubi.sh
     RUN chown _daemon_:_daemon_ /opt/pebble/kyuubi.sh
+    COPY ./conf/gpu_executor_template.yaml /etc/spark8t/conf/gpu_executor_template.yaml
+    RUN chown _daemon_:_daemon_ /etc/spark8t/conf/gpu_executor_template.yaml
 
     # Copy hive schematool to the image
     COPY ./bin/schematool.sh /opt/hive/bin/schematool.sh
