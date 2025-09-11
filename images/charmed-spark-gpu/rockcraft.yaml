@@ -54,8 +54,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.4-ubuntu2/spark-3.4.4-ubuntu2-20250226135921-bin-k8s.tgz
-    source-checksum: sha512/29d30eb219a8d8b17685d1841b09b5673f7894197683e186ca4f9b50c8839211b2a5b940b576c0efc13658a8bf06269a1cd3a794cf04311eae4f71a1e1771c34
+    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.4-ubuntu3/spark-3.4.4-ubuntu3-20250909091544-bin-k8s.tgz
+    source-checksum: sha512/f535b5733b706cee62bd5ab49ab53ff9cb3be0dd9a0d71b1be7a4b033172de6f4c474cad0171fc4f8cea021615cb7694a5d8d9fc7e0fd9c60b3f3c01176e0bb2
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
