@@ -16,7 +16,7 @@
 # Import reusable utilities
 source ./tests/integration/utils/s3-utils.sh
 source ./tests/integration/utils/k8s-utils.sh
-source ./tests/integration/utils/azure-utils.sh
+# source ./tests/integration/utils/azure-utils.sh
 
 
 # Global Variables
@@ -183,12 +183,13 @@ setup_s3_properties_in_pod(){
       /bin/bash -c '\
         spark-client.service-account-registry add-config \
         --username $UU --namespace $NN \
-        --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider \
+       --conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem \
         --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
         --conf spark.hadoop.fs.s3a.path.style.access=true \
         --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
         --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
         --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
+        --conf spark.hadoop.fs.s3a.fast.upload=true \
         --conf spark.sql.warehouse.dir=s3a://$BUCKET/warehouse \
         --conf spark.sql.catalog.local.warehouse=s3a://$BUCKET/warehouse'
 }
@@ -585,6 +586,7 @@ run_spark_sql_in_pod(){
       BUCKET="$S3_BUCKET" \
     /bin/bash -c 'echo "$CMDS" | spark-client.spark-sql \
       --username $UU --namespace $NN \
+      --packages org.apache.hadoop:hadoop-aws:3.4.1 \
       --conf spark.kubernetes.container.image=$IM \
       --conf spark.driver.extraJavaOptions='-Dderby.system.home=/tmp/derby' \
     ')" > spark-sql.out
@@ -608,7 +610,7 @@ test_spark_sql_in_pod_using_s3() {
 
   run_spark_sql_in_pod ./tests/integration/resources/test-spark-sql.sql
   return_value=$?
-
+  echo $return_value
   delete_s3_bucket $S3_BUCKET
 
   if [ $return_value -eq 1 ]; then
