@@ -183,13 +183,14 @@ setup_s3_properties_in_pod(){
       /bin/bash -c '\
         spark-client.service-account-registry add-config \
         --username $UU --namespace $NN \
-       --conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem \
+        --conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem \
         --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
         --conf spark.hadoop.fs.s3a.path.style.access=true \
         --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
         --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
         --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
         --conf spark.hadoop.fs.s3a.fast.upload=true \
+        --conf spark.hadoop.fs.s3a.create.checksum.algorithm=SHA256 \
         --conf spark.sql.warehouse.dir=s3a://$BUCKET/warehouse \
         --conf spark.sql.catalog.local.warehouse=s3a://$BUCKET/warehouse'
 }
