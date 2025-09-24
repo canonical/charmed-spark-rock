@@ -190,7 +190,6 @@ setup_s3_properties_in_pod(){
         --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
         --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
         --conf spark.hadoop.fs.s3a.fast.upload=true \
-        --conf spark.hadoop.fs.s3a.create.checksum.algorithm=SHA256 \
         --conf spark.sql.warehouse.dir=s3a://$BUCKET/warehouse \
         --conf spark.sql.catalog.local.warehouse=s3a://$BUCKET/warehouse'
 }
@@ -587,7 +586,6 @@ run_spark_sql_in_pod(){
       BUCKET="$S3_BUCKET" \
     /bin/bash -c 'echo "$CMDS" | spark-client.spark-sql \
       --username $UU --namespace $NN \
-      --packages org.apache.hadoop:hadoop-aws:3.4.1 \
       --conf spark.kubernetes.container.image=$IM \
       --conf spark.driver.extraJavaOptions='-Dderby.system.home=/tmp/derby' \
     ')" > spark-sql.out
