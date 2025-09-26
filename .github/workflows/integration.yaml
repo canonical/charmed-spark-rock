@@ -43,6 +43,14 @@ jobs:
         run: |
           make microk8s-setup MICROK8S_CHANNEL=${{ matrix.k8s_version }}
 
+      - name: Install microceph
+        run: |
+          sudo snap install microceph
+          sudo microceph cluster bootstrap
+          sudo microceph disk add loop,1G,3
+          sudo microceph enable rgw
+          sudo microceph.radosgw-admin user create --uid test --display-name test --access-key=foo --secret-key=bar
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:

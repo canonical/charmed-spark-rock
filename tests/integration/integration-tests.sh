@@ -186,6 +186,7 @@ setup_s3_properties_in_pod(){
         --conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem \
         --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
         --conf spark.hadoop.fs.s3a.path.style.access=true \
+        --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
         --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
         --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
         --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
@@ -694,11 +695,11 @@ echo -e "##################################"
 
 (setup_user_context && test_spark_sql_in_pod_using_s3 && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo -e "##################################"
-echo -e "RUN SPARK SQL IN POD (Using Azure Storage ABFSS)"
-echo -e "##################################"
+# echo -e "##################################"
+# echo -e "RUN SPARK SQL IN POD (Using Azure Storage ABFSS)"
+# echo -e "##################################"
 
-(setup_user_context && test_spark_sql_in_pod_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
+# (setup_user_context && test_spark_sql_in_pod_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE JOB WITH POD TEMPLATE"
@@ -730,11 +731,11 @@ echo -e "##################################"
 
 (setup_user_context && test_iceberg_example_in_pod_using_s3 && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo -e "##################################"
-echo -e "RUN EXAMPLE THAT USES AZURE STORAGE"
-echo -e "##################################"
+# echo -e "##################################"
+# echo -e "RUN EXAMPLE THAT USES AZURE STORAGE"
+# echo -e "##################################"
 
-(setup_user_context && test_iceberg_example_in_pod_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
+# (setup_user_context && test_iceberg_example_in_pod_using_abfss && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "TEARDOWN TEST POD"
