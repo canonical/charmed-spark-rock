@@ -8,7 +8,7 @@ get_s3_endpoint(){
   # Print the endpoint where the S3 bucket is exposed on.
   # kubectl get service minio -n minio-operator -o jsonpath='{.spec.clusterIP}'
   # echo $(hostname -I | awk '{print $1; exit}')
-  echo "127.0.1.1"
+  echo $(ip route get 1.1.1.1 | awk '{print $7; exit}')
 }
 
 
