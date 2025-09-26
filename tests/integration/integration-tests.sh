@@ -172,6 +172,10 @@ run_example_job_in_pod() {
 setup_s3_properties_in_pod(){
   # Setup S3 related Spark properties in the service account inside the pod
 
+  echo "credentials"
+  echo "$(get_s3_access_key)"
+  echo "$(get_s3_secret_key)"
+
   kubectl -n $NAMESPACE exec testpod -- \
       env \
         UU="$SERVICE_ACCOUNT" \
@@ -581,10 +585,6 @@ run_spark_sql_in_pod(){
       NN="$NAMESPACE" \
       CMDS="$SPARK_SQL_COMMANDS" \
       IM=$(spark_image) \
-      ACCESS_KEY=$(get_s3_access_key) \
-      SECRET_KEY=$(get_s3_secret_key) \
-      S3_ENDPOINT=$(get_s3_endpoint) \
-      BUCKET="$S3_BUCKET" \
     /bin/bash -c 'echo "$CMDS" | spark-client.spark-sql \
       --username $UU --namespace $NN \
       --conf spark.kubernetes.container.image=$IM \

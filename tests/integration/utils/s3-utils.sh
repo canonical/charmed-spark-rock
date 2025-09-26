@@ -27,7 +27,7 @@ get_s3_access_key(){
 
 get_s3_secret_key(){
   # Print the S3 Secret Key by reading it from K8s secret or by outputting the default value
-    echo "$bar"
+    echo "bar"
 }
 
 
