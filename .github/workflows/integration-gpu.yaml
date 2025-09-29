@@ -72,6 +72,14 @@ jobs:
       run: |
         GPU_ARTIFACT=$(make help FLAVOUR=gpu | grep 'Artifact: ')
         echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+    
+    - name: Install microceph
+      run: |
+        sudo snap install microceph
+        sudo microceph cluster bootstrap
+        sudo microceph disk add loop,1G,3
+        sudo microceph enable rgw
+        sudo microceph.radosgw-admin user create --uid test --display-name test --access-key=foo --secret-key=bar
 
     - name: Download artifact
       uses: actions/download-artifact@v4
