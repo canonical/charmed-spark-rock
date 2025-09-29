@@ -5,19 +5,19 @@ sudo snap install aws-cli --classic
 set -x
 
 get_s3_endpoint(){
-  # Return the S3 endpoint
+  # Return the endpoint where the S3 microceph endpoint is exposed.
   echo $(ip route get 1.1.1.1 | awk '{print $7; exit}')
 }
 
 
 get_s3_access_key(){
-  # Return the access-key 
+  # Return the S3 Access Key for microceph.
     echo "foo"
 }
 
 
 get_s3_secret_key(){
-  # Return the secret key
+  # Return the S3 Secret Key for microceph.
     echo "bar"
 }
 

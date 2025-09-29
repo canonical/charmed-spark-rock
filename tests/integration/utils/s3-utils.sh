@@ -14,19 +14,19 @@ fi
 
 
 get_s3_endpoint(){
-  # Print the endpoint where the S3 bucket is exposed on.
+  # Return the endpoint where the S3 microceph endpoint is exposed.
   echo $(ip route get 1.1.1.1 | awk '{print $7; exit}')
 }
 
 
 get_s3_access_key(){
-  # Print the S3 Access Key by reading it from K8s secret or by outputting the default value
+  # Return the S3 Access Key for microceph.
     echo "foo"
 }
 
 
 get_s3_secret_key(){
-  # Print the S3 Secret Key by reading it from K8s secret or by outputting the default value
+  # Return the S3 Secret Key for microceph.
     echo "bar"
 }
 
@@ -40,7 +40,6 @@ create_s3_bucket(){
   BUCKET_NAME=$1
   aws s3 mb s3://"$BUCKET_NAME"
   echo "Created S3 bucket ${BUCKET_NAME}."
-  aws s3 ls 
 }
 
 
