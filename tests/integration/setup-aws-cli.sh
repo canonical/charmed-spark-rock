@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Import reusable utilities
-source ./tests/integration/utils/s3-utils.sh
 
 # Install AWS CLI
 sudo snap install aws-cli --classic
@@ -27,6 +25,22 @@ wait_and_retry(){
     fi
 }
 
+get_s3_endpoint(){
+  # Return the endpoint where the S3 microceph endpoint is exposed.
+  echo $(ip route get 1.1.1.1 | awk '{print $7; exit}')
+}
+
+
+get_s3_access_key(){
+  # Return the S3 Access Key for microceph.
+    echo "foo"
+}
+
+
+get_s3_secret_key(){
+  # Return the S3 Secret Key for microceph.
+    echo "bar"
+}
 
 # Wait for `minio` service to be ready and S3 endpoint to be available
 wait_and_retry get_s3_endpoint
