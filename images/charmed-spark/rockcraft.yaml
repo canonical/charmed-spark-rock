@@ -10,7 +10,7 @@ description: |
 
 license: Apache-2.0
 
-version: "3.5.5"
+version: "4.0.1"
 
 base: ubuntu@22.04
 
@@ -53,8 +53,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/canonical/central-uploader/releases/download/spark-3.5.5-ubuntu1/spark-3.5.5-ubuntu1-20250407072329-bin-k8s.tgz
-    source-checksum: sha512/0d2197b35827577682f2a4b71682127896e85a4dac52a99606d5c31e2c5e5146c0b7e99a4d8c1b25b0ebd277271e8e13561dfc0649414e552f6901cc88db1410
+    source: https://github.com/canonical/central-uploader/releases/download/spark-4.0.1-ubuntu2/spark-4.0.1-ubuntu2-20250919121355-bin-k8s.tgz
+    source-checksum: sha512/ceebd4b5d8f770f21b44af9bde8daa14aa4ce2c87eed21b9a3be0a4f79924d1b5ad0c71090b8de231a0f5f53a3003781ead6bd2f1125a8c3b3f37be1cb229fe9
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
@@ -98,25 +98,25 @@ parts:
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
-      ICEBERG_SPARK_RUNTIME_VERSION='3.5_2.12'
-      ICEBERG_VERSION='1.9.1'
-      SPARK_METRICS_VERSION='3.4-1.0.5'
+      ICEBERG_SPARK_RUNTIME_VERSION='4.0_2.13'
+      ICEBERG_VERSION='1.10.0'
+      SPARK_METRICS_VERSION='4.0-1.0.2'
       SERVLET_FILTERS_VERSION='0.0.1'
       PROMETHEUS_JMX_EXPORTER_VERSION='0.20.0'
       POSTGRESQL_VERSION='42.7.2'
-      SHA1SUM_ICEBERG_JAR='577f2d40043ab6af4387eef5e856bdde06a931e6'
-      SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='5603f59fe6362bfc0e66c7da17b749b1d859fe29425aa067c6efe4393f9af59ac11d22c759ce5265938ebaabe97d5c42af21e2a8fed8aaeb52eaaf5b222a83c9'
+      SHA1SUM_ICEBERG_JAR='0188a624704ca3505c4d5aa63b613910f7f36131'
+      SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='de05643ba65a46b4b4c6c0e9b222aed2c2b78f5c28e5161e7312080b87d1dccf81dcf0155ad00de170a7350422fe433e75fe66b50fc795ac6863ca6f0c992cad'
       SHA512SUM_SPARK_SERVLET_FILTER_JAR='ffeb809d58ef0151d513b09d4c2bfd5cc064b0b888ca45899687aed2f42bcb1ce9834be9709290dd70bd9df84049f02cbbff6c2d5ec3c136c278c93f167c8096'
       SHA1SUM_PROMETHEUS_JMX_EXPORTER='7b8a98e3482cee8889698ef391b85c47a3c4ce5b'
       SHA1SUM_POSTGRESQL='86ed42574cd68662b05d3b00432a34e9a34cb12c'
 
+
       JARS=(
-      "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
       "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-LIB_VERSION/spark-metrics-assembly-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
       "https://github.com/canonical/central-uploader/releases/download/servlet-filters-LIB_VERSION/servlet-filters-LIB_VERSION.jar $SERVLET_FILTERS_VERSION sha512sum $SHA512SUM_SPARK_SERVLET_FILTER_JAR"
       "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/LIB_VERSION/jmx_prometheus_javaagent-LIB_VERSION.jar $PROMETHEUS_JMX_EXPORTER_VERSION sha1sum $SHA1SUM_PROMETHEUS_JMX_EXPORTER"
       "https://repo1.maven.org/maven2/org/postgresql/postgresql/LIB_VERSION/postgresql-LIB_VERSION.jar $POSTGRESQL_VERSION sha1sum $SHA1SUM_POSTGRESQL"
-
+      "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
       )
       for ENTRY in "${JARS[@]}"; do
         echo "$ENTRY"

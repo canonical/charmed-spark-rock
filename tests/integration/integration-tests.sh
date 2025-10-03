@@ -130,12 +130,12 @@ cleanup_user_failure() {
 teardown_test_pod() {
   kubectl logs testpod-admin -n $NAMESPACE 
   kubectl logs testpod -n $NAMESPACE 
-  kubectl logs -l spark-version=3.5.5 -n $NAMESPACE
+  kubectl logs -l spark-version=$(get_spark_version) -n $NAMESPACE
   kubectl -n $NAMESPACE delete pod $ADMIN_POD_NAME
 }
 
 run_example_job_in_pod() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
@@ -172,6 +172,10 @@ run_example_job_in_pod() {
 setup_s3_properties_in_pod(){
   # Setup S3 related Spark properties in the service account inside the pod
 
+  echo "credentials"
+  echo "$(get_s3_access_key)"
+  echo "$(get_s3_secret_key)"
+
   kubectl -n $NAMESPACE exec testpod -- \
       env \
         UU="$SERVICE_ACCOUNT" \
@@ -183,12 +187,14 @@ setup_s3_properties_in_pod(){
       /bin/bash -c '\
         spark-client.service-account-registry add-config \
         --username $UU --namespace $NN \
-        --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider \
+        --conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem \
         --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
         --conf spark.hadoop.fs.s3a.path.style.access=true \
+        --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
         --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
         --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
         --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
+        --conf spark.hadoop.fs.s3a.fast.upload=true \
         --conf spark.sql.warehouse.dir=s3a://$BUCKET/warehouse \
         --conf spark.sql.catalog.local.warehouse=s3a://$BUCKET/warehouse'
 }
@@ -332,7 +338,7 @@ test_iceberg_example_in_pod_using_abfss(){
 
 
 run_example_job_in_pod_with_pod_templates() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
 
@@ -378,7 +384,7 @@ run_example_job_in_pod_with_pod_templates() {
 
 
 run_example_job_in_pod_with_metrics() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
   LOG_FILE="/tmp/server.log"
   SERVER_PORT=9091
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
@@ -429,7 +435,7 @@ run_example_job_in_pod_with_metrics() {
 run_example_job_in_pod_with_log_forwarding() {
   NAMESPACE=${1-$NAMESPACE}
   USERNAME=${2-spark}
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   # start simple http server
@@ -477,7 +483,7 @@ run_example_job_in_pod_with_log_forwarding() {
 
 
 run_example_job_with_error_in_pod() {
-  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.12-$(get_spark_version).jar"
+  SPARK_EXAMPLES_JAR_NAME="spark-examples_2.13-$(get_spark_version).jar"
 
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
@@ -554,7 +560,7 @@ run_spark_shell_in_pod() {
 
   echo -e "$(kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$SPARK_SHELL_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | spark-client.spark-shell --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > spark-shell.out
 
-  pi=$(cat spark-shell.out  | grep "^Pi is roughly" | rev | cut -d' ' -f1 | rev | cut -c 1-3)
+  pi=$(cat spark-shell.out  | grep "Pi is roughly" | rev | cut -d' ' -f1 | rev | cut -c 1-3)
   echo -e "Spark-shell Pi Job Output: \n ${pi}"
   rm spark-shell.out
   validate_pi_value $pi
@@ -579,10 +585,6 @@ run_spark_sql_in_pod(){
       NN="$NAMESPACE" \
       CMDS="$SPARK_SQL_COMMANDS" \
       IM=$(spark_image) \
-      ACCESS_KEY=$(get_s3_access_key) \
-      SECRET_KEY=$(get_s3_secret_key) \
-      S3_ENDPOINT=$(get_s3_endpoint) \
-      BUCKET="$S3_BUCKET" \
     /bin/bash -c 'echo "$CMDS" | spark-client.spark-sql \
       --username $UU --namespace $NN \
       --conf spark.kubernetes.container.image=$IM \
@@ -608,7 +610,7 @@ test_spark_sql_in_pod_using_s3() {
 
   run_spark_sql_in_pod ./tests/integration/resources/test-spark-sql.sql
   return_value=$?
-
+  echo $return_value
   delete_s3_bucket $S3_BUCKET
 
   if [ $return_value -eq 1 ]; then
