@@ -1,25 +1,10 @@
 #!/bin/bash
 
+# Import reusable utilities
+source ./../s3-utils.sh
+
 # Install AWS CLI
 sudo snap install aws-cli --classic
-set -x
-
-get_s3_endpoint(){
-  # Return the endpoint where the S3 microceph endpoint is exposed.
-  echo $(ip route get 1.1.1.1 | awk '{print $7; exit}')
-}
-
-
-get_s3_access_key(){
-  # Return the S3 Access Key for microceph.
-    echo "foo"
-}
-
-
-get_s3_secret_key(){
-  # Return the S3 Secret Key for microceph.
-    echo "bar"
-}
 
 wait_and_retry(){
     # Retry a command for a number of times by waiting a few seconds.
