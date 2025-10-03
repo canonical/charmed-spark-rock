@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Import reusable utilities
-source ./../s3-utils.sh
+source ./utils/s3-utils.sh
 
 # Install AWS CLI
 sudo snap install aws-cli --classic
