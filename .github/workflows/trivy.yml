@@ -4,6 +4,7 @@ on:
     branches:
       - 3.5/edge
       - 3.4/edge
+      - 4.0/edge
   pull_request:
   workflow_call:
     inputs:
