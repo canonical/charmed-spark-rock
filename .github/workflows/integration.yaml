@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         env: [integration]
-        k8s_version: 
+        k8s_version:
           - 1.28/stable
           - 1.32/stable
           - 1.34/stable
