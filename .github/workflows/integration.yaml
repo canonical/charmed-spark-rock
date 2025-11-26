@@ -11,13 +11,18 @@ on:
 jobs:
   build-rock:
     uses: ./.github/workflows/build.yaml
+
   integration:
-    runs-on: ${{ matrix.system }}
+    runs-on: ${{ matrix.system.os }}
     timeout-minutes: 120
     needs: build-rock
     strategy:
       matrix:
-        system: [ubuntu-22.04, ubuntu-22.04-arm]
+        system:
+          - os: ubuntu-22.04
+            arch: amd64
+          - os: ubuntu-22.04-arm
+            arch: arm64
         env: [integration]
         k8s_version:
           - 1.28/stable
@@ -75,7 +80,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v6
         with:
-          name: charmed-spark
+          name: charmed-spark-${{ matrix.system.arch }}
           path: charmed-spark
 
       - name: Run tests
@@ -121,3 +126,7 @@ jobs:
             -o ${{ steps.artifact.outputs.kyuubi_artifact_name }}
 
           sg microk8s -c "make tests FLAVOUR=kyuubi"
+
+  trivy:
+    needs: build-rock
+    uses: ./.github/workflows/trivy.yaml

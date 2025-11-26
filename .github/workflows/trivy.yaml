@@ -4,7 +4,6 @@ on:
     branches:
       - 3.5/edge
       - 3.4/edge
-  pull_request:
   workflow_call:
     inputs:
       branch:
@@ -12,12 +11,14 @@ on:
         default: ""
 jobs:
   build:
+    if: ${{ inputs.branch }}
     uses: ./.github/workflows/build.yaml
     with:
       branch: ${{ inputs.branch }}
   scan:
     name: Trivy scan and sbom generation
     needs: build
+    if: always()
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -43,7 +44,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v6
         with:
-          name: charmed-spark
+          name: charmed-spark-${{ matrix.arch }}
           path: charmed-spark
       - name: Import locally
         run: |

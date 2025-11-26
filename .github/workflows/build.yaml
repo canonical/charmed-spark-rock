@@ -63,8 +63,12 @@ jobs:
   build:
     strategy:
       matrix:
-        system: [ubuntu-22.04, ubuntu-22.04-arm]
-    runs-on: ${{ matrix.system }}
+        system:
+          - os: ubuntu-22.04
+            arch: amd64
+          - os: ubuntu-22.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.system.os }}
     timeout-minutes: 30
     needs:
       - lint
@@ -135,7 +139,7 @@ jobs:
       - name: Upload locally built artifacts
         uses: actions/upload-artifact@v5
         with:
-          name: charmed-spark
+          name: charmed-spark-${{ matrix.system.arch }}
           path: |
             ${{ steps.artifact.outputs.base_artifact_name }}
             ${{ steps.artifact.outputs.jupyter_artifact_name }}
