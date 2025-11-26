@@ -5,7 +5,7 @@ on:
     inputs:
       branch:
         type: string
-        default: ''
+        default: ""
 
 jobs:
   lint:
@@ -13,11 +13,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install yamllint
         run: python3 -m pip install yamllint
       - name: YAML Lint
-        run:  |
+        run: |
           yamllint -d "{extends: relaxed, rules: {line-length: {max: 250}}}" \
             --no-warnings images/charmed-spark/rockcraft.yaml
           yamllint -d "{extends: relaxed, rules: {line-length: {max: 250}}}" \
@@ -61,7 +61,10 @@ jobs:
           echo "Verification of Spark default image passed."
       
   build:
-    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        system: [ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.system }}
     timeout-minutes: 30
     needs:
       - lint
@@ -93,7 +96,7 @@ jobs:
           df --human-readable
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch }}
 
@@ -129,13 +132,11 @@ jobs:
       - name: Change artifact permissions
         run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }}
 
-      - name: Upload locally built artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload locally built artifacts
+        uses: actions/upload-artifact@v5
         with:
           name: charmed-spark
           path: |
             ${{ steps.artifact.outputs.base_artifact_name }}
             ${{ steps.artifact.outputs.jupyter_artifact_name }}
             ${{ steps.artifact.outputs.kyuubi_artifact_name }}
-
-
