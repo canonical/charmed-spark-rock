@@ -230,7 +230,7 @@ parts:
       chmod -R 750 var/log/spark
 
       # Create a symlink to py4j
-      ln -s opt/spark/python/lib/py4j-*-src.zip opt/spark/python/lib/py4j.zip
+      ln -s /opt/spark/python/lib/py4j-*-src.zip opt/spark/python/lib/py4j.zip
 
       # This is needed to run the spark job, as it requires RW+ access on the spark folder
       chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
