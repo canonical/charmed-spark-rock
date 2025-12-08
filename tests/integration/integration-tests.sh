@@ -658,11 +658,6 @@ test_pyspark_shell_in_pod() {
   run_pyspark_shell_in_pod $NAMESPACE spark
 }
 
-cleanup_user_failure_in_pod() {
-  teardown_test_pod
-  cleanup_user_failure
-}
-
 
 import_pyspark_from_python_runtime_in_pod() {
   echo "import_pyspark_from_python_runtime_in_pod ${1} ${2}"
@@ -686,6 +681,11 @@ test_import_pyspark_in_pod() {
   import_pyspark_from_python_runtime_in_pod $NAMESPACE spark
 }
 
+
+cleanup_user_failure_in_pod() {
+  teardown_test_pod
+  cleanup_user_failure
+}
 
 
 echo -e "##################################"

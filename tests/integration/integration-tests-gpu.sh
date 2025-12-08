@@ -315,6 +315,31 @@ test_sql_gpu_example_in_pod() {
   run_test_sql_gpu_example_in_pod $NAMESPACE spark
 }
 
+
+
+import_pyspark_from_python_runtime_in_pod() {
+  echo "import_pyspark_from_python_runtime_in_pod ${1} ${2}"
+
+  NAMESPACE=$1
+  USERNAME=$2
+
+  out=$(kubectl -n "$NAMESPACE" exec testpod -- python3 -c 'import py4j; import pyspark;' 2> >(tee /tmp/err.log))
+  rc=$?
+
+  if [[ $rc -ne 0 || -s /tmp/err.log ]]; then
+      echo "Canont import pyspark from inside pod:"
+      echo "  Exit code: $rc"
+      echo "  Stderr:"
+      cat /tmp/err.log
+      exit 1
+  fi
+}
+
+test_import_pyspark_in_pod() {
+  import_pyspark_from_python_runtime_in_pod $NAMESPACE spark
+}
+
+
 cleanup_user_failure_in_pod() {
   teardown_test_pod
   cleanup_user_failure
@@ -327,6 +352,12 @@ echo -e "##################################"
 
 kubectl create namespace $NAMESPACE
 setup_admin_pod $ADMIN_POD_NAME $(spark_image) $NAMESPACE
+
+echo -e "##################################"
+echo -e "IMPORT pyspark FROM INSIDE POD"
+echo -e "##################################"
+
+(setup_user_context && test_import_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES GPU"
