@@ -52,8 +52,8 @@ jobs:
           name: charmed-spark
           path: charmed-spark
 
-      - name: Setup upterm session
-        uses: owenthereal/action-upterm@v1
+      # - name: Setup upterm session
+      #   uses: owenthereal/action-upterm@v1
 
 
       - name: Run tests
@@ -64,7 +64,7 @@ jobs:
           # Import artifact into microk8s to be used in integration tests
           sudo make microk8s-import PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
             -o ${{ steps.artifact.outputs.base_artifact_name }}
-          
+
           sg microk8s -c "make tests"
 
       - name: Run tests (Jupyter)
