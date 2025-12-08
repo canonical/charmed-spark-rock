@@ -241,4 +241,4 @@ parts:
       chmod a+x opt/decom.sh
 
       # Create a symlink to py4j
-      ln -s /opt/spark/python/lib/py4j-*-src.zip /opt/spark/python/lib/py4j.zip
+      ln -s opt/spark/python/lib/py4j-*-src.zip opt/spark/python/lib/py4j.zip
