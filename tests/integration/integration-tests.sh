@@ -140,13 +140,15 @@ run_example_job_in_pod() {
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
   USERNAME=$2
-
-  kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IM="$(spark_image)" \
+  if [[ -n "$3" ]]; then
+      EXTRA_IMAGE_CONF="--conf spark.kubernetes.container.image=$SPARK_IMAGE"
+  fi
+  kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" JJ="$SPARK_EXAMPLES_JAR_NAME" IMGCNF="$EXTRA_IMAGE_CONF" \
                   /bin/bash -c 'spark-client.spark-submit \
                   --username $UU --namespace $NN \
                   --conf spark.kubernetes.driver.request.cores=100m \
                   --conf spark.kubernetes.executor.request.cores=100m \
-                  --conf spark.kubernetes.container.image=$IM \
+                  $IMGCNF \
                   --class org.apache.spark.examples.SparkPi \
                   local:///opt/spark/examples/jars/$JJ 1000'
 
@@ -531,6 +533,10 @@ test_example_job_in_pod_with_templates() {
 
 
 test_example_job_in_pod() {
+  run_example_job_in_pod $NAMESPACE spark $(spark_image)
+}
+
+test_example_job_in_pod_with_default_image {
   run_example_job_in_pod $NAMESPACE spark
 }
 
@@ -699,6 +705,12 @@ echo -e "RUN EXAMPLE JOB"
 echo -e "##################################"
 
 (setup_user_context && test_example_job_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo -e "##################################"
+echo -e "RUN EXAMPLE JOB WITH DEFAULT SPARK IMAGE"
+echo -e "##################################"
+
+(setup_user_context && test_example_job_in_pod_with_default_image && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN SPARK SHELL IN POD"
