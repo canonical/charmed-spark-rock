@@ -32,7 +32,7 @@ jobs:
         id: verify-default-image
         run: |
           echo "Extracting image from spark-defaults.conf"
-          DEFAULT_IMAGE_LINE=$(grep -E '^spark.kubernetes.container.image=' images/charmed-spark/conf/spark-defaults.conf || true)
+          DEFAULT_IMAGE_LINE=$(grep -E '^spark.kubernetes.container.image=' images/charmed-spark-gpu/conf/spark-defaults.conf || true)
           IMAGE=${DEFAULT_IMAGE_LINE#*=}
           echo "Default Spark Image: ${IMAGE}"
 
@@ -43,7 +43,7 @@ jobs:
           fi
 
           echo "Cross-checking with rockcraft.yaml"
-          VERSION=$(yq .version images/charmed-spark/rockcraft.yaml)
+          VERSION=$(yq .version images/charmed-spark-gpu/rockcraft.yaml)
           MAJOR_MINOR=$(echo "${VERSION}" | awk -F. '{print $1"."$2}')
           echo "rockcraft version: ${VERSION} (major_minor=${MAJOR_MINOR})"
 
