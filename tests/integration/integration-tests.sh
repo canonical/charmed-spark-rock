@@ -671,7 +671,7 @@ import_pyspark_from_python_runtime_in_pod() {
   rc=$?
 
   if [[ $rc -ne 0 || -s /tmp/err.log ]]; then
-      echo "Canont import pyspark from inside pod:"
+      echo "Could not import pyspark from inside pod:"
       echo "  Exit code: $rc"
       echo "  Stderr:"
       cat /tmp/err.log
