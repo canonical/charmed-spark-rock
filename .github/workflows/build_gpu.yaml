@@ -23,6 +23,31 @@ jobs:
     needs:
       - lint
     steps:
+      - name: Disk cleanup
+        shell: bash
+        run: |
+          sudo rm -rf \
+            /opt/google \
+            /opt/hostedtoolcache \
+            /opt/microsoft/powershell \
+            /opt/microsoft/msedge \
+            "$AGENT_TOOLSDIRECTORY" \
+            /usr/lib/firefox \
+            /usr/lib/mono \
+            /usr/local/julia* \
+            /usr/local/lib/android \
+            /usr/local/share/chromium \
+            /usr/local/share/powershell \
+            /usr/share/dotnet \
+            /usr/share/gradle* \
+            /usr/share/miniconda \
+            /usr/share/sbt \
+            /usr/share/swift \
+            /home/linuxbrew
+          pipx uninstall-all
+          printf '\nDisk usage\n'
+          df --human-readable
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -34,8 +59,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo snap install yq
-          sudo snap install rockcraft --classic --edge    
-      
+          sudo snap install rockcraft --classic --edge
+
       - name: Build image (GPU)
         run: sudo make build FLAVOUR=gpu
 
@@ -47,7 +72,7 @@ jobs:
 
       - name: Change artifact permissions
         run: sudo chmod a+r  ${{ steps.artifact.outputs.gpu_artifact_name }}
-          
+
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
         with:
