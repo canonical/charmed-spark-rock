@@ -140,6 +140,7 @@ run_example_job_in_pod() {
   PREVIOUS_JOB=$(kubectl -n $NAMESPACE get pods --sort-by=.metadata.creationTimestamp | grep driver | tail -n 1 | cut -d' ' -f1)
   NAMESPACE=$1
   USERNAME=$2
+  SPARK_IMAGE=$3
   if [[ -n "$3" ]]; then
       EXTRA_IMAGE_CONF="--conf spark.kubernetes.container.image=$SPARK_IMAGE"
   fi
@@ -536,7 +537,7 @@ test_example_job_in_pod() {
   run_example_job_in_pod $NAMESPACE spark $(spark_image)
 }
 
-test_example_job_in_pod_with_default_image {
+test_example_job_in_pod_with_default_image() {
   run_example_job_in_pod $NAMESPACE spark
 }
 

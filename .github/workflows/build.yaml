@@ -39,11 +39,11 @@ jobs:
         run: |
           echo "Extracting image from spark-defaults.conf"
           DEFAULT_IMAGE_LINE=$(grep -E '^spark.kubernetes.container.image=' images/charmed-spark/conf/spark-defaults.conf || true)
-          DEFAULT_IMAGE=${DEFAULT_IMAGE_LINE#*=}
-          echo "Default Spark Image: ${DEFAULT_IMAGE}"
+          IMAGE=${DEFAULT_IMAGE_LINE#*=}
+          echo "Default Spark Image: ${IMAGE}"
 
           echo "Inspecting image with rockcraft.skopeo"
-          if ! rockcraft.skopeo inspect "${IMAGE}"; then
+          if ! rockcraft.skopeo inspect "docker://${IMAGE}"; then
             echo "Image ${IMAGE} not found or inspect failed" >&2
             exit 1
           fi
