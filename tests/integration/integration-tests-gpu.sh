@@ -120,9 +120,13 @@ run_test_gpu_example_in_pod(){
   # Copy 'test-iceberg.py' script to 'spark' bucket
   copy_file_to_s3_bucket $S3_BUCKET ./tests/integration/resources/test-gpu-simple.py
 
-#  IMAGE="test-image"
   # Number of driver pods that exist in the namespace already.
   PREVIOUS_DRIVER_PODS_COUNT=$(kubectl get pods --sort-by=.metadata.creationTimestamp -n ${NAMESPACE} | grep driver | wc -l)
+
+  SPARK_IMAGE=$3
+  if [[ -n "$3" ]]; then
+      EXTRA_IMAGE_CONF="--conf spark.kubernetes.container.image=$SPARK_IMAGE"
+  fi
 
   # Submit the job from inside 'testpod'
   kubectl -n $NAMESPACE exec testpod -- \
@@ -133,7 +137,7 @@ run_test_gpu_example_in_pod(){
         SECRET_KEY="$(get_s3_secret_key)" \
         S3_ENDPOINT="$(get_s3_endpoint)" \
         BUCKET="$S3_BUCKET" \
-        IM="$(spark_image)" \
+        IMGCNF="$EXTRA_IMAGE_CONF" \
       /bin/bash -c '\
         spark-client.spark-submit \
         --username $UU \
@@ -159,7 +163,7 @@ run_test_gpu_example_in_pod(){
         --conf spark.plugins=com.nvidia.spark.SQLPlugin \
         --conf spark.executor.resource.gpu.discoveryScript=/opt/getGpusResources.sh \
         --conf spark.executor.resource.gpu.vendor=nvidia.com \
-        --conf spark.kubernetes.container.image=$IM \
+        $IMGCNF \
         --driver-memory 2G \
         --conf spark.kubernetes.executor.podTemplateFile=/etc/spark/conf/gpu_executor_template.yaml \
         --conf spark.kubernetes.executor.deleteOnTermination=false \
@@ -197,6 +201,11 @@ run_test_gpu_example_in_pod(){
 }
 
 test_gpu_example_in_pod() {
+  run_test_gpu_example_in_pod $NAMESPACE spark $(spark_image)
+}
+
+
+test_gpu_example_in_pod_with_default_image() {
   run_test_gpu_example_in_pod $NAMESPACE spark
 }
 
@@ -365,6 +374,11 @@ echo -e "##################################"
 
 (setup_user_context && test_gpu_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
+echo -e "##################################"
+echo -e "RUN EXAMPLE THAT USES GPU WITH DEFAULT IMAGE"
+echo -e "##################################"
+
+(setup_user_context && test_gpu_example_in_pod_with_default_image && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN SQL EXAMPLE THAT USES GPU"
