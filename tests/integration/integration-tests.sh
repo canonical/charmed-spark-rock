@@ -560,6 +560,7 @@ run_spark_shell_in_pod() {
 
   # Check job output
   # Sample output
+
   # "Pi is roughly 3.13956232343"
 
   echo -e "$(kubectl -n $NAMESPACE exec testpod -- env UU="$USERNAME" NN="$NAMESPACE" CMDS="$SPARK_SHELL_COMMANDS" IM="$(spark_image)" /bin/bash -c 'echo "$CMDS" | spark-client.spark-shell --username $UU --namespace $NN --conf spark.kubernetes.container.image=$IM')" > spark-shell.out
@@ -642,8 +643,8 @@ test_spark_sql_in_pod_using_abfss() {
 }
 
 
-run_pyspark_in_pod() {
-  echo "run_pyspark_in_pod ${1} ${2}"
+run_pyspark_shell_in_pod() {
+  echo "run_pyspark_shell_in_pod ${1} ${2}"
 
   NAMESPACE=$1
   USERNAME=$2
@@ -663,9 +664,33 @@ run_pyspark_in_pod() {
   validate_pi_value $pi
 }
 
-test_pyspark_in_pod() {
-  run_pyspark_in_pod $NAMESPACE spark
+test_pyspark_shell_in_pod() {
+  run_pyspark_shell_in_pod $NAMESPACE spark
 }
+
+
+import_pyspark_from_python_runtime_in_pod() {
+  echo "import_pyspark_from_python_runtime_in_pod ${1} ${2}"
+
+  NAMESPACE=$1
+  USERNAME=$2
+
+  out=$(kubectl -n "$NAMESPACE" exec testpod -- python3 -c 'import py4j; import pyspark;' 2> >(tee /tmp/err.log))
+  rc=$?
+
+  if [[ $rc -ne 0 || -s /tmp/err.log ]]; then
+      echo "Could not import pyspark from inside pod:"
+      echo "  Exit code: $rc"
+      echo "  Stderr:"
+      cat /tmp/err.log
+      exit 1
+  fi
+}
+
+test_import_pyspark_in_pod() {
+  import_pyspark_from_python_runtime_in_pod $NAMESPACE spark
+}
+
 
 cleanup_user_failure_in_pod() {
   teardown_test_pod
@@ -695,7 +720,13 @@ echo -e "##################################"
 echo -e "RUN PYSPARK IN POD"
 echo -e "##################################"
 
-(setup_user_context && test_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+(setup_user_context && test_pyspark_shell_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
+
+echo -e "##################################"
+echo -e "IMPORT pyspark FROM INSIDE POD"
+echo -e "##################################"
+
+(setup_user_context && test_import_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN SPARK SQL IN POD (Using S3 Object Storage)"
