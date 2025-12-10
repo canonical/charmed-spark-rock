@@ -37,14 +37,14 @@ spark_image(){
 setup_user() {
   echo "setup_user() ${1} ${2}"
 
-
+  IMAGE=$(spark_image)
   USERNAME=$1
   NAMESPACE=$2
 
   create_serviceaccount_using_pod $USERNAME $NAMESPACE $ADMIN_POD_NAME
 
   # Create the pod with the Spark service account
-  cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.serviceAccountName = '\"${USERNAME}\"' | .spec.containers[0].image="ghcr.io/welpaolo/charmed-spark@sha256:d8273bd904bb5f74234bc0756d520115b5668e2ac4f2b65a677bfb1c27e882da"' | \
+  cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.serviceAccountName = '\"${USERNAME}\"' | .spec.containers[0].image='\"${IMAGE}\" | \
     kubectl -n tests apply -f -
 
   wait_for_pod testpod $NAMESPACE
@@ -97,7 +97,7 @@ cleanup_user_failure() {
 teardown_test_pod() {
   kubectl logs testpod-admin -n $NAMESPACE 
   kubectl logs testpod -n $NAMESPACE 
-  kubectl logs -l spark-version=3.4.4 -n $NAMESPACE 
+  kubectl logs -l spark-version=$(get_spark_version) -n $NAMESPACE 
   kubectl -n $NAMESPACE delete pod testpod
   kubectl -n $NAMESPACE delete pod testpod-admin
 
@@ -192,17 +192,6 @@ run_test_gpu_example_in_pod(){
 
 test_gpu_example_in_pod() {
   run_test_gpu_example_in_pod $NAMESPACE spark
-}
-
-
-teardown_test_pod() {
-  kubectl logs testpod-admin -n $NAMESPACE 
-  kubectl logs testpod -n $NAMESPACE 
-  kubectl logs -l spark-version=3.4.4 -n $NAMESPACE 
-  kubectl -n $NAMESPACE delete pod testpod
-  kubectl -n $NAMESPACE delete pod testpod-admin
-
-  kubectl delete namespace $NAMESPACE
 }
 
 
