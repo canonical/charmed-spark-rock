@@ -37,14 +37,14 @@ spark_image(){
 setup_user() {
   echo "setup_user() ${1} ${2}"
 
-
+  IMAGE=$(spark_image)
   USERNAME=$1
   NAMESPACE=$2
 
   create_serviceaccount_using_pod $USERNAME $NAMESPACE $ADMIN_POD_NAME
 
   # Create the pod with the Spark service account
-  cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.serviceAccountName = '\"${USERNAME}\"' | .spec.containers[0].image="ghcr.io/welpaolo/charmed-spark@sha256:d8273bd904bb5f74234bc0756d520115b5668e2ac4f2b65a677bfb1c27e882da"' | \
+  cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.serviceAccountName = '\"${USERNAME}\"' | .spec.containers[0].image='\"${IMAGE}\" | \
     kubectl -n tests apply -f -
 
   wait_for_pod testpod $NAMESPACE
@@ -97,7 +97,7 @@ cleanup_user_failure() {
 teardown_test_pod() {
   kubectl logs testpod-admin -n $NAMESPACE 
   kubectl logs testpod -n $NAMESPACE 
-  kubectl logs -l spark-version=3.4.4 -n $NAMESPACE 
+  kubectl logs -l spark-version=$(get_spark_version) -n $NAMESPACE 
   kubectl -n $NAMESPACE delete pod testpod
   kubectl -n $NAMESPACE delete pod testpod-admin
 
@@ -204,17 +204,6 @@ test_gpu_example_in_pod_with_default_image() {
 }
 
 
-teardown_test_pod() {
-  kubectl logs testpod-admin -n $NAMESPACE 
-  kubectl logs testpod -n $NAMESPACE 
-  kubectl logs -l spark-version=3.4.4 -n $NAMESPACE 
-  kubectl -n $NAMESPACE delete pod testpod
-  kubectl -n $NAMESPACE delete pod testpod-admin
-
-  kubectl delete namespace $NAMESPACE
-}
-
-
 run_test_sql_gpu_example_in_pod(){
   # Test Spark-rapids integration in Charmed Spark Rock
 
@@ -318,6 +307,31 @@ test_sql_gpu_example_in_pod() {
   run_test_sql_gpu_example_in_pod $NAMESPACE spark
 }
 
+
+
+import_pyspark_from_python_runtime_in_pod() {
+  echo "import_pyspark_from_python_runtime_in_pod ${1} ${2}"
+
+  NAMESPACE=$1
+  USERNAME=$2
+
+  out=$(kubectl -n "$NAMESPACE" exec testpod -- python3 -c 'import py4j; import pyspark;' 2> >(tee /tmp/err.log))
+  rc=$?
+
+  if [[ $rc -ne 0 || -s /tmp/err.log ]]; then
+      echo "Could not import pyspark from inside pod:"
+      echo "  Exit code: $rc"
+      echo "  Stderr:"
+      cat /tmp/err.log
+      exit 1
+  fi
+}
+
+test_import_pyspark_in_pod() {
+  import_pyspark_from_python_runtime_in_pod $NAMESPACE spark
+}
+
+
 cleanup_user_failure_in_pod() {
   teardown_test_pod
   cleanup_user_failure
@@ -330,6 +344,12 @@ echo -e "##################################"
 
 kubectl create namespace $NAMESPACE
 setup_admin_pod $ADMIN_POD_NAME $(spark_image) $NAMESPACE
+
+echo -e "##################################"
+echo -e "IMPORT pyspark FROM INSIDE POD"
+echo -e "##################################"
+
+(setup_user_context && test_import_pyspark_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES GPU"

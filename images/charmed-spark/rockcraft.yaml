@@ -25,7 +25,7 @@ environment:
   SPARK_CONFS: /etc/spark8t/conf
   SPARK_CONF_DIR: /etc/spark8t/conf
   JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-  PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/usr/lib/python3.10/site-packages
+  PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/opt/spark/python/lib/py4j.zip:/usr/lib/python3.10/site-packages
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin
   HOME: /var/lib/spark
   SPARK_USER_DATA: /var/lib/spark
@@ -227,6 +227,12 @@ parts:
       mkdir -p var/log/spark
       chown -R ${SPARK_GID}:${SPARK_UID} var/log/spark
       chmod -R 750 var/log/spark
+
+      # Create a symlink to py4j
+      (
+        cd opt/spark/python/lib
+        ln -s py4j-*-src.zip py4j.zip
+      )
 
       # This is needed to run the spark job, as it requires RW+ access on the spark folder
       chown -R ${SPARK_GID}:${SPARK_UID} opt/spark
