@@ -17,11 +17,49 @@ jobs:
           yamllint -d "{extends: relaxed, rules: {line-length: {max: 250}}}" \
             --no-warnings images/charmed-spark-gpu/rockcraft.yaml
 
+  checks:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo snap install yq
+          sudo snap install rockcraft --classic --edge
+
+      - name: Verify default Spark image
+        id: verify-default-image
+        run: |
+          echo "Extracting image from spark-defaults.conf"
+          DEFAULT_IMAGE_LINE=$(grep -E '^spark.kubernetes.container.image=' images/charmed-spark-gpu/conf/spark-defaults.conf || true)
+          IMAGE=${DEFAULT_IMAGE_LINE#*=}
+          echo "Default Spark Image: ${IMAGE}"
+
+          echo "Inspecting image with rockcraft.skopeo"
+          if ! rockcraft.skopeo inspect "docker://${IMAGE}"; then
+            echo "Image ${IMAGE} not found or inspect failed" >&2
+            exit 1
+          fi
+
+          echo "Cross-checking with rockcraft.yaml"
+          VERSION=$(yq .version images/charmed-spark-gpu/rockcraft.yaml)
+          MAJOR_MINOR=$(echo "${VERSION}" | awk -F. '{print $1"."$2}')
+          echo "rockcraft version: ${VERSION} (major_minor=${MAJOR_MINOR})"
+
+          if ! echo "${IMAGE}" | grep -q "${MAJOR_MINOR}"; then
+            echo "Image tag does not contain version prefix ${MAJOR_MINOR}" >&2
+            exit 1
+          fi
+
+          echo "Verification of Spark default image passed."
+      
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     needs:
       - lint
+      - checks
     steps:
       - name: Disk cleanup
         shell: bash
