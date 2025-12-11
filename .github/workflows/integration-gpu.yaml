@@ -96,6 +96,9 @@ jobs:
           sudo make microk8s-import FLAVOUR=gpu PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
             -o ${{ steps.artifact.outputs.gpu_artifact_name }}
 
+      - name: Setup upterm session
+        uses: owenthereal/action-upterm@v1
+      
       - name: Run integration tests on GPU
         run: |
           echo "Start test..."
