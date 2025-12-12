@@ -27,6 +27,31 @@ jobs:
       AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
       AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
     steps:
+      - name: Disk cleanup
+        shell: bash
+        run: |
+          sudo rm -rf \
+            /opt/google \
+            /opt/hostedtoolcache \
+            /opt/microsoft/powershell \
+            /opt/microsoft/msedge \
+            "$AGENT_TOOLSDIRECTORY" \
+            /usr/lib/firefox \
+            /usr/lib/mono \
+            /usr/local/julia* \
+            /usr/local/lib/android \
+            /usr/local/share/chromium \
+            /usr/local/share/powershell \
+            /usr/share/dotnet \
+            /usr/share/gradle* \
+            /usr/share/miniconda \
+            /usr/share/sbt \
+            /usr/share/swift \
+            /home/linuxbrew
+          pipx uninstall-all
+          printf '\nDisk usage\n'
+          df --human-readable
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -60,9 +85,6 @@ jobs:
           name: charmed-spark
           path: charmed-spark
 
-      - name: Setup upterm session
-        uses: owenthereal/action-upterm@v1
-        
       - name: Run tests
         run: |
           # Unpack Artifact
