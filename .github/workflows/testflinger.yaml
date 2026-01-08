@@ -1,0 +1,37 @@
+name: GPU integration on testflinger
+on:
+  pull_request:
+  workflow_call:
+
+jobs:
+  build-rock:
+    uses: ./.github/workflows/build_gpu.yaml
+
+  integration-tests:
+    name: Run integration tests
+    needs: [build-rock]
+    runs-on: [self-hosted-linux-amd64-jammy-private-endpoint-medium]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Download artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: charmed-spark-gpu
+          path: charmed-spark
+
+      - name: Prepare testflinger job
+        run: |
+          cp testflinger/reservation_gpu_amd.yaml job.yaml
+          mv charmed-spark/*.tar .
+          sed -i "s/PLACEHOLDER/$(ls *.tar)/g" job.yaml
+          ls
+          cat job.yaml
+
+      - name: Run tests
+        id: submit-testflinger
+        uses: canonical/testflinger/.github/actions/submit@main
+        with:
+          poll: true
+          job-path: job.yaml
