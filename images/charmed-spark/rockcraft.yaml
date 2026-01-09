@@ -31,7 +31,7 @@ environment:
   HOME: /var/lib/spark
   SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
-  PEBBLE_VERBOSE: 1
+  PEBBLE_VERBOSE: "1"
 
 services:
   sparkd:
@@ -92,7 +92,7 @@ parts:
 
   dependencies:
     plugin: nil
-    after: [ spark ]
+    after: [spark]
     build-packages:
       - wget
     overlay-script: |
@@ -140,7 +140,7 @@ parts:
 
   spark8t:
     plugin: nil
-    after: [ dependencies ]
+    after: [dependencies]
     build-packages:
       - wget
       - ssl-cert
@@ -177,7 +177,7 @@ parts:
 
   charmed-spark:
     plugin: dump
-    after: [ spark8t, spark ]
+    after: [spark8t, spark]
     source: .
     organize:
       conf/spark-defaults.conf: etc/spark8t/conf/spark-defaults.conf
@@ -204,7 +204,7 @@ parts:
 
   user-setup:
     plugin: nil
-    after: [ charmed-spark ]
+    after: [charmed-spark]
     overlay-packages:
       - tini
       - libc6
@@ -246,4 +246,3 @@ parts:
       chmod -R 770 var/lib/spark
       mv opt/spark/decom.sh opt/decom.sh
       chmod a+x opt/decom.sh
-
