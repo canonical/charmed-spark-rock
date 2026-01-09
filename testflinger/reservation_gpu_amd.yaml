@@ -1,8 +1,6 @@
 job_queue: riccioli
 provision_data:
   distro: noble
-reserve_data:
-  timeout: 7200 # 2 hours
 
 test_data:
   test_cmds: |
