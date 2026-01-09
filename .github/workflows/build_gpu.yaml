@@ -9,11 +9,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install yamllint
         run: python3 -m pip install yamllint
       - name: YAML Lint
-        run:  |
+        run: |
           yamllint -d "{extends: relaxed, rules: {line-length: {max: 250}}}" \
             --no-warnings images/charmed-spark-gpu/rockcraft.yaml
 
@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           sudo snap install yq
@@ -53,9 +53,16 @@ jobs:
           fi
 
           echo "Verification of Spark default image passed."
-      
+
   build:
-    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        system:
+          - os: ubuntu-22.04
+            arch: amd64
+          - os: ubuntu-22.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.system.os }}
     timeout-minutes: 30
     needs:
       - lint
@@ -87,7 +94,7 @@ jobs:
           df --human-readable
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup LXD
         uses: canonical/setup-lxd@main
@@ -112,9 +119,8 @@ jobs:
         run: sudo chmod a+r  ${{ steps.artifact.outputs.gpu_artifact_name }}
 
       - name: Upload locally built artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: charmed-spark-gpu
+          name: charmed-spark-gpu-${{ matrix.system.arch }}
           path: |
             ${{ steps.artifact.outputs.gpu_artifact_name }}
-
