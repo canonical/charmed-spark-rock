@@ -10,7 +10,7 @@ jobs:
   integration-tests:
     name: Run integration tests
     needs: [build-rock]
-    runs-on: [self-hosted-linux-amd64-jammy-private-endpoint-medium]
+    runs-on: [self-hosted]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
