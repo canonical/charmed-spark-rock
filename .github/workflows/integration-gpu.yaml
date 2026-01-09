@@ -42,7 +42,7 @@ jobs:
         with:
           mode: start
           github-token: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
-          ec2-image-id: ${{ vars.AWS_EC2_IMAGE_ID_AM }}
+          ec2-image-id: ${{ vars.AWS_EC2_IMAGE_ID_ARM }}
           ec2-instance-type: ${{ vars.AWS_EC2_INSTANCE_TYPE_ARM }}
           subnet-id: ${{ vars.AWS_DEFAULT_SUBNET_ID }}
           security-group-id: ${{ vars.AWS_SECURITY_GROUP_ID }}
