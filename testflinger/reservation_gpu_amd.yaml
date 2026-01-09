@@ -1,20 +1,18 @@
-job_queue: riccioli
+job_queue: QUEUE
 provision_data:
   distro: noble
 
 test_data:
-  test_cmds: |
-    ssh -t ubuntu@$DEVICE_IP lsb_release -a
-
-test_data:
   attachments:
     - local: "testflinger/concierge_gpu.yaml"
-    - local: "PLACEHOLDER"
+    - local: "ROCK"
   test_cmds: |
-    scp attachments/test/testflinger/concierge_gpu.yaml ubuntu@$DEVICE_IP:/home/ubuntu/concierge.yaml
-    scp attachments/test/PLACEHOLDER ubuntu@$DEVICE_IP:/home/ubuntu/
     ssh -t ubuntu@$DEVICE_IP 'sudo snap wait system seed.loaded'
     ssh -t ubuntu@$DEVICE_IP 'sudo snap install concierge --classic'
+    ssh -t ubuntu@$DEVICE_IP 'ls'
+    scp attachments/test/testflinger/concierge_gpu.yaml ubuntu@$DEVICE_IP:/home/ubuntu/concierge.yaml
+    scp attachments/test/ROCK ubuntu@$DEVICE_IP:/home/ubuntu/
+    ssh -t ubuntu@$DEVICE_IP 'ls'
     ssh -t ubuntu@$DEVICE_IP 'sudo concierge prepare'
     ssh -t ubuntu@$DEVICE_IP 'sudo microk8s kubectl get pods -n gpu-operator-resources'
-    ssh -t ubuntu@$DEVICE_IP 'ls'
+

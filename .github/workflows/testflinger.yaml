@@ -25,7 +25,8 @@ jobs:
         run: |
           cp testflinger/reservation_gpu_amd.yaml job.yaml
           mv charmed-spark/*.tar .
-          sed -i "s/PLACEHOLDER/$(ls *.tar)/g" job.yaml
+          sed -i "s/ROCK/$(ls *.tar)/g" job.yaml
+          sed -i "s/QUEUE/${{ vars.JOB_QUEUE }}/g" job.yaml
           ls
           cat job.yaml
 
