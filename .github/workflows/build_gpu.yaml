@@ -124,3 +124,16 @@ jobs:
           name: charmed-spark-gpu-${{ matrix.system.arch }}
           path: |
             ${{ steps.artifact.outputs.gpu_artifact_name }}
+
+      - name: Export test image for testing
+        run: |
+          sudo snap install regclient
+          sudo docker run -d -p 5000:5000 --restart always --name local-registry registry:latest
+          rockcraft.skopeo --insecure-policy copy oci-archive:${{ steps.artifact.outputs.gpu_artifact_name }} "docker://localhost:5000/ghcr.io/canonical/test-charmed-spark-gpu:test" --dest-tls-verify=false
+          regctl image export localhost:5000/ghcr.io/canonical/test-charmed-spark-gpu:test --name ghcr.io/canonical/test-charmed-spark-gpu:test --host reg=localhost:5000,tls=disabled >test_image.tar
+
+      - name: Upload test artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: charmed-spark-gpu-test-${{ matrix.system.arch }}
+          path: test_image.tar
