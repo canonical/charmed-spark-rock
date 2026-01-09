@@ -1,7 +1,7 @@
 name: GPU integration CI pipeline
 
 on:
-  pull_request:
+  # pull_request:
   workflow_call:
 
 jobs:
