@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           sudo snap install yq
@@ -59,7 +59,7 @@ jobs:
           fi
 
           echo "Verification of Spark default image passed."
-      
+
   build:
     strategy:
       matrix:
@@ -137,7 +137,7 @@ jobs:
         run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }}
 
       - name: Upload locally built artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: charmed-spark-${{ matrix.system.arch }}
           path: |
