@@ -1,0 +1,103 @@
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+name: Release to GHCR
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - "3.4/edge"
+      - "3.5/edge"
+
+jobs:
+  build-rocks:
+    uses: ./.github/workflows/build.yaml
+
+  build-rock-gpu-amd:
+    uses: ./.github/workflows/build_gpu.yaml
+    with:
+      arch: amd64
+
+  build-rock-gpu-arm:
+    uses: ./.github/workflows/build_gpu.yaml
+    with:
+      arch: arm64
+
+  reorganise-images:
+    runs-on: ubuntu-24.04
+    needs: [build-rocks, build-rock-gpu-amd, build-rock-gpu-arm]
+    steps:
+      - name: Disk cleanup
+        run: |
+          sudo rm -rf \
+            /opt/google \
+            /opt/hostedtoolcache \
+            /opt/microsoft/powershell \
+            /opt/microsoft/msedge \
+            "$AGENT_TOOLSDIRECTORY" \
+            /usr/lib/firefox \
+            /usr/lib/mono \
+            /usr/local/julia* \
+            /usr/local/lib/android \
+            /usr/local/share/chromium \
+            /usr/local/share/powershell \
+            /usr/share/dotnet \
+            /usr/share/gradle* \
+            /usr/share/miniconda \
+            /usr/share/sbt \
+            /usr/share/swift \
+            /home/linuxbrew
+          pipx uninstall-all
+          printf '\nDisk usage\n'
+          df --human-readable
+
+      - name: Install tooling
+        run: |
+          sudo snap install rockcraft --channel latest/edge --classic
+          sudo snap alias rockcraft.skopeo skopeo
+          sudo snap install yq
+          pipx install git+https://github.com/canonical/data-platform-workflows#subdirectory=_cli
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: charmed-spark-*
+
+      - name: Reorganize and convert images
+        run: |
+          mkdir -p to_convert \
+            to_export/charmed-spark \
+            to_export/charmed-spark-kyuubi \
+            to_export/charmed-spark-jupyterlab \
+            to_export/charmed-spark-gpu
+          mv charmed-spark-*/* to_convert
+
+          for file in to_convert/*; do
+              echo "Processing $file"
+              rockcraft.skopeo --insecure-policy copy "docker-archive:${file}" "oci-archive:${file%.*}.rock"
+          done
+          mv to_convert/charmed-spark-kyuubi*.rock to_export/charmed-spark-kyuubi/
+          mv to_convert/charmed-spark-jupyterlab*.rock to_export/charmed-spark-jupyterlab/
+          mv to_convert/charmed-spark-gpu*.rock to_export/charmed-spark-gpu/
+          mv to_convert/charmed-spark*.rock to_export/charmed-spark/
+
+          cp images/charmed-spark/rockcraft.yaml to_export/charmed-spark/
+          cp images/charmed-spark-gpu/rockcraft.yaml to_export/charmed-spark-gpu/
+          yq '. | pick(["name", "version", "base"]) | .name |= "charmed-spark-kyuubi"' images/charmed-spark/rockcraft.yaml > to_export/charmed-spark-kyuubi/rockcraft.yaml
+          yq '. | pick(["name", "version", "base"]) | .name |= "charmed-spark-jupyterlab"' images/charmed-spark/rockcraft.yaml > to_export/charmed-spark-jupyterlab/rockcraft.yaml
+
+      - name: Upload & release rocks
+        id: release
+        run: |
+          release-rock --directory=to_export/charmed-spark/ --create-tags=true
+          release-rock --directory=to_export/charmed-spark-kyuubi/ --create-tags=true
+          release-rock --directory=to_export/charmed-spark-jupyterlab/ --create-tags=true
+          release-rock --directory=to_export/charmed-spark-gpu/ --create-tags=true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
