@@ -7,6 +7,10 @@ on:
         type: string
         default: "amd64"
         required: true
+      export-test-image:
+        type: boolean
+        default: false
+
 jobs:
   build:
     runs-on: ${{ inputs.arch == 'amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
@@ -70,6 +74,7 @@ jobs:
             ${{ steps.artifact.outputs.gpu_artifact_name }}
 
       - name: Export test image
+        if: ${{ inputs.export-test-image }}
         run: |
           sudo snap install regclient
           sudo docker run -d -p 5000:5000 --restart always --name local-registry registry:latest
@@ -77,6 +82,7 @@ jobs:
           regctl image export localhost:5000/ghcr.io/canonical/test-charmed-spark-gpu:test --name ghcr.io/canonical/test-charmed-spark-gpu:test --host reg=localhost:5000,tls=disabled >test_image.tar
 
       - name: Upload test artifact
+        if: ${{ inputs.export-test-image }}
         uses: actions/upload-artifact@v6
         with:
           name: charmed-spark-gpu-test-${{ inputs.arch }}

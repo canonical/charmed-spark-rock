@@ -13,6 +13,7 @@ jobs:
     uses: ./.github/workflows/build_gpu.yaml
     with:
       arch: ${{ inputs.arch }}
+      export-test-image: true
 
   start-runner:
     name: Start self-hosted EC2 runner
