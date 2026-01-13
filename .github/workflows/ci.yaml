@@ -89,15 +89,28 @@ jobs:
   integration:
     needs: [lint, checks]
     uses: ./.github/workflows/integration.yaml
+    secrets:
+      AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+      AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
 
   integration-gpu-amd:
     needs: [lint, checks]
     uses: ./.github/workflows/integration-gpu.yaml
     with:
       arch: "amd64"
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      GITHUB_TOKEN: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
 
   integration-gpu-arm:
     needs: [lint, checks]
     uses: ./.github/workflows/integration-gpu.yaml
     with:
       arch: "arm64"
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      GITHUB_TOKEN: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}

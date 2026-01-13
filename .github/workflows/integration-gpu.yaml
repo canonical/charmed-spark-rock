@@ -7,6 +7,16 @@ on:
         type: string
         default: "amd64"
         required: true
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_REGION:
+        required: true
+      GITHUB_TOKEN:
+        required: true
+
 jobs:
   build-rock:
     uses: ./.github/workflows/build_gpu.yaml
@@ -36,7 +46,7 @@ jobs:
           AWS_EC2_INSTANCE_TYPE: ${{ inputs.arch == 'amd64' && vars.AWS_EC2_INSTANCE_TYPE_AMD || vars.AWS_EC2_INSTANCE_TYPE_ARM }}
         with:
           mode: start
-          github-token: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           ec2-image-id: $AWS_EC2_IMAGE_ID
           ec2-instance-type: $AWS_EC2_INSTANCE_TYPE
           subnet-id: ${{ vars.AWS_DEFAULT_SUBNET_ID }}
@@ -144,6 +154,6 @@ jobs:
         uses: machulav/ec2-github-runner@v2.4.1
         with:
           mode: stop
-          github-token: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           label: ${{ needs.start-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}

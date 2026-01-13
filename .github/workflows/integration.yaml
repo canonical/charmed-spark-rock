@@ -6,6 +6,11 @@ concurrency:
 
 on:
   workflow_call:
+    secrets:
+      AZURE_STORAGE_ACCOUNT:
+        required: true
+      AZURE_STORAGE_KEY:
+        required: true
 
 jobs:
   build-rock:
