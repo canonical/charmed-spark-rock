@@ -2,7 +2,11 @@ name: Build GPU ROCK
 
 on:
   workflow_call:
-
+    inputs:
+      arch:
+        type: string
+        default: "amd64"
+        required: true
 jobs:
   lint:
     runs-on: ubuntu-22.04
@@ -55,14 +59,7 @@ jobs:
           echo "Verification of Spark default image passed."
 
   build:
-    strategy:
-      matrix:
-        system:
-          - os: ubuntu-22.04
-            arch: amd64
-          - os: ubuntu-22.04-arm
-            arch: arm64
-    runs-on: ${{ matrix.system.os }}
+    runs-on: ${{ inputs.arch == 'amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
     timeout-minutes: 30
     needs:
       - lint
@@ -121,7 +118,7 @@ jobs:
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v6
         with:
-          name: charmed-spark-gpu-${{ matrix.system.arch }}
+          name: charmed-spark-gpu-${{ inputs.arch }}
           path: |
             ${{ steps.artifact.outputs.gpu_artifact_name }}
 
@@ -135,5 +132,5 @@ jobs:
       - name: Upload test artifact
         uses: actions/upload-artifact@v6
         with:
-          name: charmed-spark-gpu-test-${{ matrix.system.arch }}
+          name: charmed-spark-gpu-test-${{ inputs.arch }}
           path: test_image.tar

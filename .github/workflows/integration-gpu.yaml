@@ -1,22 +1,25 @@
 name: GPU integration CI pipeline
 
 on:
-  pull_request:
   workflow_call:
-
+    inputs:
+      arch:
+        type: string
+        default: "amd64"
+        required: true
 jobs:
   build-rock:
     uses: ./.github/workflows/build_gpu.yaml
+    with:
+      arch: ${{ inputs.arch }}
 
-  start-runners:
-    name: Start self-hosted EC2 runners
+  start-runner:
+    name: Start self-hosted EC2 runner
     needs: [build-rock]
     runs-on: ubuntu-22.04
     outputs:
-      label-amd: ${{ steps.start-ec2-runner-amd.outputs.label }}
-      ec2-instance-id-amd: ${{ steps.start-ec2-runner-amd.outputs.ec2-instance-id }}
-      label-arm: ${{ steps.start-ec2-runner-arm.outputs.label }}
-      ec2-instance-id-arm: ${{ steps.start-ec2-runner-arm.outputs.ec2-instance-id }}
+      label: ${{ steps.start-ec2-runner.outputs.label }}
+      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2
@@ -25,43 +28,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Start EC2 runner amd
-        id: start-ec2-runner-amd
+      - name: Start EC2 runner
+        id: start-ec2-runner
         uses: machulav/ec2-github-runner@v2.4.1
+        env:
+          AWS_EC2_IMAGE_ID: ${{ inputs.arch == 'amd64' && vars.AWS_EC2_IMAGE_ID_AMD || vars.AWS_EC2_IMAGE_ID_ARM }}
+          AWS_EC2_INSTANCE_TYPE: ${{ inputs.arch == 'amd64' && vars.AWS_EC2_INSTANCE_TYPE_AMD || vars.AWS_EC2_INSTANCE_TYPE_ARM }}
         with:
           mode: start
           github-token: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
-          ec2-image-id: ${{ vars.AWS_EC2_IMAGE_ID_AMD }}
-          # ec2-instance-type: ${{ vars.AWS_EC2_INSTANCE_TYPE_AMD }}
-          ec2-instance-type: g4dn.2xlarge
-          subnet-id: ${{ vars.AWS_DEFAULT_SUBNET_ID }}
-          security-group-id: ${{ vars.AWS_SECURITY_GROUP_ID }}
-
-      - name: Start EC2 runner arm
-        id: start-ec2-runner-arm
-        uses: machulav/ec2-github-runner@v2.4.1
-        with:
-          mode: start
-          github-token: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
-          ec2-image-id: ${{ vars.AWS_EC2_IMAGE_ID_ARM }}
-          # ec2-instance-type: ${{ vars.AWS_EC2_INSTANCE_TYPE_ARM }}
-          ec2-instance-type: g5g.4xlarge
+          ec2-image-id: $AWS_EC2_IMAGE_ID
+          ec2-instance-type: $AWS_EC2_INSTANCE_TYPE
           subnet-id: ${{ vars.AWS_DEFAULT_SUBNET_ID }}
           security-group-id: ${{ vars.AWS_SECURITY_GROUP_ID }}
 
   integration-tests:
     name: Run integration tests
-    needs: [start-runners]
-    runs-on: ${{ matrix.system.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        system:
-          - os: ${{ needs.start-runners.outputs.label-amd }}
-            arch: amd64
-          - os: ${{ needs.start-runners.outputs.label-arm }}
-            arch: arm64
-
+    needs: [start-runner]
+    runs-on: ${{ needs.start-runner.outputs.label }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -82,10 +66,12 @@ jobs:
 
       - name: Deploy gpu operator
         timeout-minutes: 10
+        env:
+          KUBECONFIG: "/home/ubuntu/.kube/config"
         run: |
           helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
           helm repo update
-          KUBECONFIG=/home/ubuntu/.kube/config helm install --generate-name -n gpu-operator-resources --create-namespace nvidia/gpu-operator
+          helm install --generate-name -n gpu-operator-resources --create-namespace nvidia/gpu-operator
           # Wait for gpu operator components to be ready
           while ! sudo kubectl logs -n gpu-operator-resources -l app=nvidia-operator-validator | grep "all validations are successful"
           do
@@ -107,16 +93,10 @@ jobs:
           aws configure set endpoint_url "http://$(ip -4 -j route get 2.2.2.2 | yq -r '.[] | .prefsrc'):80"
           aws s3 ls
 
-      - name: Get Artifact Name
-        id: artifact
-        run: |
-          GPU_ARTIFACT=$(make help FLAVOUR=gpu | grep 'Artifact: ')
-          echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
-
       - name: Download artifact
         uses: actions/download-artifact@v6
         with:
-          name: charmed-spark-gpu-test-${{ matrix.system.arch }}
+          name: charmed-spark-gpu-test-${{ inputs.arch }}
           path: charmed-spark
 
       - name: Load test image
@@ -145,10 +125,10 @@ jobs:
           KUBECONFIG: "/home/ubuntu/.kube/config"
           USER: "ubuntu"
 
-  stop-runners:
-    name: Stop self-hosted EC2 runners
+  stop-runner:
+    name: Stop self-hosted EC2 runner
     needs:
-      - start-runners
+      - start-runner
       - integration-tests
     runs-on: ubuntu-22.04
     if: ${{ always() }}
@@ -160,18 +140,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Stop EC2 runner amd
+      - name: Stop EC2 runner
         uses: machulav/ec2-github-runner@v2.4.1
         with:
           mode: stop
           github-token: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
-          label: ${{ needs.start-runners.outputs.label-amd }}
-          ec2-instance-id: ${{ needs.start-runners.outputs.ec2-instance-id-amd }}
-
-      - name: Stop EC2 runner arm
-        uses: machulav/ec2-github-runner@v2.4.1
-        with:
-          mode: stop
-          github-token: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
-          label: ${{ needs.start-runners.outputs.label-arm }}
-          ec2-instance-id: ${{ needs.start-runners.outputs.ec2-instance-id-arm }}
+          label: ${{ needs.start-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
