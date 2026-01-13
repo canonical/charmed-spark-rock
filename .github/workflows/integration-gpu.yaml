@@ -92,7 +92,7 @@ jobs:
           aws s3 ls
 
       - name: Download artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: charmed-spark-gpu-test-${{ inputs.arch }}
           path: charmed-spark

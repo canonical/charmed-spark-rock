@@ -80,7 +80,7 @@ jobs:
           make microk8s-setup MICROK8S_CHANNEL=${{ matrix.k8s_version }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: charmed-spark-${{ matrix.system.arch }}
           path: charmed-spark
