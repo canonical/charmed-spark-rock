@@ -2,6 +2,10 @@
 # See LICENSE file for licensing details.
 name: CI pipeline
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   pull_request:
 
