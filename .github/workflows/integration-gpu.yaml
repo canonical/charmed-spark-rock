@@ -41,14 +41,11 @@ jobs:
       - name: Start EC2 runner
         id: start-ec2-runner
         uses: machulav/ec2-github-runner@v2.4.1
-        env:
-          AWS_EC2_IMAGE_ID: ${{ inputs.arch == 'amd64' && vars.AWS_EC2_IMAGE_ID_AMD || vars.AWS_EC2_IMAGE_ID_ARM }}
-          AWS_EC2_INSTANCE_TYPE: ${{ inputs.arch == 'amd64' && vars.AWS_EC2_INSTANCE_TYPE_AMD || vars.AWS_EC2_INSTANCE_TYPE_ARM }}
         with:
           mode: start
           github-token: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
-          ec2-image-id: $AWS_EC2_IMAGE_ID
-          ec2-instance-type: $AWS_EC2_INSTANCE_TYPE
+          ec2-image-id: ${{ inputs.arch == 'amd64' && vars.AWS_EC2_IMAGE_ID_AMD || vars.AWS_EC2_IMAGE_ID_ARM }}
+          ec2-instance-type: ${{ inputs.arch == 'amd64' && vars.AWS_EC2_INSTANCE_TYPE_AMD || vars.AWS_EC2_INSTANCE_TYPE_ARM }}
           subnet-id: ${{ vars.AWS_DEFAULT_SUBNET_ID }}
           security-group-id: ${{ vars.AWS_SECURITY_GROUP_ID }}
 
