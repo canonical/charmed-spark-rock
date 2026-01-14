@@ -34,7 +34,7 @@ get_spark_version(){
 
 
 spark_image(){
-  echo "ghcr.io/canonical/test-charmed-spark-gpu:test"
+  echo "ghcr.io/canonical/test-charmed-spark-gpu:$(get_spark_version)"
 }
 
 
