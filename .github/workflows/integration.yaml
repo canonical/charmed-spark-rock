@@ -1,22 +1,23 @@
 name: Spark Image Tests
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 on:
-  pull_request:
   workflow_call:
 
 jobs:
   build-rock:
     uses: ./.github/workflows/build.yaml
+
   integration:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.system.os }}
     timeout-minutes: 120
     needs: build-rock
     strategy:
       matrix:
+        system:
+          - os: ubuntu-22.04
+            arch: amd64
+          - os: ubuntu-22.04-arm
+            arch: arm64
         env: [integration]
         k8s_version:
           - 1.28/stable
@@ -53,7 +54,10 @@ jobs:
           df --human-readable
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Install tooling
+        run: pipx install azure-cli
 
       - name: Get Artifact Name
         id: artifact
@@ -80,9 +84,9 @@ jobs:
           sudo microceph.radosgw-admin user create --uid test --display-name test --access-key=foo --secret-key=bar
 
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
-          name: charmed-spark
+          name: charmed-spark-${{ matrix.system.arch }}
           path: charmed-spark
 
       - name: Run tests
@@ -128,3 +132,7 @@ jobs:
             -o ${{ steps.artifact.outputs.kyuubi_artifact_name }}
 
           sg microk8s -c "make tests FLAVOUR=kyuubi"
+
+  trivy:
+    needs: build-rock
+    uses: ./.github/workflows/trivy.yaml
