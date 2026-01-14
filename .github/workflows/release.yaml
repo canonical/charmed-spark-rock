@@ -55,6 +55,8 @@ jobs:
           df --human-readable
 
       - name: Install tooling
+        # The release-rock command is installed here from the shared workflows
+        # using pipx
         run: |
           sudo snap install rockcraft --channel latest/edge --classic
           sudo snap alias rockcraft.skopeo skopeo
@@ -70,6 +72,9 @@ jobs:
           pattern: charmed-spark-*
 
       - name: Reorganize and convert images
+        # The release-rock command requires a flavor's images to be in the same folder,
+        # using the compressed oci-archive format (so we need to convert what we have) and
+        # it needs a rockcraft.yaml file to read the name, base & version from
         run: |
           mkdir -p to_convert \
             to_export/charmed-spark \
