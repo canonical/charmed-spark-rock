@@ -2,64 +2,19 @@ name: Build GPU ROCK
 
 on:
   workflow_call:
+    inputs:
+      arch:
+        type: string
+        default: "amd64"
+        required: true
+      export-test-image:
+        type: boolean
+        default: false
 
 jobs:
-  lint:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 5
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Install yamllint
-        run: python3 -m pip install yamllint
-      - name: YAML Lint
-        run:  |
-          yamllint -d "{extends: relaxed, rules: {line-length: {max: 250}}}" \
-            --no-warnings images/charmed-spark-gpu/rockcraft.yaml
-
-  checks:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 15
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo snap install yq
-          sudo snap install rockcraft --classic --edge
-
-      - name: Verify default Spark image
-        id: verify-default-image
-        run: |
-          echo "Extracting image from spark-defaults.conf"
-          DEFAULT_IMAGE_LINE=$(grep -E '^spark.kubernetes.container.image=' images/charmed-spark-gpu/conf/spark-defaults.conf || true)
-          IMAGE=${DEFAULT_IMAGE_LINE#*=}
-          echo "Default Spark Image: ${IMAGE}"
-
-          echo "Inspecting image with rockcraft.skopeo"
-          if ! rockcraft.skopeo inspect "docker://${IMAGE}"; then
-            echo "Image ${IMAGE} not found or inspect failed" >&2
-            exit 1
-          fi
-
-          echo "Cross-checking with rockcraft.yaml"
-          VERSION=$(yq .version images/charmed-spark-gpu/rockcraft.yaml)
-          MAJOR_MINOR=$(echo "${VERSION}" | awk -F. '{print $1"."$2}')
-          echo "rockcraft version: ${VERSION} (major_minor=${MAJOR_MINOR})"
-
-          if ! echo "${IMAGE}" | grep -q "${MAJOR_MINOR}"; then
-            echo "Image tag does not contain version prefix ${MAJOR_MINOR}" >&2
-            exit 1
-          fi
-
-          echo "Verification of Spark default image passed."
-      
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.arch == 'amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
     timeout-minutes: 30
-    needs:
-      - lint
-      - checks
     steps:
       - name: Disk cleanup
         shell: bash
@@ -87,7 +42,7 @@ jobs:
           df --human-readable
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup LXD
         uses: canonical/setup-lxd@main
@@ -112,9 +67,32 @@ jobs:
         run: sudo chmod a+r  ${{ steps.artifact.outputs.gpu_artifact_name }}
 
       - name: Upload locally built artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: charmed-spark-gpu
+          name: charmed-spark-gpu-${{ inputs.arch }}
           path: |
             ${{ steps.artifact.outputs.gpu_artifact_name }}
 
+      - name: Export test image
+        if: ${{ inputs.export-test-image }}
+        run: |
+          export SPARK_VERSION=$(yq .version images/charmed-spark-gpu/rockcraft.yaml)
+          export GPU_VERSION=$(yq .flavours.gpu.version images/metadata.yaml)
+
+          sudo snap install regclient
+          sudo docker run -d -p 5000:5000 --restart always --name local-registry registry:latest
+          rockcraft.skopeo --insecure-policy copy \
+            oci-archive:${{ steps.artifact.outputs.gpu_artifact_name }} \
+            "docker://localhost:5000/ghcr.io/canonical/test-charmed-spark-gpu:${SPARK_VERSION}-${GPU_VERSION}" \
+            --dest-tls-verify=false
+          regctl image export \
+            "localhost:5000/ghcr.io/canonical/test-charmed-spark-gpu:${SPARK_VERSION}-${GPU_VERSION}" \
+            --name "ghcr.io/canonical/test-charmed-spark-gpu:${SPARK_VERSION}-${GPU_VERSION}" \
+            --host reg=localhost:5000,tls=disabled >test_image.tar
+
+      - name: Upload test artifact
+        if: ${{ inputs.export-test-image }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: charmed-spark-gpu-test-${{ inputs.arch }}
+          path: test_image.tar
