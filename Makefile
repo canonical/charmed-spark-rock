@@ -19,7 +19,7 @@ REPOSITORY :=
 # eg, test- [To be passed when you 'make' the recipe]
 PREFIX := 
 
-PLATFORM := amd64
+PLATFORM := $(shell dpkg --print-architecture)
 
 # The flavor of the image, (one of spark, jupyter and kyuubi)
 FLAVOUR := "spark"
