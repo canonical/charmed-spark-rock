@@ -26,13 +26,17 @@ jobs:
     with:
       arch: arm64
 
+  trivy:
+    needs: build-rocks
+    uses: ./.github/workflows/trivy.yaml
+
   release-images:
     name: Release images
     runs-on: ubuntu-24.04
     needs: [build-rocks, build-rock-gpu-amd, build-rock-gpu-arm]
     permissions:
-      packages: write  # Needed to publish to GitHub Container Registry
-      contents: write  # Needed to create git tags
+      packages: write # Needed to publish to GitHub Container Registry
+      contents: write # Needed to create git tags
     steps:
       - name: Disk cleanup
         run: |
