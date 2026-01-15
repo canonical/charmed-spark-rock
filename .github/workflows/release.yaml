@@ -26,7 +26,8 @@ jobs:
     with:
       arch: arm64
 
-  reorganise-images:
+  release-images:
+    name: Release images
     runs-on: ubuntu-24.04
     needs: [build-rocks, build-rock-gpu-amd, build-rock-gpu-arm]
     steps:
@@ -62,6 +63,13 @@ jobs:
           sudo snap alias rockcraft.skopeo skopeo
           sudo snap install yq
           pipx install git+https://github.com/canonical/data-platform-workflows#subdirectory=_cli
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: unused # Required input—but not used
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout repository
         uses: actions/checkout@v6
