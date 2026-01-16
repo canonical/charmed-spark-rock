@@ -25,7 +25,7 @@ PLATFORM := $(shell dpkg --print-architecture)
 FLAVOUR := "spark"
 
 # The channel of `microk8s` snap to be used for testing
-MICROK8S_CHANNEL := "1.32-strict/stable"
+MICROK8S_CHANNEL := "1.32/stable"
 
 # The Azure credentials supplied as environment variables
 AZURE_STORAGE_ACCOUNT := ${AZURE_STORAGE_ACCOUNT}
@@ -54,6 +54,7 @@ JUPYTER_VERSION=$(shell cat images/metadata.yaml | yq .flavours.jupyter.version)
 
 # eg, charmed-spark-gpu
 ROCK_NAME_GPU := $(shell cat images/charmed-spark-gpu/rockcraft.yaml | yq .name)
+GPU_VERSION=$(shell cat images/metadata.yaml | yq .flavours.gpu.version)
 
 # The filename of the Rock file built during the build process.
 # eg, charmed-spark_3.4.2_amd64.rock
@@ -103,9 +104,9 @@ else ifeq ($(FLAVOUR), kyuubi)
 	DISPLAY_NAME=$(REPOSITORY)$(PREFIX)$(ROCK_NAME)-kyuubi
 	TAG=$(SPARK_VERSION)-$(KYUUBI_VERSION)
 	ARTIFACT=$(KYUUBI_ARTIFACT)
-else ifeq ($(FLAVOUR), spark-gpu)
+else ifeq ($(FLAVOUR), gpu)
 	DISPLAY_NAME=$(REPOSITORY)$(PREFIX)$(ROCK_NAME)-gpu
-	TAG=$(SPARK_VERSION)
+	TAG=$(SPARK_VERSION)-$(GPU_VERSION)
 	ARTIFACT=$(SPARK_GPU_ARTIFACT)
 else
 	DISPLAY_NAME=$(REPOSITORY)$(PREFIX)$(ROCK_NAME)
@@ -122,7 +123,7 @@ endif
 # K8S_MARKER: The MicroK8s cluster has been installed and configured successfully
 # AWS_MARKER: The AWS CLI has been installed and configured with valid S3 credentials from MinIO
 SPARK_MARKER=$(_MAKE_DIR)/spark-$(SPARK_VERSION).tag
-SPARK_GPU_MARKER=$(_MAKE_DIR)/spark-gpu-$(SPARK_VERSION).tag
+SPARK_GPU_MARKER=$(_MAKE_DIR)/gpu-$(SPARK_VERSION).tag
 JUPYTER_MARKER=$(_MAKE_DIR)/jupyter-$(JUPYTER_VERSION).tag
 KYUUBI_MARKER=$(_MAKE_DIR)/kyuubi-$(KYUUBI_VERSION).tag
 K8S_MARKER=$(_MAKE_DIR)/k8s.tag
@@ -250,15 +251,15 @@ $(SPARK_GPU_MARKER): $(ROCK_FILE_GPU)
 	touch $(SPARK_GPU_MARKER)
 
 # Shorthand recipe for building Spark-gpu image
-spark-gpu: $(SPARK_GPU_MARKER)
+gpu: $(SPARK_GPU_MARKER)
 
 $(ARTIFACT):
 ifeq ($(FLAVOUR), jupyter)
 	make jupyter
 else ifeq ($(FLAVOUR), kyuubi)
 	make kyuubi
-else ifeq ($(FLAVOUR), spark-gpu)
-	make spark-gpu
+else ifeq ($(FLAVOUR), gpu)
+	make gpu
 else
 	make spark
 endif
@@ -296,7 +297,7 @@ tests: $(K8S_MARKER) $(AWS_MARKER) $(AZURE_MARKER)
 	@echo "=== Running Integration Tests ==="
 ifeq ($(FLAVOUR), jupyter)
 	/bin/bash ./tests/integration/integration-tests-jupyter.sh
-else ifeq ($(FLAVOUR), spark-gpu)
+else ifeq ($(FLAVOUR), gpu)
 	/bin/bash ./tests/integration/integration-tests-gpu.sh
 else ifeq ($(FLAVOUR), kyuubi)
 	@export AZURE_STORAGE_ACCOUNT=$(AZURE_STORAGE_ACCOUNT) \
@@ -322,7 +323,7 @@ azure-cli-setup: $(AZURE_MARKER)
 $(K8S_MARKER):
 	@echo "=== Setting up and configuring local Microk8s cluster ==="
 	/bin/bash ./tests/integration/setup-microk8s.sh $(MICROK8S_CHANNEL)
-	sg snap_microk8s ./tests/integration/config-microk8s.sh
+	sg microk8s ./tests/integration/config-microk8s.sh
 	touch $(K8S_MARKER)
 
 

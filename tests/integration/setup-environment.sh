@@ -14,7 +14,6 @@ pip3 install tox
 
 # Restart the systemd service
 systemctl restart snapd.service
-sleep 30
 
 # Microk8s setup
 echo "Installing microk8s: $MICROK8S_CHANNEL"

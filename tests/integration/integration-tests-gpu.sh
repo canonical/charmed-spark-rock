@@ -25,7 +25,11 @@ S3_BUCKET=spark-$(uuidgen)
 
 get_spark_version(){
   # Fetch Spark version from rockcraft.yaml
-  cat images/charmed-spark-gpu/rockcraft.yaml | yq '(.version)' 
+  SPARK_VERSION=$(cat images/charmed-spark/rockcraft.yaml | yq '(.version)')
+
+  GPU_VERSION=$(cat images/metadata.yaml | yq .flavours.gpu.version)
+
+  echo "${SPARK_VERSION}-${GPU_VERSION}"
 }
 
 
@@ -37,11 +41,13 @@ spark_image(){
 setup_user() {
   echo "setup_user() ${1} ${2}"
 
-  IMAGE=$(spark_image)
+
   USERNAME=$1
   NAMESPACE=$2
 
   create_serviceaccount_using_pod $USERNAME $NAMESPACE $ADMIN_POD_NAME
+
+  IMAGE=$(spark_image)
 
   # Create the pod with the Spark service account
   cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.serviceAccountName = '\"${USERNAME}\"' | .spec.containers[0].image='\"${IMAGE}\" | \

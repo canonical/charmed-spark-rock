@@ -113,7 +113,6 @@ jobs:
           fi
 
       - name: Run integration tests on GPU
-        timeout-minutes: 45
         run: |
           echo "Start test..."
           export S3_ACCESS_KEY=foo
