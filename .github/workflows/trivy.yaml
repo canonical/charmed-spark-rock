@@ -1,9 +1,5 @@
 name: trivy
 on:
-  push:
-    branches:
-      - 3.5/edge
-      - 3.4/edge
   workflow_call:
     inputs:
       branch:
@@ -81,7 +77,7 @@ jobs:
           scanners: "vuln"
 
       - name: Upload trivy report as a Github artifact (${{ matrix.flavour }})
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: trivy-sbom-report-${{ matrix.flavour }}-${{ matrix.arch }}
           path: "${{ github.workspace }}/dependency-results-${{ matrix.flavour }}-${{ matrix.arch }}.sbom.json"
