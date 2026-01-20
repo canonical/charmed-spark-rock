@@ -1,10 +1,5 @@
 name: trivy
 on:
-  push:
-    branches:
-      - 3.5/edge
-      - 3.4/edge
-  pull_request:
   workflow_call:
     inputs:
       branch:
@@ -12,21 +7,24 @@ on:
         default: ""
 jobs:
   build:
+    if: ${{ inputs.branch }}
     uses: ./.github/workflows/build.yaml
     with:
       branch: ${{ inputs.branch }}
   scan:
     name: Trivy scan and sbom generation
     needs: build
+    if: always()
     runs-on: ubuntu-latest
     strategy:
       matrix:
         flavour:
           - charmed-spark
           - charmed-spark-kyuubi
+        arch: [amd64, arm64]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch }}
 
@@ -37,12 +35,12 @@ jobs:
         id: artifact
         run: |
           FLAVOUR=${{ matrix.flavour }}
-          BASE_ARTIFACT=$(make help | grep 'Artifact: ' | sed "s/charmed-spark/$FLAVOUR/g")
+          BASE_ARTIFACT=$(make help | grep 'Artifact: ' | sed "s/charmed-spark/$FLAVOUR/g" | sed "s/amd64/${{ matrix.arch }}/g")
           echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
-          name: charmed-spark
+          name: charmed-spark-${{ matrix.arch }}
           path: charmed-spark
       - name: Import locally
         run: |
@@ -50,11 +48,11 @@ jobs:
           mv charmed-spark/${{ steps.artifact.outputs.base_artifact_name }} .
           sudo rockcraft.skopeo --insecure-policy copy \
             docker-archive:${{ steps.artifact.outputs.base_artifact_name }} \
-            docker-daemon:trivy/${{ matrix.flavour }}:test
+            docker-daemon:trivy/${{ matrix.flavour }}-${{ matrix.arch }}:test
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.31.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
-          image-ref: "trivy/${{ matrix.flavour }}:test"
+          image-ref: "trivy/${{ matrix.flavour }}-${{ matrix.arch }}:test"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "MEDIUM,HIGH,CRITICAL"
@@ -65,22 +63,22 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
           ref: ${{ inputs.branch }}
-          category: ${{ matrix.flavour }}
+          category: ${{ matrix.flavour }}-${{ matrix.arch }}
 
       - name: Run Trivy in GitHub SBOM mode and submit results to Dependency Graph
-        uses: aquasecurity/trivy-action@0.31.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           scan-type: "image"
           format: "spdx-json"
-          output: "dependency-results-${{ matrix.flavour }}.sbom.json"
-          image-ref: "trivy/${{ matrix.flavour }}:test"
+          output: "dependency-results-${{ matrix.flavour }}-${{ matrix.arch }}.sbom.json"
+          image-ref: "trivy/${{ matrix.flavour }}-${{ matrix.arch }}:test"
           github-pat: ${{ secrets.GITHUB_TOKEN }}
           severity: "MEDIUM,HIGH,CRITICAL"
           scanners: "vuln"
 
       - name: Upload trivy report as a Github artifact (${{ matrix.flavour }})
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: trivy-sbom-report-${{ matrix.flavour }}
-          path: "${{ github.workspace }}/dependency-results-${{ matrix.flavour }}.sbom.json"
+          name: trivy-sbom-report-${{ matrix.flavour }}-${{ matrix.arch }}
+          path: "${{ github.workspace }}/dependency-results-${{ matrix.flavour }}-${{ matrix.arch }}.sbom.json"
           retention-days: 90

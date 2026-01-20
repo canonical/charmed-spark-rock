@@ -1,27 +1,28 @@
 name: Spark Image Tests
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 on:
-  pull_request:
   workflow_call:
 
 jobs:
   build-rock:
     uses: ./.github/workflows/build.yaml
+
   integration:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.system.os }}
     timeout-minutes: 120
     needs: build-rock
     strategy:
       matrix:
+        system:
+          - os: ubuntu-22.04
+            arch: amd64
+          - os: ubuntu-22.04-arm
+            arch: arm64
         env: [integration]
         k8s_version:
-          - 1.28-strict/stable
-          - 1.32-strict/stable
-          - 1.34-strict/stable
+          - 1.28/stable
+          - 1.32/stable
+          - 1.34/stable
       fail-fast: false
     env:
       AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
@@ -53,7 +54,10 @@ jobs:
           df --human-readable
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Install tooling
+        run: pipx install azure-cli
 
       - name: Get Artifact Name
         id: artifact
@@ -64,7 +68,7 @@ jobs:
           echo "jupyter_artifact_name=${JUPYTER_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
           KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
           echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
-          GPU_ARTIFACT=$(make help FLAVOUR=spark-gpu | grep 'Artifact: ')
+          GPU_ARTIFACT=$(make help FLAVOUR=gpu | grep 'Artifact: ')
           echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Install and configure microk8s
@@ -72,9 +76,9 @@ jobs:
           make microk8s-setup MICROK8S_CHANNEL=${{ matrix.k8s_version }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
-          name: charmed-spark
+          name: charmed-spark-${{ matrix.system.arch }}
           path: charmed-spark
 
       - name: Run tests
@@ -86,7 +90,7 @@ jobs:
           sudo make microk8s-import PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
             -o ${{ steps.artifact.outputs.base_artifact_name }}
 
-          sg snap_microk8s -c "make tests"
+          sg microk8s -c "make tests"
 
       - name: Run tests (Jupyter)
         run: |
@@ -101,7 +105,7 @@ jobs:
             PREFIX=test- \
             -o ${{ steps.artifact.outputs.jupyter_artifact_name }}
 
-          sg snap_microk8s -c "make tests FLAVOUR=jupyter"
+          sg microk8s -c "make tests FLAVOUR=jupyter"
 
       - name: Run tests (Kyuubi)
         env:
@@ -119,4 +123,8 @@ jobs:
             REPOSITORY=ghcr.io/canonical/ PREFIX=test- \
             -o ${{ steps.artifact.outputs.kyuubi_artifact_name }}
 
-          sg snap_microk8s -c "make tests FLAVOUR=kyuubi"
+          sg microk8s -c "make tests FLAVOUR=kyuubi"
+
+  trivy:
+    needs: build-rock
+    uses: ./.github/workflows/trivy.yaml

@@ -1,12 +1,19 @@
 name: GPU integration CI pipeline
 
 on:
-  pull_request:
   workflow_call:
+    inputs:
+      arch:
+        type: string
+        default: "amd64"
+        required: true
 
 jobs:
   build-rock:
     uses: ./.github/workflows/build_gpu.yaml
+    with:
+      arch: ${{ inputs.arch }}
+      export-test-image: true
 
   start-runner:
     name: Start self-hosted EC2 runner
@@ -22,14 +29,15 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Start EC2 runner
         id: start-ec2-runner
         uses: machulav/ec2-github-runner@v2.4.1
         with:
           mode: start
           github-token: ${{ secrets.WELPAOLO_GITHUB_TOKEN }}
-          ec2-image-id: ${{ vars.AWS_EC2_IMAGE_ID }}
-          ec2-instance-type: ${{ vars.AWS_EC2_INSTANCE_TYPE }}
+          ec2-image-id: ${{ inputs.arch == 'amd64' && vars.AWS_EC2_IMAGE_ID_AMD || vars.AWS_EC2_IMAGE_ID_ARM }}
+          ec2-instance-type: ${{ inputs.arch == 'amd64' && vars.AWS_EC2_INSTANCE_TYPE_AMD || vars.AWS_EC2_INSTANCE_TYPE_ARM }}
           subnet-id: ${{ vars.AWS_DEFAULT_SUBNET_ID }}
           security-group-id: ${{ vars.AWS_SECURITY_GROUP_ID }}
 
@@ -38,86 +46,78 @@ jobs:
     needs: [start-runner]
     runs-on: ${{ needs.start-runner.outputs.label }}
     steps:
-      - name: Disk cleanup
-        shell: bash
-        run: |
-          sudo rm -rf \
-            /opt/google \
-            /opt/hostedtoolcache \
-            /opt/microsoft/powershell \
-            /opt/microsoft/msedge \
-            "$AGENT_TOOLSDIRECTORY" \
-            /usr/lib/firefox \
-            /usr/lib/mono \
-            /usr/local/julia* \
-            /usr/local/lib/android \
-            /usr/local/share/chromium \
-            /usr/local/share/powershell \
-            /usr/share/dotnet \
-            /usr/share/gradle* \
-            /usr/share/miniconda \
-            /usr/share/sbt \
-            /usr/share/swift \
-            /home/linuxbrew
-          printf '\nDisk usage\n'
-          df --human-readable
-
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup environment
         run: |
-          sudo -E bash ./tests/integration/setup-environment.sh
-        env:
-          MICROK8S_CHANNEL: 1.32/stable
+          sudo systemctl disable --now unattended-upgrades.service
+          sudo apt autoremove unattended-upgrades -y
+          sudo apt update
+          sudo apt install build-essential -yqq
 
-      - name: Setup microk8s
-        timeout-minutes: 30
-        run: sudo -E /bin/bash ./tests/integration/config-microk8s-gpu.sh
-        env:
-          MICROK8S_ADDONS: "hostpath-storage dns rbac gpu minio"
+          sudo snap install concierge --classic
+          sudo concierge prepare
 
-      - name: Configure microk8s
-        timeout-minutes: 5
-        run: |
-          sudo microk8s.status
-          sudo snap alias microk8s.kubectl kubectl
           mkdir -p /home/ubuntu/.kube
           sudo chown -f -R ubuntu /home/ubuntu/.kube
-          sudo microk8s config | tee /home/ubuntu/.kube/config
+          sudo k8s config | tee /home/ubuntu/.kube/config
 
-      - name: Install required packages/snaps
+      - name: Deploy gpu operator
+        timeout-minutes: 10
+        env:
+          KUBECONFIG: "/home/ubuntu/.kube/config"
         run: |
-          sudo systemctl stop unattended-upgrades
-          sudo apt-get install build-essential -yqq
-          sudo snap install yq
+          helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+          helm repo update
+          helm install --generate-name -n gpu-operator-resources --create-namespace nvidia/gpu-operator
+          # Wait for gpu operator components to be ready
+          while ! sudo kubectl logs -n gpu-operator-resources -l app=nvidia-operator-validator | grep "all validations are successful"
+          do
+              echo "--------------------------------------------------------------------------------------------------------------------"
+              echo "waiting for validations"
+              sudo kubectl get pods -n gpu-operator-resources
+              sleep 60
+              echo "--------------------------------------------------------------------------------------------------------------------"
+          done
 
-      - name: Get Artifact Name
-        id: artifact
+      - name: Setup object storage
         run: |
-          GPU_ARTIFACT=$(make help FLAVOUR=spark-gpu | grep 'Artifact: ')
-          echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          sudo microceph cluster bootstrap
+          sudo microceph disk add loop,1G,3
+          sudo microceph enable rgw
+          sudo microceph.radosgw-admin user create --uid test --display-name test --access-key=foo --secret-key=bar
+          aws configure set aws_access_key_id foo
+          aws configure set aws_secret_access_key bar
+          aws configure set endpoint_url "http://$(ip -4 -j route get 2.2.2.2 | yq -r '.[] | .prefsrc'):80"
+          aws s3 ls
 
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
-          name: charmed-spark-gpu
+          name: charmed-spark-gpu-test-${{ inputs.arch }}
           path: charmed-spark
 
-      - name: Load image
+      - name: Load test image
         run: |
-          # Unpack Artifact
-          mv charmed-spark/${{ steps.artifact.outputs.gpu_artifact_name }} .
-          touch .make_cache/k8s.tag
-          # Import artifact into microk8s to be used in integration tests
-          sudo make microk8s-import FLAVOUR=spark-gpu PREFIX=test- REPOSITORY=ghcr.io/canonical/ \
-            -o ${{ steps.artifact.outputs.gpu_artifact_name }}
+          sudo mkdir /var/snap/k8s/common/images
+          sudo cp charmed-spark/test_image.tar /var/snap/k8s/common/images/
+          sudo snap restart k8s.containerd
+          sleep 30
+          if [ -z "$(sudo /snap/k8s/current/bin/ctr --address /run/containerd/containerd.sock --namespace k8s.io images list -q | grep test-charmed-spark)" ]; then
+            sleep 30
+            if [ -z "$(sudo /snap/k8s/current/bin/ctr --address /run/containerd/containerd.sock --namespace k8s.io images list -q | grep test-charmed-spark)" ]; then
+              echo "Test image not loaded"
+              exit 1
+            fi
+          fi
 
       - name: Run integration tests on GPU
-        timeout-minutes: 45
         run: |
           echo "Start test..."
-          /bin/bash ./tests/integration/setup-aws-cli.sh
+          export S3_ACCESS_KEY=foo
+          export S3_SECRET_KEY=bar
+          export S3_ENDPOINT="http://$(ip -4 -j route get 2.2.2.2 | yq -r '.[] | .prefsrc'):80"
           /bin/bash ./tests/integration/integration-tests-gpu.sh
           echo "End of the test :)"
         env:
@@ -138,6 +138,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Stop EC2 runner
         uses: machulav/ec2-github-runner@v2.4.1
         with:

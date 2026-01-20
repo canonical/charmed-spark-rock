@@ -25,7 +25,11 @@ S3_BUCKET=spark-$(uuidgen)
 
 get_spark_version(){
   # Fetch Spark version from rockcraft.yaml
-  cat images/charmed-spark-gpu/rockcraft.yaml | yq '(.version)' 
+  SPARK_VERSION=$(cat images/charmed-spark/rockcraft.yaml | yq '(.version)')
+
+  GPU_VERSION=$(cat images/metadata.yaml | yq .flavours.gpu.version)
+
+  echo "${SPARK_VERSION}-${GPU_VERSION}"
 }
 
 
@@ -37,11 +41,13 @@ spark_image(){
 setup_user() {
   echo "setup_user() ${1} ${2}"
 
-  IMAGE=$(spark_image)
+
   USERNAME=$1
   NAMESPACE=$2
 
   create_serviceaccount_using_pod $USERNAME $NAMESPACE $ADMIN_POD_NAME
+
+  IMAGE=$(spark_image)
 
   # Create the pod with the Spark service account
   cat ./tests/integration/resources/testpod.yaml | yq ea '.spec.serviceAccountName = '\"${USERNAME}\"' | .spec.containers[0].image='\"${IMAGE}\" | \
@@ -127,9 +133,6 @@ run_test_gpu_example_in_pod(){
       env \
         UU="$SERVICE_ACCOUNT" \
         NN="$NAMESPACE" \
-        ACCESS_KEY="$(get_s3_access_key)" \
-        SECRET_KEY="$(get_s3_secret_key)" \
-        S3_ENDPOINT="$(get_s3_endpoint)" \
         BUCKET="$S3_BUCKET" \
         IMGCNF="$EXTRA_IMAGE_CONF" \
       /bin/bash -c '\
@@ -142,8 +145,8 @@ run_test_gpu_example_in_pod(){
         --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
         --conf spark.hadoop.fs.s3a.path.style.access=true \
         --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
-        --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
-        --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
+        --conf spark.hadoop.fs.s3a.access.key=$S3_ACCESS_KEY \
+        --conf spark.hadoop.fs.s3a.secret.key=$S3_ACCESS_KEY \
         --conf spark.executor.instances=1 \
         --conf spark.executor.resource.gpu.amount=1 \
         --conf spark.executor.memory=4G \
@@ -233,9 +236,6 @@ run_test_sql_gpu_example_in_pod(){
       env \
         UU="$SERVICE_ACCOUNT" \
         NN="$NAMESPACE" \
-        ACCESS_KEY="$(get_s3_access_key)" \
-        SECRET_KEY="$(get_s3_secret_key)" \
-        S3_ENDPOINT="$(get_s3_endpoint)" \
         BUCKET="$S3_BUCKET" \
         IM="$(spark_image)" \
       /bin/bash -c '\
@@ -248,8 +248,8 @@ run_test_sql_gpu_example_in_pod(){
         --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
         --conf spark.hadoop.fs.s3a.path.style.access=true \
         --conf spark.hadoop.fs.s3a.endpoint=$S3_ENDPOINT \
-        --conf spark.hadoop.fs.s3a.access.key=$ACCESS_KEY \
-        --conf spark.hadoop.fs.s3a.secret.key=$SECRET_KEY \
+        --conf spark.hadoop.fs.s3a.access.key=$S3_ACCESS_KEY \
+        --conf spark.hadoop.fs.s3a.secret.key=$S3_SECRET_KEY \
         --conf spark.executor.instances=1 \
         --conf spark.executor.resource.gpu.amount=1 \
         --conf spark.executor.memory=4G \
@@ -357,11 +357,12 @@ echo -e "##################################"
 
 (setup_user_context && test_gpu_example_in_pod && cleanup_user_success) || cleanup_user_failure_in_pod
 
-echo -e "##################################"
-echo -e "RUN EXAMPLE THAT USES GPU WITH DEFAULT IMAGE"
-echo -e "##################################"
+# TODO(arm): Re-enable once we have an arm release
+# echo -e "##################################"
+# echo -e "RUN EXAMPLE THAT USES GPU WITH DEFAULT IMAGE"
+# echo -e "##################################"
 
-(setup_user_context && test_gpu_example_in_pod_with_default_image && cleanup_user_success) || cleanup_user_failure_in_pod
+# (setup_user_context && test_gpu_example_in_pod_with_default_image && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN SQL EXAMPLE THAT USES GPU"

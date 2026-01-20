@@ -17,6 +17,7 @@ base: ubuntu@22.04
 
 platforms:
   amd64:
+  arm64:
 
 run_user: _daemon_
 entrypoint-service: sparkd
@@ -24,9 +25,9 @@ entrypoint-service: sparkd
 environment:
   SPARK_HOME: /opt/spark
   SPARK_CONFS: /etc/spark8t/conf
-  JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+  JAVA_HOME: /usr/lib/jvm/java-17-openjdk-${CRAFT_ARCH_BUILD_FOR}
   PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/opt/spark/python/lib/py4j.zip:/usr/lib/python3.10/site-packages
-  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/lib/jvm/java-17-openjdk-${CRAFT_ARCH_BUILD_FOR}/bin
   HOME: /var/lib/spark
   SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
@@ -92,7 +93,7 @@ parts:
 
   dependencies:
     plugin: nil
-    after: [ spark ]
+    after: [spark]
     build-packages:
       - wget
     overlay-script: |
@@ -120,6 +121,7 @@ parts:
       "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/LIB_VERSION/jmx_prometheus_javaagent-LIB_VERSION.jar $PROMETHEUS_JMX_EXPORTER_VERSION sha1sum $SHA1SUM_PROMETHEUS_JMX_EXPORTER"
       "https://repo1.maven.org/maven2/com/nvidia/rapids-4-spark_2.12/LIB_VERSION/rapids-4-spark_2.12-LIB_VERSION.jar $NVIDIA_RAPIDS_VERSION sha1sum $SHA1SUM_NVIDIA_RAPIDS"
       "https://repo1.maven.org/maven2/org/postgresql/postgresql/LIB_VERSION/postgresql-LIB_VERSION.jar $POSTGRESQL_VERSION sha1sum $SHA1SUM_POSTGRESQL"
+
       )
       for ENTRY in "${JARS[@]}"; do
         echo "$ENTRY"
@@ -142,7 +144,7 @@ parts:
 
   spark8t:
     plugin: nil
-    after: [ dependencies ]
+    after: [dependencies]
     build-packages:
       - wget
       - ssl-cert
@@ -164,8 +166,8 @@ parts:
       mkdir -p $CRAFT_PART_INSTALL/usr/local/bin
       cd $CRAFT_PART_INSTALL/usr/local/bin
       KUBECTL_VERSION=$(wget -qO- https://dl.k8s.io/release/stable.txt)
-      wget -q "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
-      wget -q  "https://dl.k8s.io/$KUBECTL_VERSION/bin/linux/amd64/kubectl.sha256"
+      wget -q "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$CRAFT_ARCH_BUILD_FOR/kubectl"
+      wget -q  "https://dl.k8s.io/$KUBECTL_VERSION/bin/linux/$CRAFT_ARCH_BUILD_FOR/kubectl.sha256"
       echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
       if  [[ $? -ne 0 ]]
         then
@@ -179,7 +181,7 @@ parts:
 
   charmed-spark:
     plugin: dump
-    after: [ spark8t, spark ]
+    after: [spark8t, spark]
     source: .
     organize:
       bin/sparkd.sh: opt/pebble/sparkd.sh
@@ -204,7 +206,7 @@ parts:
 
   user-setup:
     plugin: nil
-    after: [ charmed-spark ]
+    after: [charmed-spark]
     overlay-packages:
       - tini
       - libc6
