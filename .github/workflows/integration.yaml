@@ -107,6 +107,9 @@ jobs:
 
           sg microk8s -c "make tests FLAVOUR=jupyter"
 
+      - name: Setup upterm session
+        uses: owenthereal/action-upterm@v1
+        
       - name: Run tests (Kyuubi)
         env:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
