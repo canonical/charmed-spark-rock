@@ -204,7 +204,12 @@ teardown_test_pods() {
 
 test_jdbc_connection(){
   # Test the JDBC endpoint exposed by Kyuubi by running a few SQL queries
-  jdbc_endpoint=$(kubectl -n $NAMESPACE exec kyuubi-test -- pebble logs kyuubi | grep 'Starting and exposing JDBC connection at:' | rev | cut -d' ' -f1 | rev)
+  echo "Waiting for a few seconds such that Kyuubi server startup is complete..."
+  sleep 10
+
+  host=$(kubectl -n $NAMESPACE exec kyuubi-test -- hostname)
+  port=10009
+  jdbc_endpoint="jdbc:hive2://$host:$port/"
   echo "Testing JDBC endpoint '$jdbc_endpoint'..."
  
   commands=$(cat ./tests/integration/resources/test-kyuubi.sql)
