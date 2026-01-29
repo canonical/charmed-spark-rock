@@ -14,7 +14,7 @@ on:
 jobs:
   build:
     runs-on: ${{ inputs.arch == 'amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Disk cleanup
         shell: bash
@@ -52,7 +52,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo snap install yq
-          sudo snap install rockcraft --classic --edge
+          sudo snap install rockcraft --classic --channel latest/stable
 
       - name: Build image (GPU)
         run: sudo make build FLAVOUR=gpu
