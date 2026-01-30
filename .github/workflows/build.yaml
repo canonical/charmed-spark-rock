@@ -17,7 +17,7 @@ jobs:
           - os: ubuntu-22.04-arm
             arch: arm64
     runs-on: ${{ matrix.system.os }}
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - name: Disk cleanup
         shell: bash
