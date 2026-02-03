@@ -17,7 +17,7 @@ jobs:
           - os: ubuntu-22.04-arm
             arch: arm64
     runs-on: ${{ matrix.system.os }}
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - name: Disk cleanup
         shell: bash
@@ -57,7 +57,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo snap install yq
-          sudo snap install rockcraft --classic --edge
+          sudo snap install rockcraft --classic
 
       - name: Build image
         run: sudo make build

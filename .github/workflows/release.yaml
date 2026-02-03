@@ -122,3 +122,44 @@ jobs:
           release-rock --directory=to_export/charmed-spark-gpu/ --create-tags=true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Re-tag OCI resources
+        id: retag
+        run: |
+          FULL_SPARK_VERSION=$(yq '.version' images/charmed-spark/rockcraft.yaml)
+          BASE=$(yq '(.base|split("@"))[1]' images/charmed-spark/rockcraft.yaml)
+          ORIGINAL_TAG="${FULL_SPARK_VERSION}-${BASE}_edge"
+          MAJOR_MINOR_VERSION=$(echo $FULL_SPARK_VERSION | sed -n "s/\(^[0-9]*\.[0-9]*\).*/\1/p")
+          MAJOR_MINOR_TAG="${MAJOR_MINOR_VERSION}-${BASE}_edge"
+
+          echo "Re-tagging charmed-spark"
+          skopeo copy --insecure-policy \
+            "docker://ghcr.io/canonical/charmed-spark:${ORIGINAL_TAG}" \
+            "docker://ghcr.io/canonical/charmed-spark:${MAJOR_MINOR_TAG}" --all
+
+          echo "Re-tagging charmed-spark-kyuubi"
+          FULL_KYUUBI_TAG="${FULL_SPARK_VERSION}-$(yq '.flavours.kyuubi.version' images/metadata.yaml)-${BASE}_edge"
+          skopeo copy --insecure-policy \
+            "docker://ghcr.io/canonical/charmed-spark-kyuubi:${ORIGINAL_TAG}"\
+            "docker://ghcr.io/canonical/charmed-spark-kyuubi:${MAJOR_MINOR_TAG}" --all
+          skopeo copy --insecure-policy \
+            "docker://ghcr.io/canonical/charmed-spark-kyuubi:${ORIGINAL_TAG}"\
+            "docker://ghcr.io/canonical/charmed-spark-kyuubi:${FULL_KYUUBI_TAG}" --all
+
+          echo "Re-tagging charmed-spark-jupyterlab"
+          FULL_JUPYTER_TAG="${FULL_SPARK_VERSION}-$(yq '.flavours.jupyter.version' images/metadata.yaml)-${BASE}_edge"
+          skopeo copy --insecure-policy \
+            "docker://ghcr.io/canonical/charmed-spark-jupyterlab:${ORIGINAL_TAG}"\
+            "docker://ghcr.io/canonical/charmed-spark-jupyterlab:${MAJOR_MINOR_TAG}" --all
+          skopeo copy --insecure-policy \
+            "docker://ghcr.io/canonical/charmed-spark-jupyterlab:${ORIGINAL_TAG}"\
+            "docker://ghcr.io/canonical/charmed-spark-jupyterlab:${FULL_JUPYTER_TAG}" --all
+
+          echo "Re-tagging charmed-spark-gpu"
+          FULL_GPU_TAG="${FULL_SPARK_VERSION}-$(yq '.flavours.gpu.version' images/metadata.yaml)-${BASE}_edge"
+          skopeo copy --insecure-policy \
+            "docker://ghcr.io/canonical/charmed-spark-gpu:${ORIGINAL_TAG}"\
+            "docker://ghcr.io/canonical/charmed-spark-gpu:${MAJOR_MINOR_TAG}" --all
+          skopeo copy --insecure-policy \
+            "docker://ghcr.io/canonical/charmed-spark-gpu:${ORIGINAL_TAG}"\
+            "docker://ghcr.io/canonical/charmed-spark-gpu:${FULL_GPU_TAG}" --all
