@@ -214,8 +214,8 @@ parts:
       - krb5-user
       - libnss3
       - procps
-      - openjdk-17-jre
-      - openjdk-17-jdk
+      - openjdk-17-jre-headless
+
     override-prime: |
       # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
       # for more information about shared user.
