@@ -45,6 +45,13 @@ jobs:
     name: Run integration tests
     needs: [start-runner]
     runs-on: ${{ needs.start-runner.outputs.label }}
+    strategy:
+      matrix:
+        k8s_version:
+          - 1.32/stable
+          - 1.34/stable
+      fail-fast: false
+      max-parallel: 1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -57,6 +64,10 @@ jobs:
           sudo apt install build-essential -yqq
 
           sudo snap install concierge --classic
+	  
+          # Set the K8s version
+          yq -i e '.providers.k8s.channel = "${{ env.K8S_VERSION }}-classic/stable"' concierge.yaml
+
           sudo concierge prepare
 
           mkdir -p /home/ubuntu/.kube
