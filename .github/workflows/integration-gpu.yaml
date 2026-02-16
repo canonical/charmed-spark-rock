@@ -63,9 +63,6 @@ jobs:
           sudo apt update
           sudo apt install build-essential -yqq
           
-          sudo apt-get remove -y docker.io containerd
-          sudo rm -rf /run/containerd
-
           sudo snap install yq
           sudo snap install concierge --classic
 
@@ -83,69 +80,77 @@ jobs:
           sudo k8s config | tee /home/ubuntu/.kube/config
           
           sudo k8s kubectl version
-          
-          sudo snap remove k8s --purge
 
-      # - name: Deploy gpu operator
-      #   timeout-minutes: 10
-      #   env:
-      #     KUBECONFIG: "/home/ubuntu/.kube/config"
-      #   run: |
-      #     helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-      #     helm repo update
-      #     helm install --generate-name -n gpu-operator-resources --create-namespace nvidia/gpu-operator
-      #     # Wait for gpu operator components to be ready
-      #     while ! sudo kubectl logs -n gpu-operator-resources -l app=nvidia-operator-validator | grep "all validations are successful"
-      #     do
-      #         echo "--------------------------------------------------------------------------------------------------------------------"
-      #         echo "waiting for validations"
-      #         sudo kubectl get pods -n gpu-operator-resources
-      #         sleep 60
-      #         echo "--------------------------------------------------------------------------------------------------------------------"
-      #     done
-      #
-      # - name: Setup object storage
-      #   run: |
-      #     sudo microceph cluster bootstrap
-      #     sudo microceph disk add loop,1G,3
-      #     sudo microceph enable rgw
-      #     sudo microceph.radosgw-admin user create --uid test --display-name test --access-key=foo --secret-key=bar
-      #     aws configure set aws_access_key_id foo
-      #     aws configure set aws_secret_access_key bar
-      #     aws configure set endpoint_url "http://$(ip -4 -j route get 2.2.2.2 | yq -r '.[] | .prefsrc'):80"
-      #     aws s3 ls
-      #
-      # - name: Download artifact
-      #   uses: actions/download-artifact@v7
-      #   with:
-      #     name: charmed-spark-gpu-test-${{ inputs.arch }}
-      #     path: charmed-spark
-      #
-      # - name: Load test image
-      #   run: |
-      #     sudo mkdir /var/snap/k8s/common/images
-      #     sudo cp charmed-spark/test_image.tar /var/snap/k8s/common/images/
-      #     sudo snap restart k8s.containerd
-      #     sleep 30
-      #     if [ -z "$(sudo /snap/k8s/current/bin/ctr --address /run/containerd/containerd.sock --namespace k8s.io images list -q | grep test-charmed-spark)" ]; then
-      #       sleep 30
-      #       if [ -z "$(sudo /snap/k8s/current/bin/ctr --address /run/containerd/containerd.sock --namespace k8s.io images list -q | grep test-charmed-spark)" ]; then
-      #         echo "Test image not loaded"
-      #         exit 1
-      #       fi
-      #     fi
-      #
-      # - name: Run integration tests on GPU
-      #   run: |
-      #     echo "Start test..."
-      #     export S3_ACCESS_KEY=foo
-      #     export S3_SECRET_KEY=bar
-      #     export S3_ENDPOINT="http://$(ip -4 -j route get 2.2.2.2 | yq -r '.[] | .prefsrc'):80"
-      #     /bin/bash ./tests/integration/integration-tests-gpu.sh
-      #     echo "End of the test :)"
-      #   env:
-      #     KUBECONFIG: "/home/ubuntu/.kube/config"
-      #     USER: "ubuntu"
+      - name: Deploy gpu operator
+        timeout-minutes: 10
+        env:
+          KUBECONFIG: "/home/ubuntu/.kube/config"
+        run: |
+          helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+          helm repo update
+          helm install --generate-name -n gpu-operator-resources --create-namespace nvidia/gpu-operator
+          # Wait for gpu operator components to be ready
+          while ! sudo kubectl logs -n gpu-operator-resources -l app=nvidia-operator-validator | grep "all validations are successful"
+          do
+              echo "--------------------------------------------------------------------------------------------------------------------"
+              echo "waiting for validations"
+              sudo kubectl get pods -n gpu-operator-resources
+              sleep 60
+              echo "--------------------------------------------------------------------------------------------------------------------"
+          done
+
+      - name: Setup object storage
+        run: |
+          sudo microceph cluster bootstrap
+          sudo microceph disk add loop,1G,3
+          sudo microceph enable rgw
+          sudo microceph.radosgw-admin user create --uid test --display-name test --access-key=foo --secret-key=bar
+          aws configure set aws_access_key_id foo
+          aws configure set aws_secret_access_key bar
+          aws configure set endpoint_url "http://$(ip -4 -j route get 2.2.2.2 | yq -r '.[] | .prefsrc'):80"
+          aws s3 ls
+
+      - name: Download artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: charmed-spark-gpu-test-${{ inputs.arch }}
+          path: charmed-spark
+
+      - name: Load test image
+        run: |
+          sudo mkdir /var/snap/k8s/common/images
+          sudo cp charmed-spark/test_image.tar /var/snap/k8s/common/images/
+          sudo snap restart k8s.containerd
+          sleep 30
+          if [ -z "$(sudo /snap/k8s/current/bin/ctr --address /run/containerd/containerd.sock --namespace k8s.io images list -q | grep test-charmed-spark)" ]; then
+            sleep 30
+            if [ -z "$(sudo /snap/k8s/current/bin/ctr --address /run/containerd/containerd.sock --namespace k8s.io images list -q | grep test-charmed-spark)" ]; then
+              echo "Test image not loaded"
+              exit 1
+            fi
+          fi
+
+      - name: Run integration tests on GPU
+        run: |
+          echo "Start test..."
+          export S3_ACCESS_KEY=foo
+          export S3_SECRET_KEY=bar
+          export S3_ENDPOINT="http://$(ip -4 -j route get 2.2.2.2 | yq -r '.[] | .prefsrc'):80"
+          /bin/bash ./tests/integration/integration-tests-gpu.sh
+          echo "End of the test :)"
+        env:
+          KUBECONFIG: "/home/ubuntu/.kube/config"
+          USER: "ubuntu"
+
+      - name: Cleanup
+        if: ${{ always() }}
+        run: |
+          sudo snap remove k8s --purge
+          sudo snap remove microceph --purge
+          
+          sudo apt-get remove -y docker.io containerd
+          sudo rm -rf /run/containerd
+
 
   stop-runner:
     name: Stop self-hosted EC2 runner
