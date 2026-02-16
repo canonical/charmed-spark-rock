@@ -62,25 +62,27 @@ jobs:
           sudo apt autoremove unattended-upgrades -y
           sudo apt update
           sudo apt install build-essential -yqq
+          
+          sudo apt-get remove -y docker.io containerd
+          sudo rm -rf /run/containerd
 
           sudo snap install yq
           sudo snap install concierge --classic
-
-          ls -l 
-          find . -name "concierge.yaml"
-          cat concierge.yaml
-          pwd
 
           # Set the K8s version
           cp concierge.yaml /var/snap/yq/common/.
           yq -i e '.providers.k8s.channel = "${{ matrix.k8s_version }}-classic/stable"' /var/snap/yq/common/concierge.yaml
           cp /var/snap/yq/common/concierge.yaml . 
           
+          cat concierge.yaml
+          
           sudo concierge prepare
 
           mkdir -p /home/ubuntu/.kube
           sudo chown -f -R ubuntu /home/ubuntu/.kube
           sudo k8s config | tee /home/ubuntu/.kube/config
+          
+          kubectl cluster-info dump
 
       # - name: Deploy gpu operator
       #   timeout-minutes: 10
