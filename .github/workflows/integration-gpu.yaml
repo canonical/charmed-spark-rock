@@ -83,6 +83,8 @@ jobs:
           sudo k8s config | tee /home/ubuntu/.kube/config
           
           sudo k8s kubectl version
+          
+          sudo snap remove k8s --purge
 
       # - name: Deploy gpu operator
       #   timeout-minutes: 10
