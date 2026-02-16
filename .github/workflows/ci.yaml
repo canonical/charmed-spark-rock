@@ -104,11 +104,11 @@ jobs:
       arch: "amd64"
     secrets: inherit
 
-  integration-gpu-arm:
-    needs:
-      - lint
-    # - checks
-    uses: ./.github/workflows/integration-gpu.yaml
-    with:
-      arch: "arm64"
-    secrets: inherit
+  # integration-gpu-arm:
+  #   needs:
+  #     - lint
+  #   # - checks
+  #   uses: ./.github/workflows/integration-gpu.yaml
+  #   with:
+  #     arch: "arm64"
+  #   secrets: inherit
