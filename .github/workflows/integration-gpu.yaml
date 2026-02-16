@@ -82,7 +82,7 @@ jobs:
           sudo chown -f -R ubuntu /home/ubuntu/.kube
           sudo k8s config | tee /home/ubuntu/.kube/config
           
-          kubectl cluster-info dump
+          sudo k8s kubectl version
 
       # - name: Deploy gpu operator
       #   timeout-minutes: 10
