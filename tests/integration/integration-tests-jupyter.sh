@@ -128,6 +128,8 @@ test_connection(){
     exit 1
   fi
 
+  LOGS =S(kubectl -n $NAMESPACE logs charmed-spark-jupyter))
+  echo "Jupyter logs: ${LOGS}"
 }
 
 echo -e "##################################"
