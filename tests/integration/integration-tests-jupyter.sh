@@ -107,6 +107,9 @@ test_connection(){
 
   echo "Jupyter service IP: ${SERVICE_IP}"
 
+  LOGS=$(kubectl  logs charmed-spark-jupyter -n $NAMESPACE)
+  echo "Jupyter logs: ${LOGS}"
+
   STATUS_CODE=$(get_status_code "http://${SERVICE_IP}:8888/jupyter-test/lab")
 
   if [[ "${STATUS_CODE}" -ne "200" ]]; then
