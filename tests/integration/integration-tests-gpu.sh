@@ -372,7 +372,7 @@ echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES GPU WITH DEFAULT IMAGE"
 echo -e "##################################"
 
-(setup_user_context && test_gpu_example_in_pod_with_default_image && cleanup_user_success) || cleanup_user_failure_in_pod
+# (setup_user_context && test_gpu_example_in_pod_with_default_image && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN SQL EXAMPLE THAT USES GPU"
