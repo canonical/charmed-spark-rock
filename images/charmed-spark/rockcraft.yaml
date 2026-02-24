@@ -165,7 +165,6 @@ parts:
       wget -q "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$CRAFT_ARCH_BUILD_FOR/kubectl"
       wget -q  "https://dl.k8s.io/$KUBECTL_VERSION/bin/linux/$CRAFT_ARCH_BUILD_FOR/kubectl.sha256"
       echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
-      
       if  [[ $? -ne 0 ]]
         then
           echo "DOWNLOAD ERROR: kubectl could not be downloaded properly! Exiting...." >&2
