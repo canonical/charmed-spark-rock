@@ -55,8 +55,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.4-ubuntu3/spark-3.4.4-ubuntu3-20250909091544-bin-k8s.tgz
-    source-checksum: sha512/f535b5733b706cee62bd5ab49ab53ff9cb3be0dd9a0d71b1be7a4b033172de6f4c474cad0171fc4f8cea021615cb7694a5d8d9fc7e0fd9c60b3f3c01176e0bb2
+    source: https://github.com/canonical/central-uploader/releases/download/spark-3.4.4-ubuntu7/spark-3.4.4-ubuntu7-20260212173553-bin-k8s.tgz
+    source-checksum: sha512/09ed9a74a560e2724debcd1a7371b8c44c38703e07cd2b7ff3a8dc5de0c3bf1cad91c4b7d6e6eb77c2c3a948d50462a647e95813ef5eafa13a42d95726a7261c
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
@@ -101,18 +101,18 @@ parts:
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
       ICEBERG_SPARK_RUNTIME_VERSION='3.4_2.12'
-      ICEBERG_VERSION='1.9.1'
+      ICEBERG_VERSION='1.10.1'
       SPARK_METRICS_VERSION='3.4-1.0.5'
       SERVLET_FILTERS_VERSION='0.0.1'
       PROMETHEUS_JMX_EXPORTER_VERSION='0.20.0'
-      NVIDIA_RAPIDS_VERSION='25.06.0'
-      POSTGRESQL_VERSION='42.7.2'
-      SHA1SUM_ICEBERG_JAR='3d7ed68e4631088334f43d7e7af433b603ad903c'
+      NVIDIA_RAPIDS_VERSION='25.12.0'
+      POSTGRESQL_VERSION='42.7.10'
+      SHA1SUM_ICEBERG_JAR='fc97c7fb477086a8448c95d8d6965b1a2929e97e'
       SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='5603f59fe6362bfc0e66c7da17b749b1d859fe29425aa067c6efe4393f9af59ac11d22c759ce5265938ebaabe97d5c42af21e2a8fed8aaeb52eaaf5b222a83c9'
       SHA512SUM_SPARK_SERVLET_FILTER_JAR='ffeb809d58ef0151d513b09d4c2bfd5cc064b0b888ca45899687aed2f42bcb1ce9834be9709290dd70bd9df84049f02cbbff6c2d5ec3c136c278c93f167c8096'
       SHA1SUM_PROMETHEUS_JMX_EXPORTER='7b8a98e3482cee8889698ef391b85c47a3c4ce5b'
-      SHA1SUM_NVIDIA_RAPIDS='64d2e313ffc9c8ac97256d593783cd738ca01b11'
-      SHA1SUM_POSTGRESQL='86ed42574cd68662b05d3b00432a34e9a34cb12c'
+      SHA1SUM_NVIDIA_RAPIDS='ab94d3060bdee734b2bcc3984a1427d95084c21e'
+      SHA1SUM_POSTGRESQL='35100a3f0899551e27af8fed4a3414619a4663b3'
 
       JARS=(
       "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
@@ -153,7 +153,7 @@ parts:
       - python3-pip
     overlay-script: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
-      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist spark8t==1.2.0
+      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist spark8t==1.3.1
       rm usr/bin/pip*
     stage:
       - opt/spark8t/python/dist
@@ -214,8 +214,7 @@ parts:
       - krb5-user
       - libnss3
       - procps
-      - openjdk-17-jre
-      - openjdk-17-jdk
+      - openjdk-17-jre-headless
     override-prime: |
       # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
       # for more information about shared user.
