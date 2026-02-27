@@ -372,7 +372,8 @@ echo -e "##################################"
 echo -e "RUN EXAMPLE THAT USES GPU WITH DEFAULT IMAGE"
 echo -e "##################################"
 
-(setup_user_context && test_gpu_example_in_pod_with_default_image && cleanup_user_success) || cleanup_user_failure_in_pod
+# TODO(release): Re-enable once we get 3.5.7 released
+# (setup_user_context && test_gpu_example_in_pod_with_default_image && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN SQL EXAMPLE THAT USES GPU"
