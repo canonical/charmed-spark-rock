@@ -82,15 +82,36 @@ jobs:
       - name: Add additional labels
         run: |
           COMMIT_ID=$(git log -1 --format=%H)
-          for file in ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }}; do
-              echo "Processing ${file}"
-              rockcraft.skopeo copy "oci-archive:${file}" oci:to_process:latest
-              regctl image mod ocidir://to_process:latest --replace \
-                --label "org.opencontainers.image.revision=${COMMIT_ID}" \
-                --label "org.opencontainers.image.source=${{ github.repositoryUrl }}"
-              regctl image export ocidir://to_process:latest "${file}"
-              rm -r to_process
-          done
+
+          FILE=${{ steps.artifact.outputs.base_artifact_name }}
+          echo "Processing ${FILE}"
+          rockcraft.skopeo copy "oci-archive:${FILE}" oci:to_process:latest
+          regctl image mod ocidir://to_process:latest --replace \
+            --label "org.opencontainers.image.revision=${COMMIT_ID}" \
+            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}"
+          regctl image export ocidir://to_process:latest "${FILE}"
+          rm -r to_process
+
+          FILE=${{ steps.artifact.outputs.jupyter_artifact_name }}
+          DESCRIPTION=$(yq .flavours.jupyter.image_description images/metadata.yaml)
+          echo "Processing ${FILE}"
+          rockcraft.skopeo copy "oci-archive:${FILE}" oci:to_process:latest
+          regctl image mod ocidir://to_process:latest --replace \
+            --label "org.opencontainers.image.revision=${COMMIT_ID}" \
+            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
+            --label "org.opencontainers.image.description=${DESCRIPTION}"
+          regctl image export ocidir://to_process:latest "${FILE}"
+          rm -r to_process
+
+          FILE=${{ steps.artifact.outputs.kyuubi_artifact_name }}
+          DESCRIPTION=$(yq .flavours.kyuubi.image_description images/metadata.yaml)
+          echo "Processing ${FILE}"
+          rockcraft.skopeo copy "oci-archive:${FILE}" oci:to_process:latest
+          regctl image mod ocidir://to_process:latest --replace \
+            --label "org.opencontainers.image.revision=${COMMIT_ID}" \
+            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
+            --label "org.opencontainers.image.description=${DESCRIPTION}"
+          regctl image export ocidir://to_process:latest "${FILE}"
 
       - name: Upload locally built artifacts
         uses: actions/upload-artifact@v6
