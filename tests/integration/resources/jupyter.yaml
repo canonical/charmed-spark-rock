@@ -12,12 +12,14 @@ spec:
     # IT WOULD BE NICE IF THESE PARAMETERS COULD BE AUTO-INFERRED FROM THE
     # SERVICE ACCOUNT USED TO RUN THE JOB
     # (JIRA TICKET https://warthogs.atlassian.net/browse/DPE-3460)
-    args: ["--username", "<SERVICE_ACCOUNT>", "--namespace", "<NAMESPACE>"]
+    args: ["--username", "<SERVICE_ACCOUNT>", "--namespace", "$NAMESPACE"]
     ports:
     - containerPort: 8888
     env:
     - name: NB_PREFIX
       value: "jupyter-test"
+    - name: NAMESPACE
+      value: <NAMESPACE>
 ---
 apiVersion: v1
 kind: Service
