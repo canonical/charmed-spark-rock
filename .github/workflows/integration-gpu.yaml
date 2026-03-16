@@ -13,7 +13,6 @@ jobs:
     uses: ./.github/workflows/build_gpu.yaml
     with:
       arch: ${{ inputs.arch }}
-      export-test-image: true
 
   start-runner:
     name: Start self-hosted EC2 runner
@@ -113,13 +112,13 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v7
         with:
-          name: charmed-spark-gpu-test-${{ inputs.arch }}
+          name: charmed-spark-gpu-${{ inputs.arch }}
           path: charmed-spark
 
       - name: Load test image
         run: |
           sudo mkdir /var/snap/k8s/common/images
-          sudo cp charmed-spark/test_image.tar /var/snap/k8s/common/images/
+          sudo cp charmed-spark/*.tar /var/snap/k8s/common/images/
           sudo snap restart k8s.containerd
           sleep 30
           if [ -z "$(sudo /snap/k8s/current/bin/ctr --address /run/containerd/containerd.sock --namespace k8s.io images list -q | grep test-charmed-spark)" ]; then
