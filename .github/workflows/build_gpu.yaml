@@ -7,9 +7,6 @@ on:
         type: string
         default: "amd64"
         required: true
-      export-test-image:
-        type: boolean
-        default: false
 
 jobs:
   build:
@@ -53,9 +50,10 @@ jobs:
         run: |
           sudo snap install yq
           sudo snap install rockcraft --classic
+          sudo snap install regclient
 
       - name: Build image (GPU)
-        run: sudo make build FLAVOUR=gpu
+        run: make build FLAVOUR=gpu
 
       - name: Get Artifact Name
         id: artifact
@@ -63,8 +61,21 @@ jobs:
           GPU_ARTIFACT=$(make help FLAVOUR=gpu | grep 'Artifact: ')
           echo "gpu_artifact_name=${GPU_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
-      - name: Change artifact permissions
-        run: sudo chmod a+r  ${{ steps.artifact.outputs.gpu_artifact_name }}
+      - name: Add additional labels
+        run: |
+          COMMIT_ID=$(git log -1 --format=%H)
+          SPARK_VERSION=$(yq .version images/charmed-spark-gpu/rockcraft.yaml)
+          GPU_VERSION=$(yq .flavours.gpu.version images/metadata.yaml)
+
+
+          rockcraft.skopeo copy "oci-archive:${{ steps.artifact.outputs.gpu_artifact_name }}" oci:to_process:latest
+          regctl image mod ocidir://to_process:latest --replace \
+            --label "org.opencontainers.image.revision=${COMMIT_ID}" \
+            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}"
+          regctl image export ocidir://to_process:latest \
+            --name "ghcr.io/canonical/test-charmed-spark-gpu:${SPARK_VERSION}-${GPU_VERSION}" \
+            "${{ steps.artifact.outputs.gpu_artifact_name }}"
+          rm -r to_process
 
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v6
@@ -72,27 +83,3 @@ jobs:
           name: charmed-spark-gpu-${{ inputs.arch }}
           path: |
             ${{ steps.artifact.outputs.gpu_artifact_name }}
-
-      - name: Export test image
-        if: ${{ inputs.export-test-image }}
-        run: |
-          export SPARK_VERSION=$(yq .version images/charmed-spark-gpu/rockcraft.yaml)
-          export GPU_VERSION=$(yq .flavours.gpu.version images/metadata.yaml)
-
-          sudo snap install regclient
-          sudo docker run -d -p 5000:5000 --restart always --name local-registry registry:latest
-          rockcraft.skopeo --insecure-policy copy \
-            oci-archive:${{ steps.artifact.outputs.gpu_artifact_name }} \
-            "docker://localhost:5000/ghcr.io/canonical/test-charmed-spark-gpu:${SPARK_VERSION}-${GPU_VERSION}" \
-            --dest-tls-verify=false
-          regctl image export \
-            "localhost:5000/ghcr.io/canonical/test-charmed-spark-gpu:${SPARK_VERSION}-${GPU_VERSION}" \
-            --name "ghcr.io/canonical/test-charmed-spark-gpu:${SPARK_VERSION}-${GPU_VERSION}" \
-            --host reg=localhost:5000,tls=disabled >test_image.tar
-
-      - name: Upload test artifact
-        if: ${{ inputs.export-test-image }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: charmed-spark-gpu-test-${{ inputs.arch }}
-          path: test_image.tar
