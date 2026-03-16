@@ -58,15 +58,16 @@ jobs:
         run: |
           sudo snap install yq
           sudo snap install rockcraft --classic
+          sudo snap install regclient
 
       - name: Build image
-        run: sudo make build
+        run: make build
 
       - name: Build image (Jupyter)
-        run: sudo make build FLAVOUR=jupyter
+        run: make build FLAVOUR=jupyter
 
       - name: Build image (Kyuubi)
-        run: sudo make build FLAVOUR=kyuubi
+        run: make build FLAVOUR=kyuubi
 
       - name: Get Artifact Name
         id: artifact
@@ -78,8 +79,39 @@ jobs:
           KYUUBI_ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
           echo "kyuubi_artifact_name=${KYUUBI_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
-      - name: Change artifact permissions
-        run: sudo chmod a+r  ${{ steps.artifact.outputs.base_artifact_name }} ${{ steps.artifact.outputs.jupyter_artifact_name }} ${{ steps.artifact.outputs.kyuubi_artifact_name }}
+      - name: Add additional labels
+        run: |
+          COMMIT_ID=$(git log -1 --format=%H)
+
+          FILE=${{ steps.artifact.outputs.base_artifact_name }}
+          echo "Processing ${FILE}"
+          rockcraft.skopeo copy "oci-archive:${FILE}" oci:to_process:latest
+          regctl image mod ocidir://to_process:latest --replace \
+            --label "org.opencontainers.image.revision=${COMMIT_ID}" \
+            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}"
+          regctl image export ocidir://to_process:latest "${FILE}"
+          rm -r to_process
+
+          FILE=${{ steps.artifact.outputs.jupyter_artifact_name }}
+          DESCRIPTION=$(yq .flavours.jupyter.image_description images/metadata.yaml)
+          echo "Processing ${FILE}"
+          rockcraft.skopeo copy "oci-archive:${FILE}" oci:to_process:latest
+          regctl image mod ocidir://to_process:latest --replace \
+            --label "org.opencontainers.image.revision=${COMMIT_ID}" \
+            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
+            --label "org.opencontainers.image.description=${DESCRIPTION}"
+          regctl image export ocidir://to_process:latest "${FILE}"
+          rm -r to_process
+
+          FILE=${{ steps.artifact.outputs.kyuubi_artifact_name }}
+          DESCRIPTION=$(yq .flavours.kyuubi.image_description images/metadata.yaml)
+          echo "Processing ${FILE}"
+          rockcraft.skopeo copy "oci-archive:${FILE}" oci:to_process:latest
+          regctl image mod ocidir://to_process:latest --replace \
+            --label "org.opencontainers.image.revision=${COMMIT_ID}" \
+            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
+            --label "org.opencontainers.image.description=${DESCRIPTION}"
+          regctl image export ocidir://to_process:latest "${FILE}"
 
       - name: Upload locally built artifacts
         uses: actions/upload-artifact@v6
