@@ -120,7 +120,7 @@ parts:
 
       JARS=(
       "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
-      "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-LIB_VERSION/spark-metrics-assembly-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
+      "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-${SPARK_METRICS_RUNTIME_VERSION}-LIB_VERSION/spark-metrics-assembly-${SPARK_METRICS_RUNTIME_VERSION}-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
       "https://github.com/canonical/central-uploader/releases/download/servlet-filters-LIB_VERSION/servlet-filters-LIB_VERSION.jar $SERVLET_FILTERS_VERSION sha512sum $SHA512SUM_SPARK_SERVLET_FILTER_JAR"
       "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/LIB_VERSION/jmx_prometheus_javaagent-LIB_VERSION.jar $PROMETHEUS_JMX_EXPORTER_VERSION sha1sum $SHA1SUM_PROMETHEUS_JMX_EXPORTER"
       "https://repo1.maven.org/maven2/org/postgresql/postgresql/LIB_VERSION/postgresql-LIB_VERSION.jar $POSTGRESQL_VERSION sha1sum $SHA1SUM_POSTGRESQL"
