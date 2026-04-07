@@ -54,6 +54,7 @@ services:
 parts:
   spark:
     plugin: dump
+    # renovate: datasource=github-releases depName=canonical/central-uploader depType=spark-source
     source: https://github.com/canonical/central-uploader/releases/download/spark-3.5.7-ubuntu2/spark-3.5.7-ubuntu2-20260212173650-bin-k8s.tgz
     source-checksum: sha512/93281f3f1f909ab23f23b167ba0f8a640e4fc53e623f7654b339f372a624142f52ac850df69d4a6982821ee448734c40286866e73b87ce5653ed3806ab0dddd6
     overlay-script: |
@@ -100,10 +101,16 @@ parts:
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
       ICEBERG_SPARK_RUNTIME_VERSION='3.5_2.12'
+      # renovate: datasource=maven depName=org.apache.iceberg:iceberg-spark-runtime-3.5_2.12
       ICEBERG_VERSION='1.10.1'
-      SPARK_METRICS_VERSION='3.4-1.0.5'
+      SPARK_METRICS_RUNTIME_VERSION='3.4'
+      # renovate: datasource=github-releases depName=canonical/central-uploader extractVersion=^spark-metrics-assembly-3.4-(?<version>.+)$
+      SPARK_METRICS_VERSION='1.0.5'
+      # renovate: datasource=github-releases depName=canonical/central-uploader extractVersion=^servlet-filters-(?<version>.+)$
       SERVLET_FILTERS_VERSION='0.0.1'
+      # renovate: datasource=maven depName=io.prometheus.jmx:jmx_prometheus_javaagent
       PROMETHEUS_JMX_EXPORTER_VERSION='0.20.0'
+      # renovate: datasource=maven depName=org.postgresql:postgresql
       POSTGRESQL_VERSION='42.7.10'
       SHA1SUM_ICEBERG_JAR='6e4f43ae82d2291fa38c7a8fc1a46fbf95e8190f'
       SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='5603f59fe6362bfc0e66c7da17b749b1d859fe29425aa067c6efe4393f9af59ac11d22c759ce5265938ebaabe97d5c42af21e2a8fed8aaeb52eaaf5b222a83c9'
@@ -113,7 +120,7 @@ parts:
 
       JARS=(
       "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
-      "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-LIB_VERSION/spark-metrics-assembly-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
+      "https://github.com/canonical/central-uploader/releases/download/spark-metrics-assembly-${SPARK_METRICS_RUNTIME_VERSION}-LIB_VERSION/spark-metrics-assembly-${SPARK_METRICS_RUNTIME_VERSION}-LIB_VERSION.jar $SPARK_METRICS_VERSION sha512sum $SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR"
       "https://github.com/canonical/central-uploader/releases/download/servlet-filters-LIB_VERSION/servlet-filters-LIB_VERSION.jar $SERVLET_FILTERS_VERSION sha512sum $SHA512SUM_SPARK_SERVLET_FILTER_JAR"
       "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/LIB_VERSION/jmx_prometheus_javaagent-LIB_VERSION.jar $PROMETHEUS_JMX_EXPORTER_VERSION sha1sum $SHA1SUM_PROMETHEUS_JMX_EXPORTER"
       "https://repo1.maven.org/maven2/org/postgresql/postgresql/LIB_VERSION/postgresql-LIB_VERSION.jar $POSTGRESQL_VERSION sha1sum $SHA1SUM_POSTGRESQL"
@@ -149,6 +156,7 @@ parts:
       - python3-pip
     overlay-script: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
+      # renovate: datasource=pypi
       pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist spark8t==1.3.1
       rm usr/bin/pip*
     stage:
