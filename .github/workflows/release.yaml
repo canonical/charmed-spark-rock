@@ -116,10 +116,10 @@ jobs:
       - name: Upload & release rocks
         id: release
         run: |
-          release-rock --directory=to_export/charmed-spark/ --create-tags=true
-          release-rock --directory=to_export/charmed-spark-kyuubi/ --create-tags=true
-          release-rock --directory=to_export/charmed-spark-jupyterlab/ --create-tags=true
-          release-rock --directory=to_export/charmed-spark-gpu/ --create-tags=true
+          release-rock --directory=to_export/charmed-spark/
+          release-rock --directory=to_export/charmed-spark-kyuubi/
+          release-rock --directory=to_export/charmed-spark-jupyterlab/
+          release-rock --directory=to_export/charmed-spark-gpu/
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
