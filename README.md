@@ -1,4 +1,4 @@
-## Introduction to Charmed Spark rock  (OCI Image)
+## Introduction to Charmed Spark rock (OCI Image)
 
 [![Container Registry](https://img.shields.io/badge/Container%20Registry-published-blue)](https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark)
 [![Release](https://github.com/canonical/charmed-spark-rock/actions/workflows/publish.yaml/badge.svg)](https://github.com/canonical/charmed-spark-rock/actions/workflows/publish.yaml)
