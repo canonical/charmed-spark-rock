@@ -1,4 +1,4 @@
-## Introduction to Charmed Spark rock  (OCI Image)
+## Introduction to Charmed Spark rock (OCI Image)
 
 [![Container Registry](https://img.shields.io/badge/Container%20Registry-published-blue)](https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark)
 [![Release](https://github.com/canonical/charmed-spark-rock/actions/workflows/publish.yaml/badge.svg)](https://github.com/canonical/charmed-spark-rock/actions/workflows/publish.yaml)
@@ -24,7 +24,7 @@ The Charmed Spark rock images come with some built-in tooling embedded:
 
 Rocks will be named as `<version>-<series>_<risk>`.
 
-`<version>` is the software version; `<series>` is the Ubuntu LTS series that rocks supports; and the <risk> is the type of release, if it is edge, candidate or stable. Example versioning will be 3.5-22.04_stable which means Charmed Spark is a version 3.5.x of the software, supporting the 22.04 Ubuntu release and currently a 'stable' version of the software. See  versioning details [here](https://snapcraft.io/docs/channels).
+`<version>` is the software version; `<series>` is the Ubuntu LTS series that rocks supports; and the `<risk>` is the type of release, if it is edge, candidate or stable. Example versioning will be 3.5-22.04_stable which means Charmed Spark is a version 3.5.x of the software, supporting the 22.04 Ubuntu release and currently a 'stable' version of the software. See  versioning details [here](https://snapcraft.io/docs/channels).
 
 Channel can also be represented by combining `<version>_<risk>`
 
@@ -56,8 +56,6 @@ This image is integrated with [Spark Rapids](https://nvidia.github.io/spark-rapi
 
 Charmed Spark rock with Spark Rapids support is available at https://github.com/canonical/charmed-spark-rock/pkgs/container/charmed-spark-gpu
 
-
-
 ## Rocks Usage
 
 ### Using Charmed Spark OCI Image in K8s Job Execution
@@ -65,7 +63,7 @@ Charmed Spark rock with Spark Rapids support is available at https://github.com/
 The image can be used straight away when running Spark on Kubernetes by setting the appropriate configuration property:
 
 ```shell
-spark.kubernetes.container.image=ghcr.io/canonical/charmed-spark:3.5-22.04_edge
+spark.kubernetes.container.image=ghcr.io/canonical/charmed-spark:4.0-22.04_edge
 ```
 
 ### Using `spark8t` CLI 
@@ -73,7 +71,7 @@ spark.kubernetes.container.image=ghcr.io/canonical/charmed-spark:3.5-22.04_edge
 The `spark8t` CLI tooling interacts with the K8s API to create, manage and delete K8s resources representing the Spark service account. 
 Make sure that the kube config file is correctly loaded into the container, e.g.
 ```shell
-docker run --name chamed-spark -v /path/to/kube/config:/var/lib/spark/.kube/config ghcr.io/canonical/charmed-spark:3.5-22.04_edge
+docker run --name chamed-spark -v /path/to/kube/config:/var/lib/spark/.kube/config ghcr.io/canonical/charmed-spark:4.0-22.04_edge
 ```
 
 Note that this will start the image and a long-living service, allowing you to exec commands:
@@ -83,7 +81,7 @@ docker exec charmed-spark spark-client.service-account-registry list
 
 If you prefer to run one-shot commands, without having the Charmed Spark image running, use `\; exec` prefix, e.g.
 ```shell
-docker run -v ... ghcr.io/canonical/charmed-spark:3.5-22.04_edge \; exec spark-client.service-account-registry list
+docker run -v ... ghcr.io/canonical/charmed-spark:4.0-22.04_edge \; exec spark-client.service-account-registry list
 ```
 
 For more information about spark-client API and `spark8t` tooling, please refer to [here](https://discourse.charmhub.io/t/spark-client-snap-how-to-manage-spark-accounts/8959).
@@ -95,7 +93,7 @@ Charmed Spark rock Image is delivered with Pebble already included in order to m
 #### Starting History Server
 
 ```shell
-docker run ghcr.io/canonical/charmed-spark:3.5-22.04_edge \; start history-server
+docker run ghcr.io/canonical/charmed-spark:4.0-22.04_edge \; start history-server
 ```
 
 ### Running Jupyter Lab
@@ -110,7 +108,7 @@ To start a JupyterLab server using the `charmed-spark-jupyter` image, use
 docker run \
   -v /path/to/kube/config:/var/lib/spark/.kube/config \
   -p <port>:8888
-  ghcr.io/canonical/charmed-spark-jupyterlab:3.5.1-4.0.11-22.04_edge \
+  ghcr.io/canonical/charmed-spark-jupyterlab:4.0.1-4.0.11-22.04_edge \
   --username <spark-service-account> --namespace <spark-namespace>
 ```
 
@@ -123,19 +121,18 @@ JupyterLab server to act as a Spark driver and request resources on the K8s clus
 
 ## Developers and Contributing
 
-Please see the [CONTRIBUTING.md](https://github.com/canonical/charmed-spark-rock/blob/3.5-22.04/edge/CONTRIBUTING.md) for guidelines and for developer guidance.
+Please see the [CONTRIBUTING.md](https://github.com/canonical/charmed-spark-rock/blob/4.0/edge/CONTRIBUTING.md) for guidelines and for developer guidance.
 
 ## Bugs and feature request
 
 If you find a bug in this rock or want to request a specific feature, here are the useful links:
 
--   Raise the issue or feature request in the [Canonical Github](https://github.com/canonical/charmed-spark-rock/issues)
-
--   Meet the community and chat with us if there are issues and feature requests in our [Matrix Channel](https://matrix.to/#/%23charmhub-data-platform%3Aubuntu.com).
+* Raise the issue or feature request in the [Canonical Github](https://github.com/canonical/charmed-spark-rock/issues)
+* Meet the community and chat with us if there are issues and feature requests in our [Matrix Channel](https://matrix.to/#/#charmhub-analytics:ubuntu.com).
 
 ## Licence statement
 
-Charmed Spark is free software, distributed under the [Apache Software License, version 2.0](https://github.com/canonical/charmed-spark-rock/blob/3.5-22.04/edge/LICENSE). 
+Charmed Spark is free software, distributed under the [Apache Software License, version 2.0](https://github.com/canonical/charmed-spark-rock/tree/3.5/edge/licenses).
 
 ## Trademark Notice
 
