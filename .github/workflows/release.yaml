@@ -29,6 +29,9 @@ jobs:
   trivy:
     needs: build-rocks
     uses: ./.github/workflows/trivy.yaml
+    permissions:
+      contents: write # Needed for Trivy SBOM submission to GitHub dependency graph
+      security-events: write # Needed to upload Trivy SARIF results
 
   release-images:
     name: Release images
