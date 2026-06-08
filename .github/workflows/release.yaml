@@ -30,6 +30,9 @@ jobs:
   trivy:
     needs: build-rocks
     uses: ./.github/workflows/trivy.yaml
+    permissions:
+      contents: read
+      security-events: write
 
   release-images:
     name: Release images

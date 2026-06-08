@@ -16,6 +16,9 @@ jobs:
     needs: build
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     strategy:
       matrix:
         flavour:
