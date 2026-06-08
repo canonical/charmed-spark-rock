@@ -61,7 +61,18 @@ jobs:
           sudo snap install regclient
 
       - name: Build image
-        run: make build
+        run: |
+          for attempt in 1 2 3; do
+            if make build; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Build failed after ${attempt} attempts."
+              exit 1
+            fi
+            echo "Build failed on attempt ${attempt}; retrying in 30s..."
+            sleep 30
+          done
 
       - name: Build image (Jupyter)
         run: make build FLAVOUR=jupyter
