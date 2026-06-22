@@ -55,8 +55,8 @@ parts:
   spark:
     plugin: dump
     # renovate: datasource=github-releases depName=canonical/central-uploader depType=spark-source
-    source: https://github.com/canonical/central-uploader/releases/download/spark-3.5.7-ubuntu2/spark-3.5.7-ubuntu2-20260212173650-bin-k8s.tgz
-    source-checksum: sha512/93281f3f1f909ab23f23b167ba0f8a640e4fc53e623f7654b339f372a624142f52ac850df69d4a6982821ee448734c40286866e73b87ce5653ed3806ab0dddd6
+    source: https://github.com/canonical/central-uploader/releases/download/spark-3.5.8-ubuntu1/spark-3.5.8-ubuntu1-20260521130458-bin-k8s.tgz 
+    source-checksum: sha512/fe8600fa52eaaafe26a2ac6c5a3c80ace4137443f5be1585c905e5e96b55034038c214b254467985c15a8712dad4d6091df554edfc464c7d9fd43472848c0415
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
