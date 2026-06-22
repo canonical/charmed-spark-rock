@@ -11,7 +11,7 @@ description: |
 
 license: Apache-2.0
 
-version: "3.5.7"
+version: "3.5.8"
 
 base: ubuntu@22.04
 
