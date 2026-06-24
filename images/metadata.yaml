@@ -13,7 +13,8 @@ flavours:
       This is an OCI image that contains Kyuubi, fully integrated with Charmed
       Spark ecosystem and utilities.
   gpu:
-    version: 25.12.0
+    # See https://nvidia.github.io/cudf-spark/docs/archive.html for version compatibility
+    version: 26.04.2
     image_description: |
       This is an OCI image that bundles Apache Spark binaries together with other
       tools of its ecosystem in order to be used in Charmed Operators, providing
