@@ -29,8 +29,10 @@ jobs:
   trivy:
     needs: build-rocks
     uses: ./.github/workflows/trivy.yaml
+    with:
+      submit_dependency_graph: true
     permissions:
-      contents: read
+      contents: write # dependency graph
       security-events: write
 
   release-images:
