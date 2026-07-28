@@ -1,108 +1,131 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "github>canonical/data-platform//renovate_presets/charm.json5",
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'github>canonical/data-platform//renovate_presets/charm.json5',
   ],
-  // Between 1AM and 6:59AM, first Friday of the month
-  "schedule": ["* 1-6 1-7 * 5"],
-  "lockFileMaintenance": {
-    "enabled": true,
-    "schedule": ["* 1-6 1-7 * 5"]
+  schedule: [
+    '* 1-6 1-7 * 5',
+  ],
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: [
+      '* 1-6 1-7 * 5',
+    ],
   },
-  "ignoreDeps": ["ubuntu"],
-  "baseBranchPatterns": [
-    "/^3\\..*\\/edge$/",
+  ignoreDeps: [
+    'ubuntu',
   ],
-  "customManagers": [
-    {
-      // Matches shell version variables annotated with:
-      //   # renovate: datasource=<ds> depName=<name>
-      // Used for Maven JARs in rockcraft.yaml overlay-scripts
-      "customType": "regex",
-      "fileMatch": ["rockcraft\\.yaml$"],
-      "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<depName>[^\\s\\n]+)\\n\\s+(?<depType>\\w+_VERSION)='(?<currentValue>[^']+)'"
-      ]
-    },
-    {
-      // Matches shell version variables annotated with:
-      //   # renovate: datasource=<ds> depName=<name> extractVersion=<pattern>
-      // Used for GitHub Releases JARs (e.g. canonical/central-uploader) in rockcraft.yaml
-      "customType": "regex",
-      "fileMatch": ["rockcraft\\.yaml$"],
-      "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<depName>[^\\s]+)\\s+extractVersion=(?<extractVersion>[^\\n]+)\\n\\s+\\w+_VERSION='(?<currentValue>[^']+)'"
-      ]
-    },
-    {
-      // Matches pip install lines annotated with:
-      //   # renovate: datasource=pypi
-      // Used for Python packages in rockcraft.yaml overlay-scripts
-      "customType": "regex",
-      "fileMatch": ["rockcraft\\.yaml$"],
-      "matchStrings": [
-        "#\\s*renovate:\\s*datasource=pypi\\n\\s+pip install[^\\n]+ (?<depName>[^=\\s]+)==(?<currentValue>[^\\s\\n]+)"
-      ],
-      "datasourceTemplate": "pypi"
-    },
-    {
-      "customType": "regex",
-      "description": "Update Spark tarball version in rockcraft.yaml",
-      "fileMatch": ["rockcraft\\.yaml$"],
-      "matchStrings": [
-        "#\\s*renovate:\\s*datasource=github-releases\\s+depName=(?<depName>[^\\s]+)\\s+depType=(?<depType>[^\\s\\n]+)\\n\\s+source:\\s*https://github\\.com/[^\\s]+/releases/download/(?<currentValue>spark-\\d+\\.\\d+\\.\\d+-ubuntu\\d+)/[^\\s]+\\.tgz"
-      ],
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "regex:^spark-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-ubuntu(?<build>\\d+)$"
-    }
+  baseBranchPatterns: [
+    '/^3\\..*\\/edge$/',
   ],
-  "postUpgradeTasks": {
-    "commands": [
+  customManagers: [
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/rockcraft\\.yaml$/',
+      ],
+      matchStrings: [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<depName>[^\\s\\n]+)\\n\\s+(?<depType>\\w+_VERSION)='(?<currentValue>[^']+)'",
+      ],
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/rockcraft\\.yaml$/',
+      ],
+      matchStrings: [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<depName>[^\\s]+)\\s+extractVersion=(?<extractVersion>[^\\n]+)\\n\\s+\\w+_VERSION='(?<currentValue>[^']+)'",
+      ],
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/rockcraft\\.yaml$/',
+      ],
+      matchStrings: [
+        '#\\s*renovate:\\s*datasource=pypi\\n\\s+pip install[^\\n]+ (?<depName>[^=\\s]+)==(?<currentValue>[^\\s\\n]+)',
+      ],
+      datasourceTemplate: 'pypi',
+    },
+    {
+      customType: 'regex',
+      description: 'Update Spark tarball version in rockcraft.yaml',
+      managerFilePatterns: [
+        '/rockcraft\\.yaml$/',
+      ],
+      matchStrings: [
+        '#\\s*renovate:\\s*datasource=github-releases\\s+depName=(?<depName>[^\\s]+)\\s+depType=(?<depType>[^\\s\\n]+)\\n\\s+source:\\s*https://github\\.com/[^\\s]+/releases/download/(?<currentValue>spark-\\d+\\.\\d+\\.\\d+-ubuntu\\d+)/[^\\s]+\\.tgz',
+      ],
+      datasourceTemplate: 'github-releases',
+      versioningTemplate: 'regex:^spark-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-ubuntu(?<build>\\d+)$',
+    },
+  ],
+  postUpgradeTasks: {
+    commands: [
       "export ASSET_URL=$(curl -s https://api.github.com/repos/canonical/central-uploader/releases/tags/{{{newValue}}} | grep browser_download_url | grep -o 'https://[^\"]*bin-k8s\\.tgz')",
-      "export ASSET_SHA512=$(wget -qO- \"$ASSET_URL\" | sha512sum | awk '{print $1}')",
-      "sed -i -e \"s|https://github.com/canonical/central-uploader/releases/download/[^ ]*\\.tgz|$ASSET_URL|g\" {{{fileFilters}}}",
-      "sed -i -E -e \"s|^([[:space:]]*source-checksum:[[:space:]]*)sha512/[a-f0-9]+$|\\1sha512/$ASSET_SHA512|\" {{{fileFilters}}}"
+      'export ASSET_SHA512=$(wget -qO- "$ASSET_URL" | sha512sum | awk \'{print $1}\')',
+      'sed -i -e "s|https://github.com/canonical/central-uploader/releases/download/[^ ]*\\.tgz|$ASSET_URL|g" {{{fileFilters}}}',
+      'sed -i -E -e "s|^([[:space:]]*source-checksum:[[:space:]]*)sha512/[a-f0-9]+$|\\1sha512/$ASSET_SHA512|" {{{fileFilters}}}',
     ],
-    "fileFilters": [
-      "**/rockcraft.yaml"
+    fileFilters: [
+      '**/rockcraft.yaml',
     ],
-    "executionMode": "branch"
+    executionMode: 'branch',
   },
-  "packageRules": [
+  packageRules: [
     {
-       // Only allow minor and patch updates for jmx_prometheus_javaagent
-       "matchDepNames": ["io.prometheus.jmx:jmx_prometheus_javaagent"],
-       "matchUpdateTypes": ["major"],
-       "enabled": false
+      matchDepNames: [
+        'io.prometheus.jmx:jmx_prometheus_javaagent',
+      ],
+      matchUpdateTypes: [
+        'major',
+      ],
+      enabled: false,
     },
     {
-      // Only allow minor and patch updates for jmx_prometheus_javaagent
-      "matchDepNames": ["io.prometheus.jmx:jmx_prometheus_javaagent"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "enabled": true
+      matchDepNames: [
+        'io.prometheus.jmx:jmx_prometheus_javaagent',
+      ],
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ],
+      enabled: true,
     },
     {
-      // Only allow minor and patch updates for central-uploader deps
-      // depType is captured from the shell variable name in customManagers
-      // "canonical/central-uploader" 
-      "matchDatasources": ["github-releases"],
-      "matchDepNames": ["canonical/central-uploader"],
-      "matchUpdateTypes": ["major"],
-      "enabled": false
+      matchDatasources: [
+        'github-releases',
+      ],
+      matchDepNames: [
+        'canonical/central-uploader',
+      ],
+      matchUpdateTypes: [
+        'major',
+      ],
+      enabled: false,
     },
     {
-      // Only allow minor and patch updates for central-uploader deps
-      // depType is captured from the shell variable name in customManagers
-      "matchDatasources": ["github-releases"],
-      "matchDepNames": ["canonical/central-uploader"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "enabled": true
+      matchDatasources: [
+        'github-releases',
+      ],
+      matchDepNames: [
+        'canonical/central-uploader',
+      ],
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ],
+      enabled: true,
     },
     {
-      // Only allow patch updates for spark tarball source
-      "matchDepTypes": ["spark-source"],
-      "matchUpdateTypes": ["major", "minor"],
-      "enabled": false
-    }
-  ]
+      matchDepTypes: [
+        'spark-source',
+      ],
+      matchUpdateTypes: [
+        'major',
+        'minor',
+      ],
+      enabled: false,
+    },
+  ],
 }
