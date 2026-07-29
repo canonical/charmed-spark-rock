@@ -1,6 +1,9 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["github>canonical/data-platform//renovate_presets/base.json5"],
+  extends: [
+    "github>canonical/data-platform//renovate_presets/base.json5",
+    "helpers:pinGitHubActionDigests",
+  ],
   // Between 1AM and 6:59AM, first Friday of the month
   schedule: ["* 1-6 1-7 * 5"],
   ignoreDeps: ["ubuntu"],
