@@ -7,7 +7,8 @@
   // Between 1AM and 6:59AM, first Friday of the month
   schedule: ["* 1-6 1-7 * 5"],
   ignoreDeps: ["ubuntu"],
-  baseBranchPatterns: ["/^3\\..*\\/edge$/"],
+  baseBranchPatterns: ["/^3\\..*\\/edge$/", "/^4\\..*\\/edge$/"],
+  useBaseBranchConfig: "merge",
   enabledManagers: ["github-actions", "custom.regex"],
   commitMessagePrefix: "[RENOVATE] ",
   lockFileMaintenance: { enabled: false },
