@@ -39,10 +39,10 @@ jobs:
           df --human-readable
 
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Setup LXD
-        uses: canonical/setup-lxd@main
+        uses: canonical/setup-lxd@da2ac84e727dc534215fd14cd088b9209d65893b # main
         with:
           channel: 5.21/stable
 
@@ -78,7 +78,7 @@ jobs:
           rm -r to_process
 
       - name: Upload locally built artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: charmed-spark-gpu-${{ inputs.arch }}
           path: |
