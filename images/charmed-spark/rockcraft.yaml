@@ -102,7 +102,7 @@ parts:
 
       ICEBERG_SPARK_RUNTIME_VERSION='3.5_2.12'
       # renovate: datasource=maven depName=org.apache.iceberg:iceberg-spark-runtime-3.5_2.12
-      ICEBERG_VERSION='1.10.1'
+      ICEBERG_VERSION='1.11.0'
       SPARK_METRICS_RUNTIME_VERSION='3.4'
       # renovate: datasource=github-releases depName=canonical/central-uploader extractVersion=^spark-metrics-assembly-3.4-(?<version>.+)$
       SPARK_METRICS_VERSION='1.0.5'
@@ -157,7 +157,7 @@ parts:
     overlay-script: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
       # renovate: datasource=pypi
-      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist spark8t==1.3.1
+      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist spark8t==1.4.0
       rm usr/bin/pip*
     stage:
       - opt/spark8t/python/dist
