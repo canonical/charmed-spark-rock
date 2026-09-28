@@ -43,15 +43,15 @@ jobs:
         run: |
           case "${{ matrix.flavour }}" in
             charmed-spark)
-              ARTIFACT=$(make help | grep 'Artifact: ')
+              ARTIFACT=$(make help | grep 'Artifact: ' | sed "s/amd64/${{ matrix.arch }}/g")
               ARCHIVE=charmed-spark-${{ matrix.arch }}
               ;;
             charmed-spark-kyuubi)
-              ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
+              ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ' | sed "s/amd64/${{ matrix.arch }}/g")
               ARCHIVE=charmed-spark-${{ matrix.arch }}
               ;;
             charmed-spark-gpu)
-              ARTIFACT=$(make help FLAVOUR=gpu | grep 'Artifact: ')
+              ARTIFACT=$(make help FLAVOUR=gpu | grep 'Artifact: ' | sed "s/amd64/${{ matrix.arch }}/g")
               ARCHIVE=charmed-spark-gpu-${{ matrix.arch }}
               ;;
           esac
