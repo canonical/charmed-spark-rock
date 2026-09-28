@@ -1,10 +1,10 @@
-name: trivy
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Trivy scan
 on:
   workflow_call:
     inputs:
-      branch:
-        type: string
-        default: ""
       submit_dependency_graph:
         description: "Submit SBOM to GitHub Dependency Graph"
         required: false
@@ -12,28 +12,19 @@ on:
         default: false
 
 jobs:
-  build:
-    if: ${{ inputs.branch }}
-    uses: ./.github/workflows/build.yaml
-    with:
-      branch: ${{ inputs.branch }}
-
   scan:
-    name: Trivy scan and sbom generation
-    needs: build
-    if: always()
+    name: Trivy scan
     runs-on: ubuntu-latest
     strategy:
       matrix:
         flavour:
           - charmed-spark
           - charmed-spark-kyuubi
+          - charmed-spark-gpu
         arch: [amd64, arm64]
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: ${{ inputs.branch }}
 
       - name: Install rockcraft (for skopeo)
         run: |
@@ -50,14 +41,27 @@ jobs:
       - name: Get Artifact Name
         id: artifact
         run: |
-          FLAVOUR=${{ matrix.flavour }}
-          BASE_ARTIFACT=$(make help | grep 'Artifact: ' | sed "s/charmed-spark/$FLAVOUR/g" | sed "s/amd64/${{ matrix.arch }}/g")
-          echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          case "${{ matrix.flavour }}" in
+            charmed-spark)
+              ARTIFACT=$(make help | grep 'Artifact: ')
+              ARCHIVE=charmed-spark-${{ matrix.arch }}
+              ;;
+            charmed-spark-kyuubi)
+              ARTIFACT=$(make help FLAVOUR=kyuubi | grep 'Artifact: ')
+              ARCHIVE=charmed-spark-${{ matrix.arch }}
+              ;;
+            charmed-spark-gpu)
+              ARTIFACT=$(make help FLAVOUR=gpu | grep 'Artifact: ')
+              ARCHIVE=charmed-spark-gpu-${{ matrix.arch }}
+              ;;
+          esac
+          echo "base_artifact_name=${ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
+          echo "archive_name=${ARCHIVE}" >> $GITHUB_OUTPUT
 
       - name: Download artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          name: charmed-spark-${{ matrix.arch }}
+          name: ${{ steps.artifact.outputs.archive_name }}
           path: charmed-spark
 
       - name: Import locally

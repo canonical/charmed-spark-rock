@@ -1,4 +1,7 @@
-name: GPU integration CI pipeline
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Run GPU integration tests
 
 on:
   workflow_call:
@@ -8,15 +11,12 @@ on:
         default: "amd64"
         required: true
 
-jobs:
-  build-rock:
-    uses: ./.github/workflows/build_gpu.yaml
-    with:
-      arch: ${{ inputs.arch }}
+permissions:
+  contents: read
 
+jobs:
   start-runner:
     name: Start self-hosted EC2 runner
-    needs: [build-rock]
     runs-on: ubuntu-22.04
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
@@ -41,7 +41,7 @@ jobs:
           security-group-id: ${{ vars.AWS_SECURITY_GROUP_ID }}
 
   integration-tests:
-    name: Run integration tests
+    name: Run GPU integration tests
     needs: [start-runner]
     runs-on: ${{ needs.start-runner.outputs.label }}
     strategy:
@@ -61,23 +61,23 @@ jobs:
           sudo apt autoremove unattended-upgrades -y
           sudo apt update
           sudo apt install build-essential -yqq
-          
+
           sudo snap install yq
           sudo snap install concierge --classic
 
           # Set the K8s version
           cp concierge.yaml /var/snap/yq/common/.
           yq -i e '.providers.k8s.channel = "${{ matrix.k8s_version }}-classic/stable"' /var/snap/yq/common/concierge.yaml
-          cp /var/snap/yq/common/concierge.yaml . 
-          
+          cp /var/snap/yq/common/concierge.yaml .
+
           cat concierge.yaml
-          
+
           sudo concierge prepare
 
           mkdir -p /home/ubuntu/.kube
           sudo chown -f -R ubuntu /home/ubuntu/.kube
           sudo k8s config | tee /home/ubuntu/.kube/config
-          
+
           sudo k8s kubectl version
 
       - name: Deploy gpu operator
@@ -146,10 +146,9 @@ jobs:
         run: |
           sudo snap remove k8s --purge
           sudo snap remove microceph --purge
-          
+
           sudo apt-get remove -y docker.io containerd
           sudo rm -rf /run/containerd
-
 
   stop-runner:
     name: Stop self-hosted EC2 runner
