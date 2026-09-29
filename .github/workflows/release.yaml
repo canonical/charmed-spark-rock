@@ -12,22 +12,18 @@ on:
       - "3.4/edge"
       - "3.5/edge"
 
+permissions:
+  contents: read
+
 jobs:
   build-rocks:
     uses: ./.github/workflows/build.yaml
 
-  build-rock-gpu-amd:
+  build-rock-gpu:
     uses: ./.github/workflows/build_gpu.yaml
-    with:
-      arch: amd64
-
-  build-rock-gpu-arm:
-    uses: ./.github/workflows/build_gpu.yaml
-    with:
-      arch: arm64
 
   trivy:
-    needs: build-rocks
+    needs: [build-rocks, build-rock-gpu]
     uses: ./.github/workflows/trivy.yaml
     with:
       submit_dependency_graph: true
@@ -38,7 +34,7 @@ jobs:
   release-images:
     name: Release images
     runs-on: ubuntu-24.04
-    needs: [build-rocks, build-rock-gpu-amd, build-rock-gpu-arm]
+    needs: [build-rocks, build-rock-gpu]
     permissions:
       packages: write # Needed to publish to GitHub Container Registry
       contents: write # Needed to create git tags
