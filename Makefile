@@ -121,13 +121,11 @@ endif
 # JUPYTER_MARKER: The Jupyter image has been built and has been registered with docker registry
 # KYUUBI_MARKER: The Kyuubi image has been built and has been registered with docker registry
 # K8S_MARKER: The MicroK8s cluster has been installed and configured successfully
-# AWS_MARKER: The AWS CLI has been installed and configured with valid S3 credentials from MinIO
 SPARK_MARKER=$(_MAKE_DIR)/spark-$(SPARK_VERSION).tag
 SPARK_GPU_MARKER=$(_MAKE_DIR)/gpu-$(SPARK_VERSION).tag
 JUPYTER_MARKER=$(_MAKE_DIR)/jupyter-$(JUPYTER_VERSION).tag
 KYUUBI_MARKER=$(_MAKE_DIR)/kyuubi-$(KYUUBI_VERSION).tag
 K8S_MARKER=$(_MAKE_DIR)/k8s.tag
-AWS_MARKER=$(_MAKE_DIR)/aws.tag
 AZURE_MARKER=$(_MAKE_DIR)/azure.tag
 
 
@@ -165,7 +163,6 @@ help:
 	@echo "  - docker-import        for importing the images to Docker container registry"
 	@echo "  - microk8s-import      for importing the images to MicroK8s container registry"
 	@echo "  - microk8s-setup       to setup a local Microk8s cluster for running integration tests"
-	@echo "  - aws-cli-setup        to setup the AWS CLI and S3 credentials for running integration tests"
 	@echo "  - tests FLAVOUR=xxxx   for running integration tests for flavour xxxx"
 	@echo "  - clean                for removing cache files, artifact file and rock file"
 	@echo "--------------------------------------------------------"
@@ -293,7 +290,7 @@ microk8s-import: $(ARTIFACT) $(K8S_MARKER)
 
 
 # Recipe that runs the integration tests
-tests: $(K8S_MARKER) $(AWS_MARKER) $(AZURE_MARKER)
+tests: $(K8S_MARKER) $(AZURE_MARKER)
 	@echo "=== Running Integration Tests ==="
 ifeq ($(FLAVOUR), jupyter)
 	/bin/bash ./tests/integration/integration-tests-jupyter.sh
@@ -313,9 +310,6 @@ endif
 # Shorthand recipe for setup and configuration of K8s cluster.
 microk8s-setup: $(K8S_MARKER)
 
-# Shorthand recipe for setup and configuration of AWS CLI.
-aws-cli-setup: $(AWS_MARKER)
-
 # Shorthand recipe for setup and configuration of Azure CLI.
 azure-cli-setup: $(AZURE_MARKER)
 
@@ -325,15 +319,6 @@ $(K8S_MARKER):
 	/bin/bash ./tests/integration/setup-microk8s.sh $(MICROK8S_CHANNEL)
 	sg microk8s ./tests/integration/config-microk8s.sh
 	touch $(K8S_MARKER)
-
-
-# Recipe for setting up and configuring the AWS CLI and credentials. 
-# Depends upon K8S_MARKER because the S3 credentials to AWS CLI is provided by MinIO, which is a MicroK8s plugin
-$(AWS_MARKER): $(K8S_MARKER)
-	@echo "=== Setting up and configure AWS CLI ==="
-	/bin/bash ./tests/integration/setup-aws-cli.sh
-	touch $(AWS_MARKER)
-
 
 # Recipe for setting up and configuring the Azure CLI and credentials. 
 $(AZURE_MARKER):
