@@ -65,24 +65,16 @@
     # Copy the extracted Hive files from the temporary stage
     COPY --from=downloader /opt/hive/scripts/metastore/upgrade/postgres /opt/hive/scripts/metastore/upgrade/postgres
 
-    # Copy local files to the container
     COPY ./bin/kyuubi.sh /opt/pebble/kyuubi.sh
-    RUN chown _daemon_:_daemon_ /opt/pebble/kyuubi.sh
     COPY ./conf/gpu_executor_template.yaml /etc/spark8t/conf/gpu_executor_template.yaml
-    RUN chown _daemon_:_daemon_ /etc/spark8t/conf/gpu_executor_template.yaml
-
-    # Copy hive schematool to the image
     COPY ./bin/schematool.sh /opt/hive/bin/schematool.sh
-
-    # Copy pebble layers
     COPY ./pebble/layers.yaml /var/lib/pebble/default/layers/002-charmed-kyuubi.yaml
-
-    # Copy PostgreSQL dependencies
-    RUN cp /opt/kyuubi/jars/postgresql* /opt/spark/jars
-
-    # Set appropriate permissions
-    RUN chown -R _daemon_:_daemon_ /opt/kyuubi/ && \
-        chmod -R 750 /opt/kyuubi
+    RUN chown _daemon_:_daemon_ /opt/pebble/kyuubi.sh && \
+      chown _daemon_:_daemon_ /etc/spark8t/conf/gpu_executor_template.yaml && \
+      cp /opt/kyuubi/jars/postgresql* /opt/spark/jars && \
+      chown -R _daemon_:_daemon_ /opt/kyuubi/ && \
+      chmod -R 750 /opt/kyuubi && \
+      sed -i 's/charmed-spark/charmed-spark-kyuubi/g' /.rock/metadata.yaml
 
     USER _daemon_
 
