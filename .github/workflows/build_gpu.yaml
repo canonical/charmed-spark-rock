@@ -1,16 +1,24 @@
-name: Build GPU ROCK
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Build GPU rock
 
 on:
   workflow_call:
-    inputs:
-      arch:
-        type: string
-        default: "amd64"
-        required: true
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    runs-on: ${{ inputs.arch == 'amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
+    strategy:
+      matrix:
+        system:
+          - os: ubuntu-22.04
+            arch: amd64
+          - os: ubuntu-22.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.system.os }}
     timeout-minutes: 60
     steps:
       - name: Disk cleanup
@@ -46,7 +54,7 @@ jobs:
         with:
           channel: 5.21/stable
 
-      - name: Install dependencies
+      - name: Install tooling
         run: |
           sudo snap install yq
           sudo snap install rockcraft --classic
@@ -80,6 +88,6 @@ jobs:
       - name: Upload locally built artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: charmed-spark-gpu-${{ inputs.arch }}
+          name: charmed-spark-gpu-${{ matrix.system.arch }}
           path: |
             ${{ steps.artifact.outputs.gpu_artifact_name }}
