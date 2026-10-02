@@ -1,16 +1,18 @@
-name: Spark Image Tests
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Run integration tests
 
 on:
   workflow_call:
 
-jobs:
-  build-rock:
-    uses: ./.github/workflows/build.yaml
+permissions:
+  contents: read
 
+jobs:
   integration:
     runs-on: ${{ matrix.system.os }}
     timeout-minutes: 120
-    needs: build-rock
     strategy:
       matrix:
         system:
@@ -57,7 +59,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install tooling
-        run: pipx install azure-cli
+        run: |
+          sudo snap install aws-cli --classic
+          sudo snap install microceph --channel squid/stable
+          pipx install azure-cli
 
       - name: Get Artifact Name
         id: artifact
@@ -75,13 +80,17 @@ jobs:
         run: |
           make microk8s-setup MICROK8S_CHANNEL=${{ matrix.k8s_version }}
 
-      - name: Install microceph
+      - name: Setup object storage
         run: |
-          sudo snap install microceph
           sudo microceph cluster bootstrap
           sudo microceph disk add loop,1G,3
           sudo microceph enable rgw
           sudo microceph.radosgw-admin user create --uid test --display-name test --access-key=foo --secret-key=bar
+          aws configure set aws_access_key_id foo
+          aws configure set aws_secret_access_key bar
+          aws configure set endpoint_url "http://$(ip -4 -j route get 2.2.2.2 | yq -r '.[] | .prefsrc'):80"
+          aws configure set default.region us-east-1
+          aws s3 ls
 
       - name: Download artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -132,10 +141,3 @@ jobs:
             -o ${{ steps.artifact.outputs.kyuubi_artifact_name }}
 
           sg microk8s -c "make tests FLAVOUR=kyuubi"
-
-  trivy:
-    needs: build-rock
-    uses: ./.github/workflows/trivy.yaml
-    permissions:
-      contents: read
-      security-events: write

@@ -1,11 +1,13 @@
-name: Build ROCK
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Build rocks
 
 on:
   workflow_call:
-    inputs:
-      branch:
-        type: string
-        default: ""
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -46,15 +48,13 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: ${{ inputs.branch }}
 
       - name: Setup LXD
         uses: canonical/setup-lxd@da2ac84e727dc534215fd14cd088b9209d65893b # main
         with:
           channel: 5.21/stable
 
-      - name: Install dependencies
+      - name: Install tooling
         run: |
           sudo snap install yq
           sudo snap install rockcraft --classic
@@ -97,6 +97,7 @@ jobs:
           echo "Processing ${FILE}"
           rockcraft.skopeo copy "oci-archive:${FILE}" oci:to_process:latest
           regctl image mod ocidir://to_process:latest --replace \
+            --label "org.opencontainers.image.title=charmed-spark-jupyter" \
             --label "org.opencontainers.image.revision=${COMMIT_ID}" \
             --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
             --label "org.opencontainers.image.description=${DESCRIPTION}"
@@ -108,6 +109,7 @@ jobs:
           echo "Processing ${FILE}"
           rockcraft.skopeo copy "oci-archive:${FILE}" oci:to_process:latest
           regctl image mod ocidir://to_process:latest --replace \
+            --label "org.opencontainers.image.title=charmed-spark-kyuubi" \
             --label "org.opencontainers.image.revision=${COMMIT_ID}" \
             --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
             --label "org.opencontainers.image.description=${DESCRIPTION}"

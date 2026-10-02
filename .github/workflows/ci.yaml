@@ -1,5 +1,6 @@
-# Copyright 2026  Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
+
 name: CI pipeline
 
 concurrency:
@@ -8,6 +9,9 @@ concurrency:
 
 on:
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   lint:
@@ -90,24 +94,45 @@ jobs:
 
           echo "Verification of Spark default image passed."
 
-  integration:
+  build-rocks:
+    name: Build rocks (vanilla, kyuubi, jupyter)
     needs: [lint, checks]
+    uses: ./.github/workflows/build.yaml
+
+  build-rock-gpu:
+    name: Build rock (gpu)
+    needs: [lint, checks]
+    uses: ./.github/workflows/build_gpu.yaml
+
+  integration:
+    name: Run integration tests
+    needs: [build-rocks]
     uses: ./.github/workflows/integration.yaml
     secrets: inherit
     permissions:
       contents: read
       security-events: write
 
-  integration-gpu-amd:
-    needs: [lint, checks]
+  integration-gpu-amd64:
+    name: Run GPU integration tests (amd64)
+    needs: [build-rock-gpu]
     uses: ./.github/workflows/integration-gpu.yaml
     with:
       arch: "amd64"
     secrets: inherit
 
-  integration-gpu-arm:
-    needs: [lint, checks]
+  integration-gpu-arm64:
+    name: Run GPU integration tests (arm64)
+    needs: [build-rock-gpu]
     uses: ./.github/workflows/integration-gpu.yaml
     with:
       arch: "arm64"
     secrets: inherit
+
+  trivy:
+    name: CVE Scanning
+    needs: [build-rocks, build-rock-gpu]
+    uses: ./.github/workflows/trivy.yaml
+    permissions:
+      contents: read
+      security-events: write
