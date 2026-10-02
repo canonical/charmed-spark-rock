@@ -634,7 +634,7 @@ test_spark_sql_in_pod_using_abfss() {
   run_spark_sql_in_pod ./tests/integration/resources/test-spark-sql.sql
   return_value=$?
 
-  delete_azure_container $S3_BUCKET
+  delete_azure_container $AZURE_CONTAINER
 
   if [ $return_value -eq 1 ]; then
     exit 1
