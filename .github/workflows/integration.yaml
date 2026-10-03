@@ -2,6 +2,8 @@ name: Spark Image Tests
 
 on:
   workflow_call:
+  schedule:
+      - cron: "53 3 * * 0" # On Sunday at 00:53 UTC
 
 jobs:
   build-rock:
