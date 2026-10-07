@@ -27,8 +27,8 @@ jobs:
           # - 1.34/stable
       fail-fast: false
     env:
-      AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-      AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
+      AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT_ABA }}
+      AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY_ABA }}
     steps:
       - name: Disk cleanup
         shell: bash
@@ -129,8 +129,8 @@ jobs:
 
       - name: Run tests (Kyuubi)
         env:
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT_ABA }}
+          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY_ABA }}
         run: |
           # Unpack Artifact
           mv charmed-spark/${{ steps.artifact.outputs.kyuubi_artifact_name }} .
