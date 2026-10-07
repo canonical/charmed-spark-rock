@@ -218,6 +218,9 @@ setup_azure_storage_properties_in_pod(){
         spark-client.service-account-registry add-config \
         --username $UU --namespace $NN \
         --conf spark.hadoop.fs.azure.account.key.$ACCOUNT_NAME.dfs.core.windows.net=$SECRET_KEY \
+        --conf spark.hadoop.fs.azure.account.hns.enabled=false \
+        --conf spark.hadoop.fs.azure.networking.library=JDK_HTTP_URL_CONNECTION \
+        --conf spark.hadoop.fs.azure.list.max.results=100 \
         --conf spark.sql.warehouse.dir=$WAREHOUSE \
         --conf spark.sql.catalog.local.warehouse=$WAREHOUSE'
 }
