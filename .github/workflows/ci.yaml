@@ -9,6 +9,8 @@ concurrency:
 
 on:
   pull_request:
+  schedule:
+      - cron: "53 3 * * 0" # On Sunday at 00:53 UTC
 
 permissions:
   contents: read
@@ -114,6 +116,7 @@ jobs:
       security-events: write
 
   integration-gpu-amd64:
+    if: ${{ github.event_name == 'pull_request' }}
     name: Run GPU integration tests (amd64)
     needs: [build-rock-gpu]
     uses: ./.github/workflows/integration-gpu.yaml
@@ -122,6 +125,7 @@ jobs:
     secrets: inherit
 
   integration-gpu-arm64:
+    if: ${{ github.event_name == 'pull_request' }}
     name: Run GPU integration tests (arm64)
     needs: [build-rock-gpu]
     uses: ./.github/workflows/integration-gpu.yaml
