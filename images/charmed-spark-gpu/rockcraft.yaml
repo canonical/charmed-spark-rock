@@ -11,7 +11,7 @@ description: |
 
 license: Apache-2.0
 
-version: "4.0.2"
+version: "4.0.4"
 
 base: ubuntu@22.04
 
@@ -55,8 +55,8 @@ services:
 parts:
   spark:
     plugin: dump
-    source: https://github.com/canonical/central-uploader/releases/download/spark-4.0.2-ubuntu2/spark-4.0.2-ubuntu2-20260618124408-bin-k8s.tgz
-    source-checksum: sha512/571f31f250d060e8d4d652c46d55eca09a7b295c08588d45502fded2f4c4803903adef4c35447f0d10fe23ebb4e44407030ff44ec7207a452785593e1e273cad
+    source: https://github.com/canonical/central-uploader/releases/download/spark-4.0.4-ubuntu1/spark-4.0.4-ubuntu1-20260930071855-bin-k8s.tgz
+    source-checksum: sha512/7e85c2b70d8e35b3065f059488d6f2cb84ace69800a93aad9e4ee12242d0de90e7926c3f38c53c3ac02b0a3ed49b3517369c15789e3bcf9c5927b19d63a0d1e7
     overlay-script: |
       sed -i 's/http:\/\/deb.\(.*\)/https:\/\/deb.\1/g' /etc/apt/sources.list
       apt-get update
@@ -101,18 +101,18 @@ parts:
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
       ICEBERG_SPARK_RUNTIME_VERSION='4.0_2.13'
-      ICEBERG_VERSION='1.10.1'
+      ICEBERG_VERSION='1.12.0'
       SPARK_METRICS_VERSION='4.0-1.0.2'
       SERVLET_FILTERS_VERSION='0.0.1'
       PROMETHEUS_JMX_EXPORTER_VERSION='0.20.0'
-      NVIDIA_RAPIDS_VERSION='26.04.2'
-      POSTGRESQL_VERSION='42.7.10'
-      SHA1SUM_ICEBERG_JAR='aa296e2a410cac2270e4d4130de0e7bfde714e11'
+      NVIDIA_RAPIDS_VERSION='26.08.1'
+      POSTGRESQL_VERSION='42.7.13'
+      SHA1SUM_ICEBERG_JAR='72ff4d5759385c282113dc36235ad8b0e4d007cc'
       SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='de05643ba65a46b4b4c6c0e9b222aed2c2b78f5c28e5161e7312080b87d1dccf81dcf0155ad00de170a7350422fe433e75fe66b50fc795ac6863ca6f0c992cad'
       SHA512SUM_SPARK_SERVLET_FILTER_JAR='ffeb809d58ef0151d513b09d4c2bfd5cc064b0b888ca45899687aed2f42bcb1ce9834be9709290dd70bd9df84049f02cbbff6c2d5ec3c136c278c93f167c8096'
       SHA1SUM_PROMETHEUS_JMX_EXPORTER='7b8a98e3482cee8889698ef391b85c47a3c4ce5b'
-      SHA1SUM_NVIDIA_RAPIDS='3c76536248ca513b86d3c04b3dd84c6904f5b788'
-      SHA1SUM_POSTGRESQL='35100a3f0899551e27af8fed4a3414619a4663b3'
+      SHA1SUM_NVIDIA_RAPIDS='81c1497234f0c6c047ad74dd4ec3cd4fe274944a'
+      SHA1SUM_POSTGRESQL='a6e1bd21b412d6ffb3df23cd13d507bc2cc9e37d'
 
 
       JARS=(
@@ -153,7 +153,7 @@ parts:
       - python3-pip
     overlay-script: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
-      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist spark8t==1.3.1
+      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist spark8t==1.5.0
       rm usr/bin/pip*
     stage:
       - opt/spark8t/python/dist

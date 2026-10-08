@@ -11,6 +11,7 @@ num_rows = args.num_rows
 
 # Create Spark session
 spark = SparkSession.builder.appName("IcebergExample").getOrCreate()
+print("DEBUG: Spark session created")
 
 # Create schema
 schema = StructType(
@@ -25,11 +26,18 @@ for idx in range(num_rows):
 
 # Create a data frame and write it
 df = spark.createDataFrame(data, schema)
+print("DEBUG: DataFrame created")
 df.writeTo("demo.foo.bar").create()
+print("DEBUG: Iceberg table created and data written")
 
 # Read back the inserted data and count the number of rows
 df = spark.table("demo.foo.bar")
+print("DEBUG: Iceberg table loaded")
 count = df.count()
+print("DEBUG: Row count computed")
 
 # Print the number of rows
 print(f"Number of rows inserted: {count}")
+print("DEBUG: Stopping Spark session")
+spark.stop()
+print("DEBUG: Spark session stopped")
