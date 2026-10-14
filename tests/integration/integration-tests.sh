@@ -634,7 +634,7 @@ test_spark_sql_in_pod_using_abfss() {
   run_spark_sql_in_pod ./tests/integration/resources/test-spark-sql.sql
   return_value=$?
 
-  delete_azure_container $S3_BUCKET
+  delete_azure_container $AZURE_CONTAINER
 
   if [ $return_value -eq 1 ]; then
     exit 1
@@ -713,7 +713,8 @@ echo -e "##################################"
 echo -e "RUN EXAMPLE JOB WITH DEFAULT SPARK IMAGE"
 echo -e "##################################"
 
-(setup_user_context && test_example_job_in_pod_with_default_image && cleanup_user_success) || cleanup_user_failure_in_pod
+# TODO: Re-enable once 4.0.4 image is published
+# (setup_user_context && test_example_job_in_pod_with_default_image && cleanup_user_success) || cleanup_user_failure_in_pod
 
 echo -e "##################################"
 echo -e "RUN SPARK SHELL IN POD"
