@@ -112,7 +112,7 @@ parts:
       # renovate: datasource=maven depName=io.prometheus.jmx:jmx_prometheus_javaagent
       PROMETHEUS_JMX_EXPORTER_VERSION='0.20.0'
       # renovate: datasource=maven depName=org.postgresql:postgresql
-      POSTGRESQL_VERSION='42.7.13'
+      POSTGRESQL_VERSION='42.7.14'
       # renovate: datasource=maven depName=com.nvidia:rapids-4-spark_2.12
       NVIDIA_RAPIDS_VERSION='26.08.1'
       SHA1SUM_ICEBERG_JAR='9320e156d8ea8460e26e0604c0fed204c2579aa0'
