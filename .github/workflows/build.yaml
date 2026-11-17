@@ -52,7 +52,12 @@ jobs:
       - name: Setup LXD
         uses: canonical/setup-lxd@148b75cb43f4ac1356752fad771cc418cb215033 # main
         with:
-          channel: 5.21/stable
+          channel: 6/stable
+
+      - name: Enable LXD guest Pro attachment
+        run: |
+          sudo pro attach ${{ secrets.PRO_TOKEN }} --no-auto-enable
+          sudo pro config set lxd_guest_attach=on
 
       - name: Install tooling
         run: |
@@ -61,7 +66,9 @@ jobs:
           sudo snap install regclient
 
       - name: Build image
-        run: make build
+        run: make build USE_ESM=true
+        # The two subsequent images are built from this first one and therefore
+        # to not need USE_ESM=true
 
       - name: Build image (Jupyter)
         run: make build FLAVOUR=jupyter
@@ -123,3 +130,8 @@ jobs:
             ${{ steps.artifact.outputs.base_artifact_name }}
             ${{ steps.artifact.outputs.jupyter_artifact_name }}
             ${{ steps.artifact.outputs.kyuubi_artifact_name }}
+
+      - name: Detach Pro
+        if: always()
+        run: |
+          sudo pro detach --assume-yes || true
