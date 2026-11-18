@@ -14,8 +14,12 @@ FROM $BASE_IMAGE
 ARG JUPYTERLAB_VERSION
 USER root
 
-RUN rm /var/lib/pebble/default/layers/*.yaml /opt/pebble/*.sh && \
-  python3 -m pip install "jupyterlab==$JUPYTERLAB_VERSION"
+RUN mkdir -p /etc/ssl/certs/java \
+  && apt-get update \
+  && apt-get install --reinstall -y --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm /var/lib/pebble/default/layers/*.yaml /opt/pebble/*.sh \
+  && python3 -m pip install --no-cache-dir "jupyterlab==$JUPYTERLAB_VERSION"
 
 COPY ./pebble/layers.yaml /var/lib/pebble/default/layers/001-charmed-jupyter.yaml
 COPY ./bin/jupyterlab-server.sh /opt/pebble/jupyterlab-server.sh
