@@ -54,6 +54,7 @@ services:
 parts:
   spark:
     plugin: dump
+    # renovate: datasource=github-releases depName=canonical/central-uploader depType=spark-source
     source: https://github.com/canonical/central-uploader/releases/download/spark-4.0.4-ubuntu2/spark-4.0.4-ubuntu2-20261012122030-bin-k8s.tgz
     source-checksum: sha512/09410d350d6549eb575d6e4613b3cd5f8e9d3818afb276b57ef1d87d9d657b84e9dacc4082480582361898abcbda376472b564b0d95cdc497cf3f3ccb705a252
     overlay-script: |
@@ -100,16 +101,22 @@ parts:
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
       ICEBERG_SPARK_RUNTIME_VERSION='4.0_2.13'
-      ICEBERG_VERSION='1.12.0'
+      # renovate: datasource=github-releases depName=canonical/central-uploader extractVersion=^iceberg-(?<version>.+)$
+      ICEBERG_VERSION='1.12.0-ubuntu0'
+      ICEBERG_PUB_DATE=20261106134103
+      # renovate: datasource=github-releases depName=canonical/central-uploader extractVersion=^spark-metrics-assembly-4.0-(?<version>.+)$
       SPARK_METRICS_VERSION='4.0-1.0.2'
+      # renovate: datasource=github-releases depName=canonical/central-uploader extractVersion=^servlet-filters-(?<version>.+)$
       SERVLET_FILTERS_VERSION='4.0.1'
+      # renovate: datasource=maven depName=io.prometheus.jmx:jmx_prometheus_javaagent
       PROMETHEUS_JMX_EXPORTER_VERSION='0.20.0'
+      # renovate: datasource=maven depName=org.postgresql:postgresql
       POSTGRESQL_VERSION='42.7.13'
-      SHA1SUM_ICEBERG_JAR='72ff4d5759385c282113dc36235ad8b0e4d007cc'
       SHA512SUM_SPARK_METRICS_ASSEMBLY_JAR='de05643ba65a46b4b4c6c0e9b222aed2c2b78f5c28e5161e7312080b87d1dccf81dcf0155ad00de170a7350422fe433e75fe66b50fc795ac6863ca6f0c992cad'
       SHA512SUM_SPARK_SERVLET_FILTER_JAR='a18e8ffe0d80d6cd42e1e817765e62c9e24ee3998b82bd4d848494a5f96c40f548d7148471d3b8ca35d4e5aa71c1ceefffad6f69d21e94794818291bdbe6931f'
       SHA1SUM_PROMETHEUS_JMX_EXPORTER='7b8a98e3482cee8889698ef391b85c47a3c4ce5b'
       SHA1SUM_POSTGRESQL='a6e1bd21b412d6ffb3df23cd13d507bc2cc9e37d'
+      SHA512SUM_ICEBERG_TAR='4a74d68428f0645c1faa508f1cf97369147d8d7f5be933e33da59680e47f35a3cd84f8607cc47f6e78b9f3d1beeff91450a6ba4c60b31381e8057b518ae49a95'
 
 
       JARS=(
@@ -117,7 +124,6 @@ parts:
       "https://github.com/canonical/central-uploader/releases/download/servlet-filters-LIB_VERSION/servlet-filters-LIB_VERSION.jar $SERVLET_FILTERS_VERSION sha512sum $SHA512SUM_SPARK_SERVLET_FILTER_JAR"
       "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/LIB_VERSION/jmx_prometheus_javaagent-LIB_VERSION.jar $PROMETHEUS_JMX_EXPORTER_VERSION sha1sum $SHA1SUM_PROMETHEUS_JMX_EXPORTER"
       "https://repo1.maven.org/maven2/org/postgresql/postgresql/LIB_VERSION/postgresql-LIB_VERSION.jar $POSTGRESQL_VERSION sha1sum $SHA1SUM_POSTGRESQL"
-      "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
       )
       for ENTRY in "${JARS[@]}"; do
         echo "$ENTRY"
@@ -134,6 +140,30 @@ parts:
         echo "$EXPECTED_SHA"
         [ $ACTUAL_SHA != $EXPECTED_SHA ] && echo "ERROR"  && exit 1
       done
+
+      echo "Downloading Iceberg tgz..."
+      ICEBERG_TAR="iceberg-${ICEBERG_VERSION}-${ICEBERG_PUB_DATE}.tgz"
+      ICEBERG_URL="https://github.com/canonical/central-uploader/releases/download/iceberg-${ICEBERG_VERSION}/${ICEBERG_TAR}"
+      echo "Download from URL: $ICEBERG_URL"
+      wget -q "$ICEBERG_URL"
+      ICEBERG_TAR_SHA=$(sha512sum "$ICEBERG_TAR" | awk '{print $1}')
+      echo "$ICEBERG_TAR_SHA"
+      echo "$SHA512SUM_ICEBERG_TAR"
+      [ $ICEBERG_TAR_SHA != $SHA512SUM_ICEBERG_TAR ] && echo "ERROR: Iceberg tgz checksum mismatch" && exit 1
+
+      echo "Extracting Iceberg JAR from tgz..."
+      mkdir -p /tmp/iceberg-extract
+      tar -xzf "$ICEBERG_TAR" -C /tmp/iceberg-extract
+      ICEBERG_JAR_NAME="iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar"
+      EXTRACTED_JAR=$(find /tmp/iceberg-extract -name "$ICEBERG_JAR_NAME" -type f)
+      if [ -z "$EXTRACTED_JAR" ]; then
+        echo "ERROR: Could not find $ICEBERG_JAR_NAME in tgz"
+        exit 1
+      fi
+      cp "$EXTRACTED_JAR" .
+      echo "Iceberg JAR extracted: $ICEBERG_JAR_NAME"
+      rm -rf /tmp/iceberg-extract "$ICEBERG_TAR"
+
       echo "All dependecies downloaded!"
     stage:
       - opt/spark/jars
@@ -149,7 +179,8 @@ parts:
       - python3-pip
     overlay-script: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
-      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist spark8t==1.5.0
+      # renovate: datasource=pypi
+      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist spark8t==1.6.0
       rm usr/bin/pip*
     stage:
       - opt/spark8t/python/dist
