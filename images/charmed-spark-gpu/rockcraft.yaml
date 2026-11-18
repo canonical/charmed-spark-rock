@@ -101,7 +101,8 @@ parts:
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
       ICEBERG_SPARK_RUNTIME_VERSION='4.0_2.13'
-      ICEBERG_VERSION='1.12.0'
+      ICEBERG_VERSION='1.12.0-ubuntu0'
+      ICEBERG_PUB_DATE=20261106134103
       SPARK_METRICS_VERSION='4.0-1.0.2'
       SERVLET_FILTERS_VERSION='0.0.1'
       PROMETHEUS_JMX_EXPORTER_VERSION='0.20.0'
@@ -121,7 +122,6 @@ parts:
       "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/LIB_VERSION/jmx_prometheus_javaagent-LIB_VERSION.jar $PROMETHEUS_JMX_EXPORTER_VERSION sha1sum $SHA1SUM_PROMETHEUS_JMX_EXPORTER"
       "https://repo1.maven.org/maven2/com/nvidia/rapids-4-spark_2.13/LIB_VERSION/rapids-4-spark_2.13-LIB_VERSION.jar $NVIDIA_RAPIDS_VERSION sha1sum $SHA1SUM_NVIDIA_RAPIDS"
       "https://repo1.maven.org/maven2/org/postgresql/postgresql/LIB_VERSION/postgresql-LIB_VERSION.jar $POSTGRESQL_VERSION sha1sum $SHA1SUM_POSTGRESQL"
-      "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}/LIB_VERSION/iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-LIB_VERSION.jar $ICEBERG_VERSION sha1sum $SHA1SUM_ICEBERG_JAR"
       )
       for ENTRY in "${JARS[@]}"; do
         echo "$ENTRY"
@@ -138,6 +138,29 @@ parts:
         echo "$EXPECTED_SHA"
         [ $ACTUAL_SHA != $EXPECTED_SHA ] && echo "ERROR"  && exit 1
       done
+
+      echo "Downloading Iceberg tgz..."
+      ICEBERG_TAR="iceberg-${ICEBERG_VERSION}-${ICEBERG_PUB_DATE}.tgz"
+      ICEBERG_URL="https://github.com/canonical/central-uploader/releases/download/iceberg-${ICEBERG_VERSION}/${ICEBERG_TAR}"
+      echo "Download from URL: $ICEBERG_URL"
+      wget -q "$ICEBERG_URL"
+      ICEBERG_TAR_SHA=$(sha512sum "$ICEBERG_TAR" | awk '{print $1}')
+      echo "$ICEBERG_TAR_SHA"
+      echo "$SHA512SUM_ICEBERG_TAR"
+      [ $ICEBERG_TAR_SHA != $SHA512SUM_ICEBERG_TAR ] && echo "ERROR: Iceberg tgz checksum mismatch" && exit 1
+
+      echo "Extracting Iceberg JAR from tgz..."
+      mkdir -p /tmp/iceberg-extract
+      tar -xzf "$ICEBERG_TAR" -C /tmp/iceberg-extract
+      ICEBERG_JAR_NAME="iceberg-spark-runtime-${ICEBERG_SPARK_RUNTIME_VERSION}-${ICEBERG_VERSION}.jar"
+      EXTRACTED_JAR=$(find /tmp/iceberg-extract -name "$ICEBERG_JAR_NAME" -type f)
+      if [ -z "$EXTRACTED_JAR" ]; then
+        echo "ERROR: Could not find $ICEBERG_JAR_NAME in tgz"
+        exit 1
+      fi
+      cp "$EXTRACTED_JAR" .
+      echo "Iceberg JAR extracted: $ICEBERG_JAR_NAME"
+      rm -rf /tmp/iceberg-extract "$ICEBERG_TAR"
       echo "All dependecies downloaded!"
     stage:
       - opt/spark/jars
