@@ -101,7 +101,7 @@ parts:
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
       ICEBERG_SPARK_RUNTIME_VERSION='3.5_2.12'
-      # renovate: datasource=maven depName=org.apache.iceberg:iceberg-spark-runtime-3.5_2.12
+      # renovate: datasource=github-releases depName=canonical/central-uploader extractVersion=^iceberg-(?<version>.+)$
       ICEBERG_VERSION='1.12.0-ubuntu0'
       ICEBERG_PUB_DATE=20261106134103
       SPARK_METRICS_RUNTIME_VERSION='3.4'
