@@ -68,7 +68,7 @@ jobs:
       - name: Build image
         run: make build USE_ESM=true
         # The two subsequent images are built from this first one and therefore
-        # to not need USE_ESM=true
+        # do not need USE_ESM=true
 
       - name: Build image (Jupyter)
         run: make build FLAVOUR=jupyter
