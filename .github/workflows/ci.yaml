@@ -100,11 +100,13 @@ jobs:
     name: Build rocks (vanilla, kyuubi, jupyter)
     needs: [lint, checks]
     uses: ./.github/workflows/build.yaml
+    secrets: inherit
 
   build-rock-gpu:
     name: Build rock (gpu)
     needs: [lint, checks]
     uses: ./.github/workflows/build_gpu.yaml
+    secrets: inherit
 
   integration:
     name: Run integration tests

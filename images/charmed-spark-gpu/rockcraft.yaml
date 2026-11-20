@@ -216,6 +216,10 @@ parts:
   user-setup:
     plugin: nil
     after: [charmed-spark]
+    build-packages:
+      # Needed for building with ESM.
+      # See https://github.com/canonical/craft-parts/issues/1830
+      - ca-certificates-java
     overlay-packages:
       - tini
       - libc6
@@ -224,6 +228,14 @@ parts:
       - libnss3
       - procps
       - openjdk-17-jre-headless
+
+    override-build: |
+      # Needed for building with ESM.
+      # See https://github.com/canonical/craft-parts/issues/1830
+      craftctl default
+      mkdir -p "${CRAFT_PART_INSTALL}/etc/ssl/certs/java"
+      cp -L /etc/ssl/certs/java/cacerts "${CRAFT_PART_INSTALL}/etc/ssl/certs/java/cacerts"
+
     override-prime: |
       # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
       # for more information about shared user.
@@ -231,6 +243,16 @@ parts:
       SPARK_UID=584792
 
       craftctl default
+
+      # Needed for building with ESM.
+      # See https://github.com/canonical/craft-parts/issues/1830
+      mkdir -p "$CRAFT_PRIME/etc/ssl/certs"
+      update-ca-certificates --fresh \
+        --certsconf /etc/ca-certificates.conf \
+        --certsdir /usr/share/ca-certificates \
+        --localcertsdir /usr/local/share/ca-certificates \
+        --etccertsdir "$CRAFT_PRIME/etc/ssl/certs"
+
       chmod 755 opt/spark-client/python/bin/*
 
       chown -R ${SPARK_GID}:${SPARK_UID} etc/spark etc/spark8t

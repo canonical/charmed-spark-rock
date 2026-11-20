@@ -31,6 +31,8 @@ MICROK8S_CHANNEL := "1.32/stable"
 AZURE_STORAGE_ACCOUNT := ${AZURE_STORAGE_ACCOUNT}
 AZURE_STORAGE_KEY := ${AZURE_STORAGE_KEY}
 
+USE_ESM := false
+
 # ======================
 # INTERNAL VARIABLES
 # ======================
@@ -39,6 +41,8 @@ AZURE_STORAGE_KEY := ${AZURE_STORAGE_KEY}
 _MAKE_DIR := .make_cache
 $(shell mkdir -p $(_MAKE_DIR))
 
+# Used for the rockcraft pack command
+_PRO_FLAG := --pro esm-apps,esm-infra
 
 # eg, charmed-spark
 ROCK_NAME := $(shell cat images/charmed-spark/rockcraft.yaml | yq .name)
@@ -175,7 +179,7 @@ help:
 #
 $(ROCK_FILE): images/charmed-spark/rockcraft.yaml $(wildcard images/charmed-spark/*/*)
 	@echo "=== Building Charmed Image ==="
-	(cd images/charmed-spark && rockcraft pack)
+	(cd images/charmed-spark && rockcraft pack $(if $(filter true 1,$(USE_ESM)),$(_PRO_FLAG)))
 	mv images/charmed-spark/$(ROCK_FILE) .
 
 
@@ -230,7 +234,7 @@ kyuubi: $(KYUUBI_MARKER)
 
 $(ROCK_FILE_GPU): images/charmed-spark-gpu/rockcraft.yaml $(wildcard images/charmed-spark-gpu/*/*)
 	@echo "=== Building Charmed Image ==="
-	(cd images/charmed-spark-gpu && cp ../charmed-spark/bin/* bin/ && rockcraft pack)
+	(cd images/charmed-spark-gpu && cp ../charmed-spark/bin/* bin/ && rockcraft pack $(if $(filter true 1,$(USE_ESM)),$(_PRO_FLAG)))
 	mv images/charmed-spark-gpu/$(ROCK_FILE_GPU) .
 
 rock-gpu: $(ROCK_FILE_GPU)
