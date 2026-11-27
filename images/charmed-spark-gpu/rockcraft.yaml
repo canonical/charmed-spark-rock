@@ -25,6 +25,7 @@ entrypoint-service: sparkd
 environment:
   SPARK_HOME: /opt/spark
   SPARK_CONFS: /etc/spark8t/conf
+  SPARK_CONF_DIR: /etc/spark8t/conf
   JAVA_HOME: /usr/lib/jvm/java-17-openjdk-${CRAFT_ARCH_BUILD_FOR}
   PYTHONPATH: /opt/spark/python:/opt/spark8t/python/dist:/opt/spark/python/lib/py4j.zip:/usr/lib/python3.10/site-packages
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/spark:/opt/spark/bin:/opt/spark/python/bin:/opt/spark-client/python/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/lib/jvm/java-17-openjdk-${CRAFT_ARCH_BUILD_FOR}/bin
@@ -32,7 +33,7 @@ environment:
   SPARK_USER_DATA: /var/lib/spark
   SPARK_LOG_DIR: /var/log/spark
   LD_LIBRARY_PATH: /usr/local/nvidia/lib:/usr/local/nvidia/lib64
-  PEBBLE_VERBOSE: 1
+  PEBBLE_VERBOSE: "1"
 
 services:
   sparkd:
@@ -95,7 +96,6 @@ parts:
   authz-plugin:
     # Add the Spark AuthZ plugin coming from Kyuubi.
     plugin: dump
-    after: [spark]
     source: https://github.com/canonical/central-uploader/releases/download/kyuubi-1.12.0-ubuntu3/kyuubi-1.12.0-ubuntu3-20261125155127.tgz
     source-checksum: sha512/55700b479cbe4b7acdec9459af33b761303075079667375021bf1e6f735ea872c6db4e672133dbc31ab3e8429def91bb7f55a7bc485155df06edfd02031551d0
     organize:
@@ -110,7 +110,6 @@ parts:
     # - iceberg-aws-bundle
     # - iceberg-azure-bundle
     plugin: dump
-    after: [spark]
     source: https://github.com/canonical/central-uploader/releases/download/iceberg-1.12.0-ubuntu0/iceberg-1.12.0-ubuntu0-20261106134103.tgz
     source-checksum: sha512/4a74d68428f0645c1faa508f1cf97369147d8d7f5be933e33da59680e47f35a3cd84f8607cc47f6e78b9f3d1beeff91450a6ba4c60b31381e8057b518ae49a95
     organize:
@@ -128,10 +127,9 @@ parts:
     # - postgresql
     # - rapids-4-spark
     plugin: nil
-    after: [spark]
     build-packages:
       - wget
-    overlay-script: |
+    override-build: |
       mkdir -p $CRAFT_PART_INSTALL/opt/spark/jars
       cd $CRAFT_PART_INSTALL/opt/spark/jars
 
@@ -181,19 +179,15 @@ parts:
       done
 
       echo "All dependencies downloaded!"
-    stage:
-      - opt/spark/jars
 
   spark8t:
-    plugin: python
-    source: ""
-    stage-packages:
-      - python3-venv
-    python-packages:
+    plugin: nil
+    overlay-packages:
+      - python3-pip
+    override-build: |
+      mkdir -p $CRAFT_PART_INSTALL/opt/spark8t/python/dist
       # renovate: datasource=pypi
-      - spark8t==1.6.0
-    organize:
-      lib/python3.*/site-packages/*: opt/spark8t/python/dist/
+      pip install --target=${CRAFT_PART_INSTALL}/opt/spark8t/python/dist spark8t==1.6.0
 
   charmed-spark:
     plugin: dump
@@ -231,6 +225,7 @@ parts:
       - libnss3
       - procps
       - openjdk-17-jre-headless
+
     override-prime: |
       # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
       # for more information about shared user.
@@ -263,5 +258,3 @@ parts:
       chmod -R 770 var/lib/spark
       mv opt/spark/decom.sh opt/decom.sh
       chmod a+x opt/decom.sh
-      chown -R ${SPARK_GID}:${SPARK_UID} opt/
-      chmod -R 750 opt/
